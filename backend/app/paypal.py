@@ -108,9 +108,18 @@ class FakePayPal:
         self.calls: list[tuple] = []
         self.fail_next: Exception | None = None
 
+    def register_capture(self, capture_id: str, cents: int) -> None:
+        self.captures.setdefault(capture_id, {"id": capture_id, "status": "COMPLETED", "amount_cents": cents, "refunded": 0})
+
+    def _capture(self, capture_id: str) -> dict:
+        try:
+            return self.captures[capture_id]
+        except KeyError:
+            raise PayPalError(404, '{"name":"RESOURCE_NOT_FOUND","message":"capture not registered in FakePayPal"}')
+
     def get_capture(self, capture_id: str) -> dict:
         self.calls.append(("get_capture", capture_id))
-        c = self.captures[capture_id]
+        c = self._capture(capture_id)
         st = "REFUNDED" if c["refunded"] >= c["amount_cents"] else ("PARTIALLY_REFUNDED" if c["refunded"] else "COMPLETED")
         return {"id": capture_id, "status": st, "amount": {"value": fmt_amount(c["amount_cents"]), "currency_code": self.currency}}
 
@@ -121,7 +130,7 @@ class FakePayPal:
             raise e
         if request_id in self.by_request:                  # idempotent replay
             return self.refunds[self.by_request[request_id]]
-        c = self.captures[capture_id]
+        c = self._capture(capture_id)
         if c["refunded"] + cents > c["amount_cents"]:
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"REFUND_AMOUNT_EXCEEDED"}]}')
         rid = f"R{len(self.refunds) + 1:05d}"

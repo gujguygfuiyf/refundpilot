@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite:///{BACKEND_DIR / 'data' / 'refundpilot.db'}"
     merchant_token: str = "change-me"
     dev_token: str = "change-me"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     max_upload_mb: int = 5
 
     # Behaviour

@@ -78,5 +78,32 @@ def seed_orders(db: Session, path: Path = SEED_DIR / "orders.json", paypal=None)
     return n
 
 
+def seed_demo_orders(db: Session, paypal) -> int:
+    """Offline mode (FakePayPal): one captured demo order per product so the buyer page and approve flow work
+    without PayPal credentials. Idempotent; re-registers captures in the fake gateway after a restart."""
+    from .paypal import FakePayPal
+    if not isinstance(paypal, FakePayPal):
+        return 0
+    n = 0
+    for i, product in enumerate(db.execute(select(Product).order_by(Product.id)).scalars().all()):
+        cap_id = f"DEMO-CAP-{product.sku}"
+        row = db.execute(select(Order).where(Order.capture_id == cap_id)).scalars().first()
+        if row is None:
+            captured = datetime.now(timezone.utc) - timedelta(days=5)
+            row = Order(paypal_order_id=f"DEMO-ORD-{product.sku}", capture_id=cap_id, product_id=product.id,
+                        amount_cents=product.price_cents, currency=product.currency,
+                        captured_at=captured.isoformat(timespec="seconds"),
+                        delivered_at=(captured + timedelta(days=settings.delivered_offset_days)).isoformat(timespec="seconds"),
+                        buyer_label=f"Buyer {chr(65 + i % 26)}")
+            db.add(row)
+            n += 1
+        paypal.register_capture(cap_id, row.amount_cents)
+        paypal.captures[cap_id]["refunded"] = row.refunded_cents
+    db.commit()
+    return n
+
+
 def seed_all(db: Session, paypal=None) -> dict:
-    return {"policies": seed_policies(db), "products": seed_products(db), "orders": seed_orders(db, paypal=paypal)}
+    out = {"policies": seed_policies(db), "products": seed_products(db), "orders": seed_orders(db, paypal=paypal)}
+    out["demo_orders"] = seed_demo_orders(db, paypal)
+    return out
