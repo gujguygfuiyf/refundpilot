@@ -1,0 +1,20 @@
+{
+  "version": "standard-1.0",
+  "name": "Standard",
+  "report_window_days": 14,
+  "auto_approve_below_cents": 0,
+  "max_partial_percent": 50,
+  "strict_human_review": false,
+  "rules": [
+    {"id": "R1-broken", "when": {"product_match": ["confirmed", "likely"], "damage_type": ["broken", "shattered", "missing_part"], "evidence_quality": ["sufficient"]}, "outcome": "FULL_REFUND", "reason": "Item arrived broken; photos clearly show the ordered product"},
+    {"id": "R2-cosmetic", "when": {"product_match": ["confirmed", "likely"], "damage_type": ["cosmetic"], "evidence_quality": ["sufficient"]}, "outcome": "PARTIAL_REFUND", "percent": 30, "reason": "Cosmetic damage on the ordered product; partial refund per policy"},
+    {"id": "R3-wrong", "when": {"damage_type": ["wrong_item", "not_as_described"], "evidence_quality": ["sufficient"]}, "outcome": "REVIEW", "reason": "Wrong or not-as-described item; merchant to decide return vs refund"},
+    {"id": "R4-mismatch", "when": {"product_match": ["unlikely", "mismatch"]}, "outcome": "REQUEST_EVIDENCE", "reason": "Photos do not appear to show the ordered product"},
+    {"id": "R5-weak", "when": {"evidence_quality": ["insufficient", "unclear"]}, "outcome": "REQUEST_EVIDENCE", "reason": "Photos are not clear enough to assess"},
+    {"id": "R6-stock", "when": {"stock_photo_suspected": true}, "outcome": "REVIEW", "reason": "Photo may be a stock image"},
+    {"id": "R7-nodamage", "when": {"damage_type": ["none_visible"]}, "outcome": "REVIEW", "reason": "No visible damage in the photos"}
+  ],
+  "default_outcome": "REVIEW",
+  "out_of_window_outcome": "REVIEW",
+  "repeat_claim_outcome": "REVIEW"
+}

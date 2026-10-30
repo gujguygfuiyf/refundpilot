@@ -1,0 +1,10 @@
+[
+  {"sku": "MUG-01", "name": "Ceramic Coffee Mug, 350ml, white", "price_cents": 1900, "currency": "USD", "image_url": "https://picsum.photos/seed/mug01/600", "category": "kitchen"},
+  {"sku": "LAMP-02", "name": "LED Desk Lamp with USB charging", "price_cents": 4900, "currency": "USD", "image_url": "https://picsum.photos/seed/lamp02/600", "category": "home"},
+  {"sku": "HEAD-03", "name": "Bluetooth Over-Ear Headphones", "price_cents": 7900, "currency": "USD", "image_url": "https://picsum.photos/seed/head03/600", "category": "electronics"},
+  {"sku": "BOTT-04", "name": "Insulated Steel Water Bottle, 750ml", "price_cents": 2900, "currency": "USD", "image_url": "https://picsum.photos/seed/bott04/600", "category": "outdoor"},
+  {"sku": "CASE-05", "name": "Phone Case, clear, shock-absorbing", "price_cents": 1500, "currency": "USD", "image_url": "https://picsum.photos/seed/case05/600", "category": "electronics"},
+  {"sku": "PLNT-06", "name": "Ceramic Plant Pot, 20cm", "price_cents": 2400, "currency": "USD", "image_url": "https://picsum.photos/seed/plnt06/600", "category": "home"},
+  {"sku": "TOWL-07", "name": "Bath Towel Set, 2 pieces", "price_cents": 3500, "currency": "USD", "image_url": "https://picsum.photos/seed/towl07/600", "category": "home"},
+  {"sku": "SPKR-08", "name": "Portable Bluetooth Speaker", "price_cents": 5900, "currency": "USD", "image_url": "https://picsum.photos/seed/spkr08/600", "category": "electronics"}
+]
