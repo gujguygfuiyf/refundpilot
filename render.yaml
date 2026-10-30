@@ -42,6 +42,8 @@ services:
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://refundpilot-api.onrender.com
+      - key: NEXT_PUBLIC_DEMO_MERCHANT_TOKEN   # baked into the public bundle on purpose: judges skip sign-in
+        sync: false
 databases:
   - name: refundpilot-db
     plan: basic-256mb   # free Postgres expires after 30 days; judging runs to mid-December
