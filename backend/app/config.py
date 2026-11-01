@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-5"          # set to a vision-capable model available on your account
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-flash-latest"
     ai_provider: str = "openai"          # openai | gemini | auto (openai first, gemini on failure)
 
     # Storage / auth

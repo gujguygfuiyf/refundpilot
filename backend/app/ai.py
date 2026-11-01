@@ -11,8 +11,10 @@ import logging
 import hashlib
 import io
 import time
+from functools import lru_cache
 from typing import Literal, Protocol
 
+import httpx
 from PIL import Image
 from pydantic import BaseModel, Field, ValidationError
 
@@ -89,6 +91,19 @@ def prepare_jpeg(raw: bytes) -> tuple[bytes, int, int]:
     return buf.getvalue(), im.width, im.height
 
 
+@lru_cache(maxsize=64)
+def fetch_reference(url: str) -> bytes | None:
+    """Download and downscale the listing photo ourselves, so a slow or redirecting image host can't fail the
+    model call (OpenAI returns 5xx when it can't fetch an image URL) and Gemini actually sees the image."""
+    try:
+        r = httpx.get(url, timeout=10.0, follow_redirects=True)
+        r.raise_for_status()
+        return prepare_jpeg(r.content)[0]
+    except Exception as e:
+        logging.getLogger("refundpilot").warning("reference image %s unavailable: %s", url, e)
+        return None
+
+
 def user_text(inp: AssessmentInput) -> str:
     return (f"Product ordered: {inp.product_name}. Order amount: ${inp.order_cents / 100:.2f}. "
             f"Days since delivery: {inp.days_since_delivery}. Buyer photos: {len(inp.buyer_photos)}.\n"
@@ -107,9 +122,12 @@ class OpenAIAssessor:
         self.model = model
 
     def assess(self, inp: AssessmentInput) -> AssessmentResult:
+        ref = fetch_reference(inp.product_image_url)
         content: list[dict] = [
             {"type": "text", "text": f"Product reference image for: {inp.product_name}"},
-            {"type": "image_url", "image_url": {"url": inp.product_image_url, "detail": "low"}},
+            {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.standard_b64encode(ref).decode(),
+                                                "detail": "low"}} if ref else
+            {"type": "text", "text": "(No reference image available: judge product_match from the product name only.)"},
             {"type": "text", "text": "Buyer photos follow."},
         ]
         for raw in inp.buyer_photos:
@@ -150,7 +168,10 @@ class GeminiAssessor:
 
     def assess(self, inp: AssessmentInput) -> AssessmentResult:
         from google.genai import types
-        parts: list = [f"Product reference image for: {inp.product_name} is at this URL: {inp.product_image_url}",
+        ref = fetch_reference(inp.product_image_url)
+        parts: list = [f"Product reference image for: {inp.product_name}",
+                       types.Part.from_bytes(data=ref, mime_type="image/jpeg") if ref else
+                       "(No reference image available: judge product_match from the product name only.)",
                        "Buyer photos follow."]
         for raw in inp.buyer_photos:
             jpg, _, _ = prepare_jpeg(raw)
