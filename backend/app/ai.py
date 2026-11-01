@@ -7,6 +7,7 @@ Both return the same EvidenceAssessment; the policy engine does the rest.
 from __future__ import annotations
 
 import base64
+import logging
 import hashlib
 import io
 import time
@@ -220,7 +221,11 @@ def build_assessor(settings) -> Assessor:
         if name == "openai" and settings.openai_api_key:
             providers.append(OpenAIAssessor(settings.openai_api_key, settings.openai_model))
         if name == "gemini" and settings.gemini_api_key:
-            providers.append(GeminiAssessor(settings.gemini_api_key, settings.gemini_model))
+            try:
+                providers.append(GeminiAssessor(settings.gemini_api_key, settings.gemini_model))
+            except ImportError:  # key set but the [gemini] extra isn't installed: run without the backup
+                logging.getLogger("refundpilot").warning("GEMINI_API_KEY set but google-genai is not installed; "
+                                                         "pip install -e '.[gemini]' to enable the backup provider")
         if settings.ai_provider != "auto" and providers:
             break
     if not providers:
