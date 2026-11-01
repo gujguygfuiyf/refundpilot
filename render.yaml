@@ -25,7 +25,9 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: AI_PROVIDER
-        value: auto
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-flash-latest
       - key: MERCHANT_TOKEN
         sync: false
       - key: DEV_TOKEN
