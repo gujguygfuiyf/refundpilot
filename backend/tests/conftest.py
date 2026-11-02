@@ -12,6 +12,7 @@ from PIL import Image
 os.environ.setdefault("DATABASE_URL", "sqlite://")        # in-memory for tests
 os.environ.setdefault("MERCHANT_TOKEN", "test-merchant")
 os.environ.setdefault("DEV_TOKEN", "test-dev")
+os.environ.setdefault("CLAIMS_PER_IP_PER_MINUTE", "1000")  # rate-limit tests tighten this explicitly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sqlalchemy import create_engine  # noqa: E402
@@ -81,4 +82,4 @@ def assessor():
 
 @pytest.fixture
 def svc(db, paypal, assessor):
-    return ClaimService(db, paypal, assessor, "standard-1.0")
+    return ClaimService(db, paypal, assessor, "standard-1.1")

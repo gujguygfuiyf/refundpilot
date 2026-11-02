@@ -1,7 +1,7 @@
 """Evidence assessment. The model only DESCRIBES; it never outputs an amount or a verdict.
 
-Primary provider: OpenAI (GPT vision) with strict JSON schema output.
-Backup provider:  Gemini (google-genai) with response_schema.
+Primary provider: Gemini (google-genai) with response_schema.
+Optional backup:  OpenAI (GPT vision) with strict JSON schema output, used only when OPENAI_API_KEY is set.
 Both return the same EvidenceAssessment; the policy engine does the rest.
 """
 from __future__ import annotations
@@ -11,7 +11,6 @@ import logging
 import hashlib
 import io
 import time
-from functools import lru_cache
 from typing import Literal, Protocol
 
 import httpx
@@ -91,17 +90,27 @@ def prepare_jpeg(raw: bytes) -> tuple[bytes, int, int]:
     return buf.getvalue(), im.width, im.height
 
 
-@lru_cache(maxsize=64)
+_REFERENCE_CACHE: dict[str, bytes] = {}
+_REFERENCE_CACHE_MAX = 64
+
+
 def fetch_reference(url: str) -> bytes | None:
     """Download and downscale the listing photo ourselves, so a slow or redirecting image host can't fail the
-    model call (OpenAI returns 5xx when it can't fetch an image URL) and Gemini actually sees the image."""
+    model call (OpenAI returns 5xx when it can't fetch an image URL) and Gemini actually sees the image.
+    Only successes are cached: one network blip must not leave a product without its reference image."""
+    if url in _REFERENCE_CACHE:
+        return _REFERENCE_CACHE[url]
     try:
         r = httpx.get(url, timeout=10.0, follow_redirects=True)
         r.raise_for_status()
-        return prepare_jpeg(r.content)[0]
+        jpg = prepare_jpeg(r.content)[0]
     except Exception as e:
         logging.getLogger("refundpilot").warning("reference image %s unavailable: %s", url, e)
         return None
+    if len(_REFERENCE_CACHE) >= _REFERENCE_CACHE_MAX:
+        _REFERENCE_CACHE.pop(next(iter(_REFERENCE_CACHE)))
+    _REFERENCE_CACHE[url] = jpg
+    return jpg
 
 
 def user_text(inp: AssessmentInput) -> str:
@@ -111,7 +120,7 @@ def user_text(inp: AssessmentInput) -> str:
             "Produce the assessment as JSON.")
 
 
-# ----------------------------------------------------------------- OpenAI (primary)
+# ----------------------------------------------------------------- OpenAI (optional backup)
 
 class OpenAIAssessor:
     name = "openai"
@@ -156,7 +165,7 @@ class OpenAIAssessor:
         return AssessmentResult(assessment=parsed, **meta)
 
 
-# ----------------------------------------------------------------- Gemini (backup)
+# ----------------------------------------------------------------- Gemini (primary)
 
 class GeminiAssessor:
     name = "gemini"
@@ -236,19 +245,19 @@ class FakeAssessor:
 
 
 def build_assessor(settings) -> Assessor:
+    """Gemini first by default (AI_PROVIDER=gemini; "auto" means the same). AI_PROVIDER=openai puts OpenAI first.
+    Every provider with a key joins the chain, so the other one is the automatic backup. No keys: FakeAssessor."""
+    order = ["openai", "gemini"] if settings.ai_provider == "openai" else ["gemini", "openai"]
     providers: list[Assessor] = []
-    order = ["openai", "gemini"] if settings.ai_provider in ("auto", "openai") else ["gemini", "openai"]
     for name in order:
         if name == "openai" and settings.openai_api_key:
             providers.append(OpenAIAssessor(settings.openai_api_key, settings.openai_model))
         if name == "gemini" and settings.gemini_api_key:
             try:
                 providers.append(GeminiAssessor(settings.gemini_api_key, settings.gemini_model))
-            except ImportError:  # key set but the [gemini] extra isn't installed: run without the backup
-                logging.getLogger("refundpilot").warning("GEMINI_API_KEY set but google-genai is not installed; "
-                                                         "pip install -e '.[gemini]' to enable the backup provider")
-        if settings.ai_provider != "auto" and providers:
-            break
+            except ImportError:  # key set but google-genai missing (old install)
+                logging.getLogger("refundpilot").warning("GEMINI_API_KEY is set but google-genai is not installed; "
+                                                         "run pip install -e .")
     if not providers:
         return FakeAssessor()
     return ChainAssessor(providers)

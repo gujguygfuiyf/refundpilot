@@ -1,6 +1,7 @@
 """PayPal REST client (Orders v2 / Payments v2 / Webhooks). Token cached, idempotent refunds via PayPal-Request-Id."""
 from __future__ import annotations
 
+import secrets
 import time
 from typing import Protocol
 
@@ -60,7 +61,9 @@ class PayPalClient:
                                     "description": description[:127]}],
                 "payment_source": {"paypal": {"experience_context": {"return_url": return_url, "cancel_url": cancel_url,
                                                                       "user_action": "PAY_NOW"}}}}
-        return self._req("POST", "/v2/checkout/orders", json=body, request_id=f"order-{int(time.time()*1000)}")
+        # unique per call: two orders created in the same millisecond must not collapse into one
+        return self._req("POST", "/v2/checkout/orders", json=body,
+                         request_id=f"order-{int(time.time()*1000)}-{secrets.token_hex(4)}")
 
     def get_order(self, order_id: str) -> dict:
         return self._req("GET", f"/v2/checkout/orders/{order_id}")

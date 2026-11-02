@@ -13,7 +13,7 @@ Buyer photo ─► AI describes the evidence ─► Policy computes the amount �
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
 
-- **Live demo:** _https://refundpilot-web.onrender.com_ (merchant token is prefilled on the demo)
+- **Live demo:** _link added after deployment_ (the merchant token is prefilled there; it can only move PayPal **sandbox** money)
 - **Video (under 3 min):** _link added on submission_
 - **Design doc:** [`docs/DESIGN.md`](docs/DESIGN.md)
 
@@ -24,7 +24,7 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 
 | Layer | Job | Can it move money? |
 |---|---|---|
-| **AI (GPT vision, Gemini fallback)** | Describe the photos: does it match the product, what damage is visible, how good is the evidence, what can't be told | No. Its output schema has no amount field, so a prompt injection in the buyer's text cannot change the payout |
+| **AI (Gemini vision; optional OpenAI backup)** | Describe the photos: does it match the product, what damage is visible, how good is the evidence, what can't be told | No. Its output schema has no amount field, so a prompt injection in the buyer's text cannot change the payout |
 | **Policy engine** | Pure function from evidence + order facts to an outcome and amount, using a versioned JSON policy | No, it only suggests |
 | **Merchant** | Approve (optionally override within the refundable balance), request more evidence, or reject | Yes, the only path to a refund |
 | **PayPal** | Execute the refund on the original capture | Yes, with a fixed `PayPal-Request-Id` per attempt |
@@ -52,7 +52,7 @@ flowchart LR
     end
     subgraph API["FastAPI"]
         CS[Claim service<br/>state machine · idempotent approve]
-        AI[Assessor<br/>GPT → Gemini → human]
+        AI[Assessor<br/>Gemini → OpenAI backup → human]
         PE[Policy engine<br/>versioned JSON]
         PP[PayPal client]
         WH[Webhook + reconciler]
@@ -76,7 +76,7 @@ Requirements: Python 3.11+, Node 20+. Works with **no credentials at all**: with
 cd backend
 python -m venv .venv && . .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-cp .env.example .env                              # optional: PayPal sandbox + OpenAI keys
+cp .env.example .env                              # optional: PayPal sandbox + Gemini keys
 uvicorn app.main:app --reload                     # http://127.0.0.1:8000/docs
 
 # frontend (second terminal)
@@ -87,15 +87,18 @@ npm run dev                                       # http://localhost:3000
 ```
 
 `GET /health` tells you which PayPal gateway and AI provider are active. The merchant pages ask for
-`MERCHANT_TOKEN` (default `change-me` locally).
+`MERCHANT_TOKEN`: locally that's `change-me` (in `backend/.env`). A deployed API refuses to start with an empty or
+default token; `render.yaml` generates a random one.
 
 To use the real PayPal sandbox, fill `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`, then mint captured orders:
 
 ```bash
-cd backend && python scripts/mint_orders.py --count 8
+cd backend && python scripts/mint_orders.py --count 8            # one link at a time
+cd backend && python scripts/mint_orders.py --count 30 --batch   # all links at once, pay them in browser tabs
 ```
 
-Each order prints an approval link; pay it with a sandbox Personal account and the script captures it.
+Each order prints an approval link; pay it with a sandbox Personal account and the script captures it and appends it
+to `backend/seed/orders.json`. Restart the API to load new orders.
 
 ## Try the demo
 
@@ -105,6 +108,19 @@ Each order prints an approval link; pay it with a sandbox Personal account and t
    turns `COMPLETED`.
 4. **Policy simulator** (`/merchant/policy`): the same evidence under the Standard, Strict and Goodwill policies.
 
+### Notes for judges
+
+- **Each order can be claimed once.** A second claim on the same order is caught by the policy's repeat rule
+  (`PRE-repeat`) and goes to manual review with no suggested amount, and a fully refunded order can't be claimed at
+  all. The buyer page lists the orders you can still use first and marks the rest *Already claimed*.
+- **Everything is PayPal sandbox.** The merchant token is public on the demo on purpose, so you can skip sign-in; the
+  most it can do is refund sandbox money that was paid in for this demo.
+- **Delivery dates roll forward.** The sandbox orders were paid in early November. To keep the 14-day report window
+  open while you test, an order nobody has claimed yet always shows as delivered 3 days ago (`DEMO_ROLLING_DELIVERY`,
+  demo only). Orders with a claim keep their dates, so recorded decisions stay reproducible.
+- **Abuse limits.** Each submission costs one AI call, so the public demo allows 5 submissions per minute per IP and
+  200 AI assessments per day (`CLAIMS_PER_IP_PER_MINUTE`, `AI_CALLS_PER_DAY`). You'll see HTTP 429 past that.
+
 ## Tests
 
 ```bash
@@ -112,12 +128,14 @@ cd backend && pytest -q
 ```
 
 Covers every policy rule, the claim state machine, and idempotent approval: double click, PayPal error then retry,
-timeout then reconcile with the same request id, and a PENDING refund finalized exactly once by a webhook.
+timeout then reconcile with the same request id, and a PENDING refund finalized exactly once by a webhook. Also the
+demo guards: rolling delivery dates, rate limits, token checks, first boot on an empty database.
 
 ## Tech and sponsor tools
 
 - **PayPal** Orders v2, Payments v2 (captures, refunds), Webhooks, sandbox
-- **OpenAI** structured outputs (strict JSON schema) for vision assessment, **Gemini** as automatic fallback
+- **Gemini** (`google-genai`, `response_schema`) for the vision assessment; **OpenAI** structured outputs as an
+  optional automatic backup when `OPENAI_API_KEY` is set
 - **AG Grid** Community: the merchant claims queue (custom cell renderers, Quartz theme)
 - **Render**: `render.yaml` blueprint deploys the API, the web app and Postgres in one step
 - **APIMatic** _(planned)_: API docs and SDKs generated from the FastAPI `openapi.json`

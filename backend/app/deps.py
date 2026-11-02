@@ -1,6 +1,7 @@
 """Dependency wiring: db session, gateways, service, auth."""
 from __future__ import annotations
 
+import hmac
 from functools import lru_cache
 
 from fastapi import Depends, Header, HTTPException
@@ -31,13 +32,26 @@ def get_service(db: Session = Depends(get_db), paypal: PayPalGateway = Depends(g
     return ClaimService(db, paypal, assessor, settings.default_policy_version)
 
 
+WEAK_TOKENS = ("", "change-me")
+
+
+def bearer_matches(authorization: str, token: str) -> bool:
+    """Constant-time compare. An empty configured token never matches (so "Bearer " can't get in)."""
+    if not token:
+        return False
+    return hmac.compare_digest(authorization.encode(), f"Bearer {token}".encode())
+
+
 def require_merchant(authorization: str = Header(default="")) -> str:
-    if authorization != f"Bearer {settings.merchant_token}":
+    if not bearer_matches(authorization, settings.merchant_token):
         raise HTTPException(401, "merchant token required")
     return "merchant"
 
 
 def require_dev(authorization: str = Header(default="")) -> str:
-    if authorization != f"Bearer {settings.dev_token}":
+    # When deployed with a missing or default DEV_TOKEN, the /dev routes are simply off.
+    if settings.is_deployed() and settings.dev_token in WEAK_TOKENS:
+        raise HTTPException(404, "not found")
+    if not bearer_matches(authorization, settings.dev_token):
         raise HTTPException(401, "dev token required")
     return "dev"

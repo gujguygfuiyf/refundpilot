@@ -8,8 +8,8 @@ See `../docs/DESIGN.md` for the full design.
 ```bash
 cd backend
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"                             # add ,gemini for the backup provider, ,postgres for Render
-cp .env.example .env                                # fill PayPal + OpenAI keys
+pip install -e ".[dev]"                             # add ,postgres for Render (Gemini SDK is included)
+cp .env.example .env                                # fill PayPal + Gemini keys (OpenAI is an optional backup)
 uvicorn app.main:app --reload                       # http://127.0.0.1:8000/docs
 ```
 
@@ -19,12 +19,18 @@ reported by `GET /health`, so you can build the frontend before any credentials 
 ## Seed demo orders (real sandbox captures)
 
 ```bash
-python scripts/mint_orders.py --count 8
+python scripts/mint_orders.py --count 8               # one approve link at a time
+python scripts/mint_orders.py --count 20 --batch      # all links at once; pay them in browser tabs
 ```
 
 Each order prints an approve link; pay it with the sandbox Personal account, the script captures it and appends to
-`seed/orders.json`. The API imports that file on startup (and on `POST /dev/seed`). Mint 25 to 30 before submission:
-judges will consume refundable balance.
+`seed/orders.json`. The API imports that file on startup (and on `POST /dev/seed`). Mint 40+ before submission:
+each order can be claimed once, and judges will consume refundable balance.
+
+Demo-only behaviour: an order nobody has claimed is kept "delivered 3 days ago" (`DEMO_ROLLING_DELIVERY`), so the
+policy's report window doesn't expire weeks after minting. `POST /claims` and `/evidence` are limited to
+`CLAIMS_PER_IP_PER_MINUTE` (5) and `AI_CALLS_PER_DAY` (200); a deployed API refuses to start with an empty or
+`change-me` `MERCHANT_TOKEN`.
 
 ## Tests
 
@@ -33,7 +39,8 @@ pytest -q
 ```
 
 Covers the policy engine, the claim state machine, idempotent approval (double click, PayPal error, timeout +
-reconcile replay with the same `PayPal-Request-Id`, PENDING finalised exactly once by a webhook) and the HTTP surface.
+reconcile replay with the same `PayPal-Request-Id`, PENDING finalised exactly once by a webhook), the HTTP surface,
+and the demo guards (rolling delivery dates, rate limits, token checks, first boot on an empty database).
 
 ## Endpoints
 

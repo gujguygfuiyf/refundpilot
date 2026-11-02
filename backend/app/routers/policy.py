@@ -8,7 +8,7 @@ from ..ai import EvidenceAssessment
 from ..db import get_db
 from ..deps import require_merchant
 from ..models import Policy
-from ..policy import decide
+from ..policy import decide, load_policy_files
 from ..schemas import SimulateIn
 
 router = APIRouter(prefix="/policies", tags=["policy"], dependencies=[Depends(require_merchant)])
@@ -16,8 +16,11 @@ router = APIRouter(prefix="/policies", tags=["policy"], dependencies=[Depends(re
 
 @router.get("")
 def list_policies(db: Session = Depends(get_db)) -> list[dict]:
+    """Current policies (the ones in backend/policies). Superseded versions stay in the database so old decisions
+    remain explainable, and are still readable via GET /policies/{version}."""
+    current = {p["version"] for p in load_policy_files()}
     return [{"version": p.version, "name": p.name, "body": p.body, "sha256": p.body_sha256}
-            for p in db.execute(select(Policy).order_by(Policy.version)).scalars().all()]
+            for p in db.execute(select(Policy).where(Policy.version.in_(current)).order_by(Policy.version)).scalars().all()]
 
 
 @router.get("/{version}")

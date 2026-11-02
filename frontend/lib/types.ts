@@ -24,6 +24,8 @@ export interface Order {
   delivered_at: string;
   buyer_label: string;
   open_claim_id: string | null;
+  last_claim_id: string | null;   // newest claim that wasn't cancelled
+  claimable: boolean;             // money left and never claimed: each order can be claimed once
 }
 
 export interface EvidenceAssessment {

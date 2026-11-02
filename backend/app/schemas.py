@@ -30,14 +30,17 @@ class OrderOut(BaseModel):
     delivered_at: str
     buyer_label: str
     open_claim_id: str | None = None
+    last_claim_id: str | None = None      # most recent claim that wasn't cancelled
+    claimable: bool = True                # money left and no earlier claim (a second claim only gets PRE-repeat)
 
     @classmethod
-    def from_model(cls, o: Order, open_claim_id: str | None = None) -> "OrderOut":
+    def from_model(cls, o: Order, open_claim_id: str | None = None, last_claim_id: str | None = None) -> "OrderOut":
         return cls(id=o.id, paypal_order_id=o.paypal_order_id, capture_id=o.capture_id,
                    product=ProductOut.model_validate(o.product, from_attributes=True),
                    amount_cents=o.amount_cents, currency=o.currency, refunded_cents=o.refunded_cents,
                    remaining_cents=o.remaining_cents, capture_status=o.capture_status, captured_at=o.captured_at,
-                   delivered_at=o.delivered_at, buyer_label=o.buyer_label, open_claim_id=open_claim_id)
+                   delivered_at=o.delivered_at, buyer_label=o.buyer_label, open_claim_id=open_claim_id,
+                   last_claim_id=last_claim_id, claimable=o.remaining_cents > 0 and last_claim_id is None)
 
 
 class AssessmentOut(BaseModel):

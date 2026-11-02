@@ -27,10 +27,30 @@ class NotFound(Exception):
     """Maps to HTTP 404."""
 
 
+class BadInput(Exception):
+    """Unreadable upload; maps to HTTP 400."""
+
+
+def _utc(iso: str) -> datetime:
+    dt = datetime.fromisoformat(iso)
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 def _days_between(iso_a: str, iso_b: str | None = None) -> int:
-    a = datetime.fromisoformat(iso_a)
-    b = datetime.fromisoformat(iso_b) if iso_b else datetime.now(timezone.utc)
+    a = _utc(iso_a)
+    b = _utc(iso_b) if iso_b else datetime.now(timezone.utc)
     return max(0, (b - a).days)
+
+
+def prepare_photos(photos: list[bytes]) -> list[tuple[bytes, int, int]]:
+    """Decode and re-encode every upload before anything is stored, so a corrupt or non-image file is a clean 400."""
+    out = []
+    for raw in photos[:3]:
+        try:
+            out.append(prepare_jpeg(raw))
+        except Exception:  # UnidentifiedImageError, truncated files, decompression bombs, HEIC without a plugin
+            raise BadInput("a photo could not be read as an image (use JPEG, PNG or WebP)")
+    return out
 
 
 class ClaimService:
@@ -70,11 +90,12 @@ class ClaimService:
             raise Conflict("order already has an open claim")
         if not photos:
             raise Conflict("at least one photo is required")
+        prepared = prepare_photos(photos)
         claim = Claim(order_id=order_id, buyer_text=buyer_text.strip()[:2000],
                       policy_version=policy_version or self.default_policy_version, status="SUBMITTED")
         self.db.add(claim)
         self.db.flush()
-        self._add_photos(claim, photos)
+        self._add_photos(claim, prepared)
         audit(self.db, claim.id, "buyer", "claim_submitted", {"order_id": order_id, "photos": len(photos)})
         self.db.commit()
         return claim
@@ -85,7 +106,7 @@ class ClaimService:
             raise Conflict(f"claim is {claim.status}, not waiting for evidence")
         if not photos:
             raise Conflict("at least one photo is required")
-        self._add_photos(claim, photos)
+        self._add_photos(claim, prepare_photos(photos))
         if buyer_text:
             claim.buyer_text = (claim.buyer_text + "\n---\n" + buyer_text.strip())[:4000]
         claim.status = "SUBMITTED"
@@ -102,9 +123,8 @@ class ClaimService:
         self.db.commit()
         return claim
 
-    def _add_photos(self, claim: Claim, photos: list[bytes]) -> None:
-        for raw in photos[:3]:
-            jpg, w, h = prepare_jpeg(raw)
+    def _add_photos(self, claim: Claim, prepared: list[tuple[bytes, int, int]]) -> None:
+        for jpg, w, h in prepared:
             claim.photos.append(Photo(claim_id=claim.id, bytes=jpg, mime="image/jpeg", width=w, height=h,
                                       sha256=hashlib.sha256(jpg).hexdigest()))
 

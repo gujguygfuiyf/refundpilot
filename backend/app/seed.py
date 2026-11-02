@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -9,10 +10,16 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .config import settings
-from .models import Order, Policy, Product
+from .models import Claim, Order, Policy, Product
 from .policy import load_policy_files, policy_sha
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "seed"
+log = logging.getLogger("refundpilot")
+
+
+def _parse_utc(iso: str) -> datetime:
+    dt = datetime.fromisoformat(iso)
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
 def seed_policies(db: Session) -> int:
@@ -24,7 +31,10 @@ def seed_policies(db: Session) -> int:
             db.add(Policy(version=p["version"], name=p["name"], body=p, body_sha256=sha))
             n += 1
         elif row.body_sha256 != sha:
-            # same version string but changed content: refuse silently? No: bump is the author's job. Overwrite + log.
+            # Same version string, different content: decisions already recorded under this version would no
+            # longer be reproducible. Bumping "version" is the author's job; we overwrite and say so loudly.
+            log.warning("policy %s changed without a version bump; bump \"version\" to keep the audit meaningful",
+                        p["version"])
             row.body, row.body_sha256, row.name = p, sha, p["name"]
             n += 1
     db.commit()
@@ -62,8 +72,9 @@ def seed_orders(db: Session, path: Path = SEED_DIR / "orders.json", paypal=None)
             captured = o.get("captured_at") or datetime.now(timezone.utc).isoformat(timespec="seconds")
             delivered = (datetime.fromisoformat(captured) + timedelta(days=settings.delivered_offset_days)).isoformat(timespec="seconds")
             row = Order(paypal_order_id=o["paypal_order_id"], capture_id=o["capture_id"], product_id=product.id,
-                        amount_cents=int(o["amount_cents"]), currency=o.get("currency", "USD"), captured_at=captured,
-                        delivered_at=o.get("delivered_at") or delivered, buyer_label=o.get("buyer_label", "Buyer"))
+                        amount_cents=int(o["amount_cents"]), currency=o.get("currency", "USD"), refunded_cents=0,
+                        captured_at=captured, delivered_at=o.get("delivered_at") or delivered,
+                        buyer_label=o.get("buyer_label", "Buyer"))
             db.add(row)
             n += 1
         if paypal is not None:
@@ -91,19 +102,44 @@ def seed_demo_orders(db: Session, paypal) -> int:
         if row is None:
             captured = datetime.now(timezone.utc) - timedelta(days=5)
             row = Order(paypal_order_id=f"DEMO-ORD-{product.sku}", capture_id=cap_id, product_id=product.id,
-                        amount_cents=product.price_cents, currency=product.currency,
+                        amount_cents=product.price_cents, currency=product.currency, refunded_cents=0,
                         captured_at=captured.isoformat(timespec="seconds"),
                         delivered_at=(captured + timedelta(days=settings.delivered_offset_days)).isoformat(timespec="seconds"),
                         buyer_label=f"Buyer {chr(65 + i % 26)}")
             db.add(row)
             n += 1
         paypal.register_capture(cap_id, row.amount_cents)
-        paypal.captures[cap_id]["refunded"] = row.refunded_cents
+        paypal.captures[cap_id]["refunded"] = row.refunded_cents or 0
     db.commit()
+    return n
+
+
+def refresh_demo_delivery(db: Session, now: datetime | None = None) -> int:
+    """Demo only (DEMO_ROLLING_DELIVERY, on by default): an order nobody has claimed yet is kept "delivered
+    DEMO_DELIVERED_DAYS_AGO days ago". Sandbox orders are minted weeks before judges try the live demo; without
+    this every new claim would land outside the policy's report window (PRE-window, $0).
+    Orders with a claim (open or finished; cancelled ones don't count) keep their date, so recorded decisions
+    stay reproducible. Returns the number of orders moved."""
+    if not settings.demo_rolling_delivery:
+        return 0
+    now = now or datetime.now(timezone.utc)
+    target = now - timedelta(days=settings.demo_delivered_days_ago)
+    claimed = select(Claim.order_id).where(Claim.status != "CANCELLED")
+    n = 0
+    for o in db.execute(select(Order).where(Order.id.not_in(claimed))).scalars().all():
+        if o.remaining_cents <= 0:
+            continue
+        # move only once the date has drifted a full day past the target, so this stays a no-op most minutes
+        if _parse_utc(o.delivered_at) < target - timedelta(days=1):
+            o.delivered_at = target.isoformat(timespec="seconds")
+            n += 1
+    if n:
+        db.commit()
     return n
 
 
 def seed_all(db: Session, paypal=None) -> dict:
     out = {"policies": seed_policies(db), "products": seed_products(db), "orders": seed_orders(db, paypal=paypal)}
     out["demo_orders"] = seed_demo_orders(db, paypal)
+    out["delivery_refreshed"] = refresh_demo_delivery(db)
     return out

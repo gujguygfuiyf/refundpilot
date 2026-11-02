@@ -5,11 +5,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPExcepti
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..claims import ClaimService, Conflict, NotFound
+from ..claims import BadInput, ClaimService, Conflict, NotFound
 from ..config import settings
 from ..db import SessionLocal, get_db
 from ..deps import get_assessor, get_paypal, get_service
 from ..models import AuditLog, Claim
+from ..ratelimit import limit_claim_submissions
 from ..schemas import ClaimOut
 
 router = APIRouter(prefix="/claims", tags=["claims"])
@@ -50,7 +51,7 @@ def claim_out(db: Session, claim: Claim) -> ClaimOut:
     return ClaimOut.from_model(claim, timeline)
 
 
-@router.post("", response_model=ClaimOut, status_code=201)
+@router.post("", response_model=ClaimOut, status_code=201, dependencies=[Depends(limit_claim_submissions)])
 async def create_claim(background: BackgroundTasks, order_id: int = Form(...), buyer_text: str = Form(""),
                        photos: list[UploadFile] = File(...), svc: ClaimService = Depends(get_service),
                        db: Session = Depends(get_db)) -> ClaimOut:
@@ -59,6 +60,8 @@ async def create_claim(background: BackgroundTasks, order_id: int = Form(...), b
         claim = svc.create_claim(order_id, buyer_text, data)
     except NotFound as e:
         raise HTTPException(404, str(e))
+    except BadInput as e:
+        raise HTTPException(400, str(e))
     except Conflict as e:
         raise HTTPException(409, str(e))
     background.add_task(_run_assessment_job, claim.id)
@@ -85,7 +88,7 @@ def get_photo(claim_id: str, n: int, svc: ClaimService = Depends(get_service)) -
     return Response(content=p.bytes, media_type=p.mime, headers={"Cache-Control": "private, max-age=3600"})
 
 
-@router.post("/{claim_id}/evidence", response_model=ClaimOut)
+@router.post("/{claim_id}/evidence", response_model=ClaimOut, dependencies=[Depends(limit_claim_submissions)])
 async def add_evidence(claim_id: str, background: BackgroundTasks, buyer_text: str = Form(""),
                        photos: list[UploadFile] = File(...), svc: ClaimService = Depends(get_service),
                        db: Session = Depends(get_db)) -> ClaimOut:
@@ -94,6 +97,8 @@ async def add_evidence(claim_id: str, background: BackgroundTasks, buyer_text: s
         claim = svc.add_evidence(claim_id, data, buyer_text or None)
     except NotFound:
         raise HTTPException(404, "claim not found")
+    except BadInput as e:
+        raise HTTPException(400, str(e))
     except Conflict as e:
         raise HTTPException(409, str(e))
     background.add_task(_run_assessment_job, claim.id)

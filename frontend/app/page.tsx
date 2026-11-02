@@ -20,7 +20,8 @@ export default function OrdersPage() {
       <div>
         <h1 className="text-2xl font-semibold">Your orders</h1>
         <p className="mt-1 text-sm text-gray-600">
-          Something wrong with an item? Report it with a photo. Each order below was paid in the PayPal sandbox.
+          Something wrong with an item? Report it with a photo. Each order below was paid in the PayPal sandbox,
+          and each one can be claimed once, so orders you can still use are listed first.
         </p>
       </div>
       <ErrorNote error={error} />
@@ -31,7 +32,7 @@ export default function OrdersPage() {
         </p>
       )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {orders?.map((o) => {
+        {orders && [...orders].sort((a, b) => Number(b.claimable) - Number(a.claimable) || a.id - b.id).map((o) => {
           const fullyRefunded = o.remaining_cents <= 0;
           return (
             <article key={o.id} className="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -56,6 +57,10 @@ export default function OrdersPage() {
                     </Link>
                   ) : fullyRefunded ? (
                     <span className="block rounded-lg bg-gray-50 px-3 py-2 text-center text-sm text-gray-400">Fully refunded</span>
+                  ) : !o.claimable && o.last_claim_id ? (
+                    <Link href={`/claims/${o.last_claim_id}`} className="block rounded-lg bg-gray-50 px-3 py-2 text-center text-sm text-gray-500 hover:bg-gray-100">
+                      Already claimed · view claim
+                    </Link>
                   ) : (
                     <Link href={`/claims/new?order=${o.id}`} className="block rounded-lg bg-brand px-3 py-2 text-center text-sm font-medium text-white hover:bg-brand-dark">
                       Report a problem

@@ -25,7 +25,7 @@ def client(db):
     orig = claims_router._run_assessment_job
     def job(cid):
         from app.claims import ClaimService
-        ClaimService(db, pp, FakeAssessor(), "standard-1.0").run_assessment(cid)
+        ClaimService(db, pp, FakeAssessor(), "standard-1.1").run_assessment(cid)
     claims_router._run_assessment_job = job
     try:
         with TestClient(app, raise_server_exceptions=True) as c:   # lifespan runs create_all + seed on in-memory db
@@ -71,8 +71,8 @@ def test_simulate_is_pure(client):
          "needs_human_review": False, "confidence": 0.8, "observations": [], "limitations": []}
     out = {v: client.post("/policies/simulate", headers=MERCHANT,
                           json={"policy_version": v, "assessment": a, "order_cents": 10000}).json()["suggested_cents"]
-           for v in ("standard-1.0", "strict-1.0", "goodwill-1.0")}
-    assert out == {"standard-1.0": 3000, "strict-1.0": 1500, "goodwill-1.0": 5000}
+           for v in ("standard-1.1", "strict-1.0", "goodwill-1.1")}
+    assert out == {"standard-1.1": 3000, "strict-1.0": 1500, "goodwill-1.1": 5000}
     assert client.get("/merchant/claims", headers=MERCHANT).json() == []
 
 
@@ -81,3 +81,82 @@ def test_upload_validation(client):
     assert r.status_code == 415
     r = client.post("/claims", data={"order_id": 999}, files=[("photos", ("a.jpg", jpeg_bytes(), "image/jpeg"))])
     assert r.status_code == 404
+
+
+def test_corrupt_image_is_a_clean_400(client):
+    r = client.post("/claims", data={"order_id": 1}, files=[("photos", ("a.jpg", b"not really a jpeg", "image/jpeg"))])
+    assert r.status_code == 400 and "could not be read" in r.json()["detail"]
+    assert client.get("/orders").json()[0]["open_claim_id"] is None       # nothing half-created
+
+
+def test_claim_submissions_are_rate_limited_per_ip(client, monkeypatch):
+    from app.config import settings
+    from app.ratelimit import per_ip
+    monkeypatch.setattr(settings, "claims_per_ip_per_minute", 1)
+    per_ip.reset()
+    try:
+        photo = [("photos", ("a.jpg", jpeg_bytes(), "image/jpeg"))]
+        assert client.post("/claims", data={"order_id": 1, "buyer_text": "handle broke"}, files=photo).status_code == 201
+        r = client.post("/claims", data={"order_id": 2, "buyer_text": "handle broke"}, files=photo)
+        assert r.status_code == 429 and int(r.headers["retry-after"]) >= 1
+    finally:
+        per_ip.reset()
+
+
+def test_daily_ai_budget_caps_submissions(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "ai_calls_per_day", 1)
+    photo = [("photos", ("a.jpg", jpeg_bytes(), "image/jpeg"))]
+    assert client.post("/claims", data={"order_id": 1, "buyer_text": "handle broke"}, files=photo).status_code == 201
+    r = client.post("/claims", data={"order_id": 2, "buyer_text": "handle broke"}, files=photo)
+    assert r.status_code == 429 and "today's limit" in r.json()["detail"]
+
+
+def test_empty_merchant_token_never_authenticates(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "merchant_token", "")
+    assert client.get("/merchant/claims", headers={"Authorization": "Bearer "}).status_code == 401
+    assert client.get("/merchant/claims", headers={"Authorization": "Bearer"}).status_code == 401
+
+
+def test_deployed_instance_refuses_default_merchant_token(monkeypatch):
+    from app.config import settings
+    from app.main import check_secrets
+    monkeypatch.setattr(settings, "database_url", "postgresql://u:p@db/refundpilot")
+    for weak in ("", "change-me"):
+        monkeypatch.setattr(settings, "merchant_token", weak)
+        with pytest.raises(RuntimeError):
+            check_secrets()
+    monkeypatch.setattr(settings, "merchant_token", "a-long-random-value")
+    check_secrets()
+    monkeypatch.setattr(settings, "database_url", "sqlite://")             # local dev may keep change-me
+    monkeypatch.setattr(settings, "merchant_token", "change-me")
+    check_secrets()
+    monkeypatch.setenv("RENDER", "true")                                   # but not on Render, even with SQLite
+    with pytest.raises(RuntimeError):
+        check_secrets()
+
+
+def test_dev_routes_are_off_when_deployed_with_a_default_dev_token(client, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "dev_token", "change-me")
+    monkeypatch.setenv("RENDER", "true")
+    assert client.post("/dev/seed", headers={"Authorization": "Bearer change-me"}).status_code == 404
+
+
+def test_policy_list_shows_current_versions_only(client, db):
+    from app.models import Policy
+    db.add(Policy(version="standard-1.0", name="Standard", body={"rules": []}, body_sha256="old"))
+    db.commit()
+    versions = {p["version"] for p in client.get("/policies", headers=MERCHANT).json()}
+    assert versions == {"standard-1.1", "strict-1.0", "goodwill-1.1"}
+    assert client.get("/policies/standard-1.0", headers=MERCHANT).status_code == 200    # still auditable
+
+
+def test_orders_say_which_ones_can_still_be_claimed(client):
+    photo = [("photos", ("a.jpg", jpeg_bytes(), "image/jpeg"))]
+    cid = client.post("/claims", data={"order_id": 1, "buyer_text": "handle broke"}, files=photo).json()["id"]
+    assert client.post(f"/merchant/claims/{cid}/reject", headers=MERCHANT, json={"message": "no"}).status_code == 200
+    o1, o2 = client.get("/orders").json()[:2]
+    assert (o1["claimable"], o1["last_claim_id"], o1["open_claim_id"]) == (False, cid, None)
+    assert (o2["claimable"], o2["last_claim_id"]) == (True, None)

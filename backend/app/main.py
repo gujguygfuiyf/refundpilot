@@ -12,9 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from .claims import ClaimService
 from .config import settings
 from .db import Base, SessionLocal, engine
-from .deps import get_assessor, get_paypal
+from .deps import WEAK_TOKENS, get_assessor, get_paypal
 from .routers import claims, dev, merchant, orders, policy, webhooks
-from .seed import seed_all
+from .seed import refresh_demo_delivery, seed_all
 
 log = logging.getLogger("refundpilot")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -27,6 +27,7 @@ def _reconcile_loop(stop: threading.Event) -> None:
             n = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version).reconcile()
             if n:
                 log.info("reconciled %d refund(s)", n)
+            refresh_demo_delivery(db)
         except Exception as e:  # never let the loop die
             log.warning("reconcile error: %s", e)
             db.rollback()
@@ -34,8 +35,18 @@ def _reconcile_loop(stop: threading.Event) -> None:
             db.close()
 
 
+def check_secrets() -> None:
+    """Refuse to start a deployed instance whose merchant token is empty or the documented default."""
+    if settings.is_deployed() and settings.merchant_token in WEAK_TOKENS:
+        raise RuntimeError("MERCHANT_TOKEN is empty or the default 'change-me'. Set a random value before deploying "
+                           "(render.yaml generates one).")
+    if settings.is_deployed() and settings.dev_token in WEAK_TOKENS:
+        log.warning("DEV_TOKEN is empty or default: /dev routes are disabled on this deployment")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    check_secrets()
     Base.metadata.create_all(engine)
     db = SessionLocal()
     try:

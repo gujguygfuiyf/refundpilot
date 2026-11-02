@@ -41,7 +41,7 @@
 
 ### 1:10 – 1:28 · 规则决定金额
 
-**画面：** Decision 卡，指向 Rule `R1-broken`、金额、`policy standard-1.0`。
+**画面：** Decision 卡，指向 Rule `R1-broken`、金额、`policy standard-1.1`。
 
 > The amount comes from the merchant's own policy: deterministic, versioned rules. Rule R1 matched, full refund. The decision records the exact policy version it used.
 
@@ -80,7 +80,7 @@
 ## 开拍前检查
 
 - [ ] 线上 `/health` 显示真实 PayPal 网关和 `chain`（不是 `fake`）
-- [ ] 商品图已换成真实照片，案例 A、B 各在本地试跑过一次，结果符合预期
+- [ ] 商品图已换成真实照片，案例 A、B 用真实 Gemini 各试跑 3 次：A 命中 `R1-broken`，B 命中 `R4-mismatch`（政策 `standard-1.1`；如果出现 `R3-wrong` 说明 API 还是旧版本）
 - [ ] 案例 B 已提前提交并完成评估
 - [ ] 案例 A 用的订单剩余可退金额等于订单金额
 - [ ] Render 两个服务刚访问过（避免首个请求慢）
