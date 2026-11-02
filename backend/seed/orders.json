@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "paypal_order_id": "4U608629AH869894N",
+    "capture_id": "6MK00753UB8233300",
+    "sku": "MUG-01",
+    "amount_cents": 1900,
+    "currency": "USD",
+    "captured_at": "2026-11-01T21:56:26+00:00",
+    "buyer_label": "Buyer A"
+  },
+  {
+    "paypal_order_id": "2G553779TM942050M",
+    "capture_id": "0CT762114S324830W",
+    "sku": "LAMP-02",
+    "amount_cents": 4900,
+    "currency": "USD",
+    "captured_at": "2026-11-01T21:56:40+00:00",
+    "buyer_label": "Buyer B"
+  },
+  {
+    "paypal_order_id": "07G97104SD4204249",
+    "capture_id": "8TX527360H284391C",
+    "sku": "HEAD-03",
+    "amount_cents": 7900,
+    "currency": "USD",
+    "captured_at": "2026-11-01T21:56:51+00:00",
+    "buyer_label": "Buyer C"
+  },
+  {
+    "paypal_order_id": "5V1589466Y878484Y",
+    "capture_id": "0C926498MR194002V",
+    "sku": "MUG-01",
+    "amount_cents": 1900,
+    "currency": "USD",
+    "captured_at": "2026-11-02T15:54:04+00:00",
+    "buyer_label": "Buyer D"
+  },
+  {
+    "paypal_order_id": "6NP75476WB568480W",
+    "capture_id": "8YF9193160000781P",
+    "sku": "LAMP-02",
+    "amount_cents": 4900,
+    "currency": "USD",
+    "captured_at": "2026-11-02T15:54:24+00:00",
+    "buyer_label": "Buyer E"
+  },
+  {
+    "paypal_order_id": "4CF20090R9765893A",
+    "capture_id": "94595900RC8759239",
+    "sku": "HEAD-03",
+    "amount_cents": 7900,
+    "currency": "USD",
+    "captured_at": "2026-11-02T15:54:34+00:00",
+    "buyer_label": "Buyer F"
+  }
+]
