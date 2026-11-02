@@ -107,6 +107,7 @@ class FakePayPal:
         self.currency = currency
         self.refund_status = refund_status
         self.refunds: dict[str, dict] = {}            # refund_id -> refund
+        self._run = secrets.token_hex(3).upper() + "-"   # see refund_capture
         self.by_request: dict[str, str] = {}          # request_id -> refund_id
         self.calls: list[tuple] = []
         self.fail_next: Exception | None = None
@@ -136,7 +137,9 @@ class FakePayPal:
         c = self._capture(capture_id)
         if c["refunded"] + cents > c["amount_cents"]:
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"REFUND_AMOUNT_EXCEEDED"}]}')
-        rid = f"R{len(self.refunds) + 1:05d}"
+        # The prefix differs per process: a restarted offline API keeps its database, and a counter alone would
+        # hand out a refund id that is already stored (refunds.paypal_refund_id is unique).
+        rid = f"R{self._run}{len(self.refunds) + 1:05d}"
         r = {"id": rid, "status": self.refund_status, "amount": {"value": fmt_amount(cents), "currency_code": currency},
              "invoice_id": invoice_id}
         self.refunds[rid] = r

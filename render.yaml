@@ -1,24 +1,24 @@
+# Render Blueprint: New -> Blueprint -> pick this repo. Free plan, Frankfurt.
+# The database is an external Neon free Postgres (it doesn't expire; Render's free Postgres is deleted after 30 days,
+# before judging ends). Free web services sleep after 15 minutes without traffic and take about a minute to wake.
 services:
   - type: web
     name: refundpilot-api
     runtime: python
+    plan: free
+    region: frankfurt
     rootDir: backend
-    plan: starter
-    buildCommand: pip install -e ".[postgres,gemini]"
+    buildCommand: pip install -e ".[postgres]"
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
-      - key: DATABASE_URL
-        fromDatabase:
-          name: refundpilot-db
-          property: connectionString
+      - key: DATABASE_URL            # Neon connection string, postgresql://...?sslmode=require
+        sync: false
       - key: PAYPAL_CLIENT_ID
         sync: false
       - key: PAYPAL_CLIENT_SECRET
-        sync: false
-      - key: PAYPAL_WEBHOOK_ID
         sync: false
       - key: GEMINI_API_KEY
         sync: false
@@ -26,28 +26,31 @@ services:
         value: gemini
       - key: GEMINI_MODEL
         value: gemini-flash-latest
-      # Optional OpenAI backup: add OPENAI_API_KEY (and OPENAI_MODEL) in the dashboard if you want one.
+      # Added later in the dashboard: PAYPAL_WEBHOOK_ID (after registering the webhook), and optionally
+      # OPENAI_API_KEY + OPENAI_MODEL for an OpenAI backup.
       - key: MERCHANT_TOKEN          # random; the web service copies it so judges skip sign-in
         generateValue: true
       - key: DEV_TOKEN               # random and private; only for POST /dev/seed
         generateValue: true
       - key: CORS_ORIGINS
         value: https://refundpilot-web.onrender.com
+      - key: CORS_ORIGIN_REGEX       # in case Render adds a suffix to the web service's hostname
+        value: https://refundpilot-web(-[a-z0-9]+)?\.onrender\.com
   - type: web
     name: refundpilot-web
     runtime: node
+    plan: free
+    region: frankfurt
     rootDir: frontend
-    plan: starter
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     envVars:
-      - key: NEXT_PUBLIC_API_URL
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: NEXT_PUBLIC_API_URL     # baked in at build time: if the API got a suffixed hostname, change it and redeploy
         value: https://refundpilot-api.onrender.com
       - key: NEXT_PUBLIC_DEMO_MERCHANT_TOKEN   # baked into the public bundle on purpose (sandbox-only demo)
         fromService:
           type: web
           name: refundpilot-api
           envVarKey: MERCHANT_TOKEN
-databases:
-  - name: refundpilot-db
-    plan: basic-256mb   # free Postgres expires after 30 days; judging runs to mid-December

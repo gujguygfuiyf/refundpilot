@@ -34,25 +34,35 @@ uvicorn app.main:app --reload
 
 **完成标准：** 用 5 张测试图（明显破损、轻微划伤、另一件商品、网上下载的图、模糊图）各提交一次，分类结果落在预期范围内。
 
-## 3. 部署到 Render
+## 3. 部署（免费：Render Web 服务 + Neon 数据库）
 
-1. 先把 `seed/orders.json` 和新的 `products.json` 提交推送。**确认 `.env` 没被提交**（`git status` 里不应出现）。
-2. Render Dashboard → **New → Blueprint** → 选 `gujguygfuiyf/refundpilot` 仓库，它会读根目录的 `render.yaml`，一次建好 `refundpilot-api`、`refundpilot-web`、`refundpilot-db`。
-3. 创建时会要求填 `sync: false` 的变量：PayPal 两个、`PAYPAL_WEBHOOK_ID`（先留空，第 4 步再填）、`GEMINI_API_KEY`。`MERCHANT_TOKEN`、`DEV_TOKEN` 自动生成，web 服务的 `NEXT_PUBLIC_DEMO_MERCHANT_TOKEN` 自动复制 `MERCHANT_TOKEN`，不用手填；要看商家 token 的值，去 API 服务的 Environment 页。
-4. 部署完成后检查两个服务的实际网址。如果名字被占用，Render 会加后缀，这时要同步修改：
-   - API 的 `CORS_ORIGINS` 改成 web 的真实网址；
-   - web 的 `NEXT_PUBLIC_API_URL` 改成 API 的真实网址，**改完要手动重新部署 web**，因为 `NEXT_PUBLIC_*` 是在构建时写进前端的。
-5. 可选：要 OpenAI 备用，就在 API 服务的 Environment 里加 `OPENAI_API_KEY` 和 `OPENAI_MODEL`。
+为什么这样搭：Render 的免费 Postgres 30 天后会被删，撑不到 12 月中的评审；Neon 免费版不过期。两个 Web 服务用 Render 免费版（`render.yaml` 里 `plan: free`，机房法兰克福）。
 
-费用参考：两个 `starter` Web 服务加一个 `basic-256mb` Postgres，大约每月 20 美元。评审结束（12 月 15 日）之后再删。
+### 3.1 先推送订单
+把 `backend/seed/orders.json`（只有沙盒订单号，没有密钥）提交推送，第一次部署就会导入这些订单。**确认 `.env` 没被提交**（`git status` 里不应出现）。
 
-**完成标准：** `https://<api>/health` 返回真实网关；web 首页能看到订单；在线提交一笔并批准成功。
+### 3.2 Neon 数据库
+1. 打开 neon.tech → Sign up，用 GitHub 登录。
+2. 新建项目：名字 `refundpilot`，Region 选 **AWS Europe Central 1 (Frankfurt)**，其他默认。
+3. 项目首页点 **Connect**，把 **Connection pooling** 关掉，复制连接串（`postgresql://...neon.tech/neondb?sslmode=require...`）。先存进记事本，**不要发到聊天里**。
+
+### 3.3 Render
+1. 打开 render.com，用 GitHub 登录。免费套餐不收费；如果它要求验证付款方式，先停下来问。
+2. Dashboard → **New → Blueprint** → 连接 GitHub 仓库 `gujguygfuiyf/refundpilot`。Render 读取根目录的 `render.yaml`，列出 `refundpilot-api` 和 `refundpilot-web` 两个服务。
+3. 填 4 个值（都从 `backend\.env` 复制，Neon 的从记事本复制）：`DATABASE_URL`、`PAYPAL_CLIENT_ID`、`PAYPAL_CLIENT_SECRET`、`GEMINI_API_KEY`。`MERCHANT_TOKEN`、`DEV_TOKEN` 自动生成，前端的 `NEXT_PUBLIC_DEMO_MERCHANT_TOKEN` 自动复制商家 token，不用手填。
+4. 点 **Deploy Blueprint**，等 5 到 10 分钟，两个服务都变成 Live。
+5. 看两个服务的实际网址。如果 API 不是 `https://refundpilot-api.onrender.com`（名字被占用时 Render 会加后缀）：去 `refundpilot-web` → Environment，把 `NEXT_PUBLIC_API_URL` 改成 API 的实际网址，选 **Save, rebuild, and deploy**（这个值是构建时写进前端的）。web 的网址带后缀不用管，CORS 已经按正则放行。
+6. 可选：要 OpenAI 备用，在 API 的 Environment 里加 `OPENAI_API_KEY` 和 `OPENAI_MODEL`。
+
+免费版的代价：15 分钟没人访问就休眠，下一次访问约 1 分钟才醒（README 里已经提醒评委）；每月 750 小时免费额度，只在运行时计时，够用。Neon 闲置 5 分钟自动暂停，下次连接自动唤醒，不用管。
+
+**完成标准：** `https://<api>/health` 返回 `"paypal": "PayPalClient"`、`"assessor": "chain"`；web 首页能看到订单；在线提交一笔并批准成功。
 
 ## 4. 注册 Webhook
 
 1. developer.paypal.com → 你的沙盒应用 → Webhooks → Add Webhook。
 2. URL 填 `https://<api>.onrender.com/webhooks/paypal`，事件勾选 **Payment capture refunded**（`PAYMENT.CAPTURE.REFUNDED`）。
-3. 把生成的 Webhook ID 填进 Render 的 `PAYPAL_WEBHOOK_ID`，重启 API。
+3. 在 Render 的 `refundpilot-api` → Environment → Add Environment Variable，加 `PAYPAL_WEBHOOK_ID` = 生成的 Webhook ID，保存后会自动重新部署。
 4. 第一次收到真实事件时，在 Render 日志里看原始 JSON，核对 `resource.id` 是退款 id（后端按这个字段找退款记录）。
 
 **完成标准：** 批准一笔后，Render 日志里有一次 webhook 请求返回 200，没有验签失败。
@@ -61,7 +71,7 @@ uvicorn app.main:app --reload
 
 - 再铸到 **40 笔以上**订单：每张订单只能申请一次，评审期到 12 月中。用 `python scripts/mint_orders.py --count 20 --batch`，一次打印全部付款链接，在浏览器标签里批量付。
 - 不用担心退货窗口过期：没人申请过的订单会一直显示为“3 天前送达”（`DEMO_ROLLING_DELIVERY`）。
-- 铸完提交 `seed/orders.json` 并重新部署 API；或者调用 `POST /dev/seed`（带 `Authorization: Bearer $DEV_TOKEN`），线上直接导入，不用重新部署。
+- 铸完提交推送 `seed/orders.json`，Render 会自动重新部署并导入；或者调用 `POST /dev/seed`（带 `Authorization: Bearer $DEV_TOKEN`，值在 API 的 Environment 页），线上直接导入。
 - 提前提交一两笔示例申请（一笔待批准、一笔要求补证），这样评委一打开商家页就有内容可看。
 
 ## 6. 提交前清单（Devpost）

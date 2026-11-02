@@ -59,7 +59,7 @@ def seed_products(db: Session, path: Path = SEED_DIR / "products.json") -> int:
 
 def seed_orders(db: Session, path: Path = SEED_DIR / "orders.json", paypal=None) -> int:
     """orders.json entries: {paypal_order_id, capture_id, sku, amount_cents, currency, captured_at, buyer_label}.
-    If a PayPal gateway is given, refresh capture status (REFUNDED => remaining 0)."""
+    If a PayPal gateway is given, also refresh capture status (see refresh_captures)."""
     if not path.exists():
         return 0
     n = 0
@@ -77,15 +77,27 @@ def seed_orders(db: Session, path: Path = SEED_DIR / "orders.json", paypal=None)
                         buyer_label=o.get("buyer_label", "Buyer"))
             db.add(row)
             n += 1
-        if paypal is not None:
-            try:
-                live = paypal.get_capture(row.capture_id)
-                row.capture_status = live.get("status", row.capture_status)
-                if row.capture_status == "REFUNDED":
-                    row.refunded_cents = row.amount_cents
-            except Exception:
-                pass
     db.commit()
+    if paypal is not None:
+        refresh_captures(db, paypal)
+    return n
+
+
+def refresh_captures(db: Session, paypal) -> int:
+    """Ask PayPal for each sandbox order's capture status, so an order refunded elsewhere (e.g. from a local copy of
+    the demo sharing the same captures) shows nothing left to refund. One GET per order, so the API runs this in the
+    background after startup instead of making a cold start wait for it. Returns orders newly marked refunded."""
+    n = 0
+    for row in db.execute(select(Order).where(Order.capture_id.not_like("DEMO-%"))).scalars().all():
+        try:
+            live = paypal.get_capture(row.capture_id)
+        except Exception:
+            continue
+        row.capture_status = live.get("status", row.capture_status)
+        if row.capture_status == "REFUNDED" and row.refunded_cents < row.amount_cents:
+            row.refunded_cents = row.amount_cents
+            n += 1
+        db.commit()
     return n
 
 
@@ -138,8 +150,10 @@ def refresh_demo_delivery(db: Session, now: datetime | None = None) -> int:
     return n
 
 
-def seed_all(db: Session, paypal=None) -> dict:
-    out = {"policies": seed_policies(db), "products": seed_products(db), "orders": seed_orders(db, paypal=paypal)}
+def seed_all(db: Session, paypal=None, refresh: bool = True) -> dict:
+    """refresh=False skips the per-order PayPal status check (the API's startup does it in the background)."""
+    out = {"policies": seed_policies(db), "products": seed_products(db),
+           "orders": seed_orders(db, paypal=paypal if refresh else None)}
     out["demo_orders"] = seed_demo_orders(db, paypal)
     out["delivery_refreshed"] = refresh_demo_delivery(db)
     return out

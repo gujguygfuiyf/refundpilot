@@ -13,7 +13,7 @@
 > 三层分工：**AI 理解证据 → 规则引擎按商家政策算金额 → 商家批准 → PayPal 执行 → 全程可追溯。**
 > 本文给出架构、数据模型、状态机、AI 与规则层、幂等退款、API、前端、部署、日程与风险。关键代码给骨架。
 > v0.2（10-30）：与已提交的后端代码对齐。Render 数据库改付费档；第 17 节的决定已落定。以代码为准，本文代码块为节选。
-> v0.3（11-02）：按验收报告修订。AI 层改为 **Gemini 主力、OpenAI 可选备用**；政策升到 `standard-1.1` / `goodwill-1.1`（R4 不符先于 R3 发错货）；新增演示期保护：送达日期滚动、匿名提交限速与每日 AI 上限、部署时拒绝默认商家 token（见第 10 节）。
+> v0.3（11-02）：按验收报告修订。部署改为免费方案：Render 免费 Web 服务加 Neon 免费 Postgres（见第 11 节）。AI 层改为 **Gemini 主力、OpenAI 可选备用**；政策升到 `standard-1.1` / `goodwill-1.1`（R4 不符先于 R3 发错货）；新增演示期保护：送达日期滚动、匿名提交限速与每日 AI 上限、部署时拒绝默认商家 token（见第 10 节）。
 
 ---
 
@@ -25,7 +25,7 @@
 | 核心闭环 | 买家提交照片与描述 → AI 结构化评估 → 规则引擎给出结论与金额 → 商家在队列里批准 → `POST /v2/payments/captures/{id}/refund` → Webhook/轮询确认 → 审计记录 |
 | 不做 | 物流对接、真实争议流程、多商户、买家登录、自动放款（默认关闭，政策里有阈值开关但演示用 0） |
 | 技术栈 | Next.js 15+（App Router, TS, Tailwind, shadcn/ui, AG Grid）+ FastAPI（SQLAlchemy 2.0, pydantic-settings）+ 视觉模型：Gemini（主力，`response_schema`）+ OpenAI GPT（可选备用，strict JSON schema），均为结构化输出+ PayPal REST（Orders v2 / Payments v2 / Webhooks）+ Render |
-| 数据库 | 本地 SQLite；Render 上用 Postgres 付费档 `basic-256mb`（免费 Postgres 创建 30 天后过期，评审期到 12 月中；免费 Web 实例文件系统也不持久） |
+| 数据库 | 本地 SQLite；线上用 Neon 免费 Postgres（不过期；Render 免费 Postgres 创建 30 天后删除，撑不到 12 月中的评审；免费 Web 实例文件系统也不持久） |
 | 金额 | 全程用**整数分**（`amount_cents`），只在调 PayPal 时格式化成 `"12.00"` |
 | 界面语言 | 英文（评委国际化），README 英文 |
 | 赞助商 | Render（部署）、AG Grid（商家队列看板）、APIMatic（用 FastAPI 自带的 openapi.json 生成文档/SDK，半天工作量） |
@@ -519,7 +519,7 @@ MAX_UPLOAD_MB=5
 
 ---
 
-## 11. 部署（Render）
+## 11. 部署（Render 免费版 + Neon）
 
 `render.yaml`（节选，完整见仓库根目录）：
 
@@ -528,26 +528,27 @@ services:
   - type: web
     name: refundpilot-api
     runtime: python
+    plan: free
+    region: frankfurt
     rootDir: backend
-    plan: starter
-    buildCommand: pip install -e ".[postgres,gemini]"
+    buildCommand: pip install -e ".[postgres]"
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
-    envVars: [PYTHON_VERSION=3.11.9, DATABASE_URL fromDatabase, PAYPAL_*, GEMINI_API_KEY, AI_PROVIDER=gemini, GEMINI_MODEL, MERCHANT_TOKEN generateValue, DEV_TOKEN generateValue, CORS_ORIGINS]
+    envVars: [PYTHON_VERSION=3.11.9, DATABASE_URL (Neon, 手填), PAYPAL_*, GEMINI_API_KEY, AI_PROVIDER=gemini, GEMINI_MODEL, MERCHANT_TOKEN generateValue, DEV_TOKEN generateValue, CORS_ORIGINS, CORS_ORIGIN_REGEX]
   - type: web
     name: refundpilot-web
     runtime: node
+    plan: free
+    region: frankfurt
     rootDir: frontend
-    plan: starter
     buildCommand: npm ci && npm run build
     startCommand: npm run start
     envVars: [NEXT_PUBLIC_API_URL=https://refundpilot-api.onrender.com, NEXT_PUBLIC_DEMO_MERCHANT_TOKEN fromService MERCHANT_TOKEN]
-databases:
-  - name: refundpilot-db
-    plan: basic-256mb   # 免费 Postgres 30 天后过期，评审期到 12 月中
 ```
 
-- 两个 Web 服务用 `starter` 付费档，不会休眠；若想先省钱用免费 Web 实例，闲置会休眠、冷启动 30 到 60 秒，录视频和评审期前必须切回付费档。
+- 数据库用 Neon 免费 Postgres（法兰克福），连接串填进 `DATABASE_URL`。不用 Render 免费 Postgres：创建 30 天后会被删。
+- 免费 Web 实例 15 分钟没人访问就休眠，下次访问约 1 分钟才醒，README 里提醒评委。为了醒得快，启动时只做建表和导入，逐笔向 PayPal 核对捕获状态放到后台线程。
+- Render 可能给重名服务加后缀：前端网址带后缀时 CORS 按 `CORS_ORIGIN_REGEX` 放行；API 网址带后缀时改前端的 `NEXT_PUBLIC_API_URL` 并重新构建（构建时写死）。
 - 启动时 `create_all` 加 seed 同步；照片存库，不依赖磁盘。
 
 ### 预置订单
@@ -565,7 +566,7 @@ databases:
 | Potential Impact | 退款在争议之前解决；商家侧时长与人工率可度量（写成设计目标，不写成已验证结果） |
 | Innovation | "AI 只描述、规则定金额、人批、PayPal 执行"的职责分层加政策模拟器 |
 | Presentation | 两个对照案例（批准一笔、暂缓一笔） |
-| Render 奖 | `render.yaml` 一键部署两个服务加数据库 |
+| Render 奖 | `render.yaml` 一键部署两个服务（数据库是外部 Neon） |
 | AG Grid 奖 | 自定义 cellRenderer、主题、抽屉联动；有企业试用 key 再加分组与侧栏 |
 | APIMatic 奖 | 导出 `openapi.json` 生成 API 文档与 SDK，README 链接 |
 
@@ -616,7 +617,7 @@ databases:
 |---|---|
 | 评委质疑视觉判断可靠性 | 产品定位是"分诊"不是"裁决"；AI 无金额字段；演示里展示 limitations 与否决路径 |
 | 沙盒退款偶发 PENDING | 状态机本来就有 PENDING；演示前用脚本核对预置订单全部 COMPLETED |
-| 实例冷启动或数据库过期 | Web 与数据库都用付费档（见第 11 节） |
+| 实例冷启动或数据库过期 | 数据库用不过期的 Neon 免费版；Web 冷启动约 1 分钟，启动只做建表和导入、PayPal 核对放后台，README 提醒评委；录视频前先访问一次把服务叫醒（见第 11 节） |
 | 评委把预置订单退光 | 铸 40 笔以上（`mint_orders.py --batch` 一次给出全部付款链接）；每张订单只能申请一次，买家页把可用订单排在前面、已申请过的标出来 |
 | AI 拒答、超时或额度用完 | Gemini 失败时若配了 OpenAI 则自动切换；都失败走 `fallback_assessment`，`needs_human_review`，申请不会卡死；后台任务异常标 ANALYZE_FAILED 可重跑 |
 | PayPal-Request-Id 幂等窗口 | UNKNOWN 状态由 Reconciler 尽快重发；启动时也跑；超窗则按 invoice_id 人工核对 |
@@ -639,7 +640,7 @@ databases:
 ## 17. 已定的决定（10-30）
 
 1. 视觉模型：Gemini 主力（`AI_PROVIDER=gemini`），OpenAI 可选备用。需要 Gemini API Key，OpenAI Key 可选。（11-02 由 OpenAI 主力改为 Gemini 主力）
-2. 数据库：Render 上用 Postgres 付费档 `basic-256mb`，本地 SQLite。
+2. 数据库：线上用 Neon 免费 Postgres，本地 SQLite。（11-02 由 Render 付费 Postgres 改为免费方案）
 3. 商家登录：单个 `MERCHANT_TOKEN`（演示级），README 里公开给评委。
 4. `auto_approve_below_cents` 保持 0，全部人批；模拟器里展示该字段。
 5. AG Grid 先只用社区版；拿到企业试用 key 再加分组与侧栏。

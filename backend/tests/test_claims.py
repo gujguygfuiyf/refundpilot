@@ -43,7 +43,7 @@ def test_one_open_claim_per_order(svc):
 def test_approve_full_refund_completes(svc, paypal, db):
     c = submit(svc)
     r = svc.approve(c.id, by="merchant")
-    assert r.status == "COMPLETED" and r.paypal_refund_id == "R00001"
+    assert r.status == "COMPLETED" and r.paypal_refund_id.endswith("-00001")
     assert r.paypal_request_id == f"rp-{c.id}-1"
     c = svc.get_claim(c.id)
     assert c.status == "COMPLETED" and c.order.refunded_cents == 1900 and c.order.remaining_cents == 0

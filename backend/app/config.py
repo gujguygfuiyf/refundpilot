@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     merchant_token: str = "change-me"
     dev_token: str = "change-me"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origin_regex: str = ""          # e.g. Render may suffix the web service's hostname; matched in full
     max_upload_mb: int = 5
 
     # Abuse limits on the anonymous claim endpoints (each submission costs one AI call). 0 disables a limit.

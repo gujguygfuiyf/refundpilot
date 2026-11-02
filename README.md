@@ -13,7 +13,8 @@ Buyer photo ─► AI describes the evidence ─► Policy computes the amount �
 
 Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
 
-- **Live demo:** _link added after deployment_ (the merchant token is prefilled there; it can only move PayPal **sandbox** money)
+- **Live demo:** _link added after deployment_ (the merchant token is prefilled there; it can only move PayPal **sandbox** money).
+  It runs on free hosting: after 15 idle minutes the first page load can take about a minute while the server wakes up.
 - **Video (under 3 min):** _link added on submission_
 - **Design doc:** [`docs/DESIGN.md`](docs/DESIGN.md)
 
@@ -120,6 +121,8 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
   demo only). Orders with a claim keep their dates, so recorded decisions stay reproducible.
 - **Abuse limits.** Each submission costs one AI call, so the public demo allows 5 submissions per minute per IP and
   200 AI assessments per day (`CLAIMS_PER_IP_PER_MINUTE`, `AI_CALLS_PER_DAY`). You'll see HTTP 429 past that.
+- **Free hosting.** The demo runs on Render's free plan with a free Neon database. If nobody has used it for 15
+  minutes, the first request wakes the server and can take about a minute; after that it's fast.
 
 ## Tests
 
@@ -137,7 +140,8 @@ demo guards: rolling delivery dates, rate limits, token checks, first boot on an
 - **Gemini** (`google-genai`, `response_schema`) for the vision assessment; **OpenAI** structured outputs as an
   optional automatic backup when `OPENAI_API_KEY` is set
 - **AG Grid** Community: the merchant claims queue (custom cell renderers, Quartz theme)
-- **Render**: `render.yaml` blueprint deploys the API, the web app and Postgres in one step
+- **Render**: `render.yaml` blueprint deploys the API and the web app in one step (free plan, Frankfurt);
+  the database is a free Neon Postgres passed in as `DATABASE_URL`
 - **APIMatic** _(planned)_: API docs and SDKs generated from the FastAPI `openapi.json`
 - FastAPI, SQLAlchemy 2, Next.js 15, Tailwind CSS 4
 
