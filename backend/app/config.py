@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     default_policy_version: str = "standard-1.1"
     delivered_offset_days: int = 2       # demo: delivered = captured + N days
     reconcile_interval_s: int = 60
+    # Slow tick for work that isn't urgent (rolling demo delivery dates, a safety reconcile). Everything else in the
+    # background loop runs only when a refund is actually waiting on PayPal.
+    housekeeping_interval_s: int = 6 * 3600
     # Demo only: keep unclaimed sandbox orders "delivered N days ago", so the policy's report window
     # doesn't expire while judges try the live demo weeks after the orders were minted.
     demo_rolling_delivery: bool = True

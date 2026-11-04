@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .claims import ClaimService
+from .claims import ClaimService, reconcile_needed
 from .config import settings
 from .db import Base, SessionLocal, engine
 from .deps import WEAK_TOKENS, get_assessor, get_paypal
@@ -21,19 +21,50 @@ log = logging.getLogger("refundpilot")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 
-def _reconcile_loop(stop: threading.Event) -> None:
-    while not stop.wait(settings.reconcile_interval_s):
-        db = SessionLocal()
+class BackgroundWork:
+    """The API's background loop. It wakes every `reconcile_interval_s` but opens a database session only when a
+    refund is waiting on PayPal (`reconcile_needed`) or the slow housekeeping tick is due, so the database can
+    scale to zero while the API idles (and an uptime ping to /health never touches it)."""
+
+    def __init__(self, session_factory=None) -> None:
+        self.session_factory = session_factory or SessionLocal
+        self.last_housekeeping = time.monotonic()
+
+    def tick(self, now: float | None = None) -> bool:
+        """One pass. Returns True if it touched the database."""
+        now = time.monotonic() if now is None else now
+        housekeeping = now - self.last_housekeeping >= settings.housekeeping_interval_s
+        if not (reconcile_needed.is_set() or housekeeping):
+            return False
         try:
-            n = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version).reconcile()
+            db = self.session_factory()
+        except Exception as e:   # e.g. the database is unreachable: retry next tick
+            log.warning("background work: no database session: %s", e)
+            return False
+        try:
+            svc = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version)
+            reconcile_needed.clear()          # cleared first: a refund that goes pending meanwhile sets it again
+            n = svc.reconcile()
             if n:
                 log.info("reconciled %d refund(s)", n)
-            refresh_demo_delivery(db)
-        except Exception as e:  # never let the loop die
-            log.warning("reconcile error: %s", e)
+            if svc.pending_refunds():
+                reconcile_needed.set()
+            if housekeeping:
+                refresh_demo_delivery(db)
+                self.last_housekeeping = now
+        except Exception as e:  # never let the loop die; try again next tick
+            log.warning("background work error: %s", e)
             db.rollback()
+            reconcile_needed.set()
         finally:
             db.close()
+        return True
+
+
+def _background_loop(stop: threading.Event) -> None:
+    work = BackgroundWork()
+    while not stop.wait(settings.reconcile_interval_s):
+        work.tick()
 
 
 def _refresh_captures_once() -> None:
@@ -69,7 +100,8 @@ async def lifespan(app: FastAPI):
     if not isinstance(get_paypal(), FakePayPal):   # one PayPal GET per order: keep it off the cold-start path
         threading.Thread(target=_refresh_captures_once, name="capture-refresh", daemon=True).start()
     stop = threading.Event()
-    t = threading.Thread(target=_reconcile_loop, args=(stop,), name="reconcile", daemon=True)
+    reconcile_needed.set()                         # pick up refunds left pending before a restart
+    t = threading.Thread(target=_background_loop, args=(stop,), name="background", daemon=True)
     t.start()
     yield
     stop.set()

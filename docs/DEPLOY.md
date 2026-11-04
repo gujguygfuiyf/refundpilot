@@ -56,6 +56,8 @@ uvicorn app.main:app --reload
 
 免费版的代价：15 分钟没人访问就休眠，下一次访问约 1 分钟才醒（README 里已经提醒评委）；每月 750 小时免费额度，只在运行时计时，够用。Neon 闲置 5 分钟自动暂停，下次连接自动唤醒，不用管。
 
+**评审期保持清醒**：`.github/workflows/keep-demo-awake.yml` 在 12 月 1 日 20:00 到 12 月 15 日 17:00（UTC）之间每 5 分钟访问一次两个服务，约用 666 小时，在 750 小时额度以内。它只访问 `/health`（不碰数据库），后端的后台任务也只在有退款等 PayPal 确认时才连数据库，所以 Neon 照样能休眠，不会用完每月 100 CU 小时的免费额度。录视频前想先叫醒网站：GitHub → Actions → keep-demo-awake → Run workflow。
+
 **完成标准：** `https://<api>/health` 返回 `"paypal": "PayPalClient"`、`"assessor": "chain"`；web 首页能看到订单；在线提交一笔并批准成功。
 
 ## 4. 注册 Webhook

@@ -1,0 +1,35 @@
+# Keeps the free Render services awake during the judging window, so a judge never waits a minute for a cold start.
+# Render's free plan gives 750 instance-hours per workspace per month. Two services pinged around the clock for the
+# window below use about 670 of them, which is why the window is limited instead of running all month.
+# /health doesn't touch the database, so the Neon database still scales to zero between real visits.
+name: keep-demo-awake
+
+on:
+  schedule:
+    - cron: "*/5 * 1-15 12 *"      # every 5 minutes on Dec 1-15 (UTC); the step trims this to the exact window
+  workflow_dispatch: {}           # manual run from the Actions tab, to test it or to wake the demo before a recording
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      WINDOW_START: "2026-12-01T20:00:00Z"   # judging opens Dec 1, 2:00 pm PT (22:00 UTC); start two hours early
+      WINDOW_END: "2026-12-15T17:00:00Z"     # judging closes Dec 15, 8:00 am PT (16:00 UTC)
+      URLS: "https://refundpilot-api.onrender.com/health https://refundpilot-web.onrender.com/"
+    steps:
+      - name: Ping the API and the web app
+        run: |
+          now=$(date -u +%s)
+          start=$(date -u -d "$WINDOW_START" +%s)
+          end=$(date -u -d "$WINDOW_END" +%s)
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ] && { [ "$now" -lt "$start" ] || [ "$now" -gt "$end" ]; }; then
+            echo "Outside the judging window; nothing to do."
+            exit 0
+          fi
+          for url in $URLS; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 120 "$url" || true)
+            echo "$url -> $code"
+          done

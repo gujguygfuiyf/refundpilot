@@ -5,10 +5,11 @@ Only `approve()` moves money. It is the single entry point.
 from __future__ import annotations
 
 import hashlib
+import threading
 from datetime import datetime, timezone
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .ai import AssessmentInput, Assessor, prepare_jpeg
@@ -17,6 +18,12 @@ from .models import (APPROVABLE_STATES, OPEN_STATES, TERMINAL_STATES, AIAssessme
                      Policy, Refund, now_iso)
 from .paypal import PayPalError, PayPalGateway
 from .policy import decide, status_for
+
+
+# Set whenever a refund is left UNKNOWN or PENDING. The background loop only opens a database session when
+# this is set (or on its slow housekeeping tick), so a serverless database (Neon) can scale to zero while the
+# API idles. Without that, a once-a-minute poll would keep the database billed around the clock.
+reconcile_needed = threading.Event()
 
 
 class Conflict(Exception):
@@ -243,6 +250,7 @@ class ClaimService:
                                               note="Refund for the issue you reported")
         except httpx.TimeoutException as e:
             refund.status, refund.error = "UNKNOWN", f"timeout: {e}"   # reconcile will replay the same request id
+            reconcile_needed.set()
             audit(self.db, claim.id, "paypal", "refund_timeout", {"request_id": refund.paypal_request_id})
             self.db.commit()
             return refund
@@ -272,6 +280,8 @@ class ClaimService:
             claim = self.get_claim(refund.claim_id)
             claim.status = "REVIEW_REQUIRED"
             refund.error = refund.error or f"PayPal reported {status}"
+        else:                                   # PENDING (e.g. eCheck): poll until PayPal settles it
+            reconcile_needed.set()
 
     def finalize(self, refund: Refund) -> None:
         """Idempotent: credits the order ledger and closes the claim exactly once."""
@@ -284,6 +294,9 @@ class ClaimService:
         claim.status, claim.resolved_at = "COMPLETED", now_iso()
         audit(self.db, claim.id, "system", "claim_completed", {"refund_id": refund.paypal_refund_id,
                                                               "cents": refund.amount_cents})
+
+    def pending_refunds(self) -> int:
+        return self.db.execute(select(func.count(Refund.id)).where(Refund.status.in_(("UNKNOWN", "PENDING")))).scalar_one()
 
     def reconcile(self) -> int:
         """Resolve UNKNOWN (replay same request id) and PENDING (poll) refunds. Returns number touched."""

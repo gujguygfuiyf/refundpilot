@@ -121,8 +121,9 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
   demo only). Orders with a claim keep their dates, so recorded decisions stay reproducible.
 - **Abuse limits.** Each submission costs one AI call, so the public demo allows 5 submissions per minute per IP and
   200 AI assessments per day (`CLAIMS_PER_IP_PER_MINUTE`, `AI_CALLS_PER_DAY`). You'll see HTTP 429 past that.
-- **Free hosting.** The demo runs on Render's free plan with a free Neon database. If nobody has used it for 15
-  minutes, the first request wakes the server and can take about a minute; after that it's fast.
+- **Free hosting.** The demo runs on Render's free plan with a free Neon database. During the judging window a
+  scheduled GitHub Action ([`keep-demo-awake.yml`](.github/workflows/keep-demo-awake.yml)) keeps it awake; outside
+  it, the first request after 15 idle minutes can take about a minute while the server wakes up.
 
 ## Tests
 
