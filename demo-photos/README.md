@@ -1,0 +1,1 @@
+Photos for trying the live demo: lamp-broken.jpg fits LED Desk Lamp orders, mug-broken.jpg fits Ceramic Coffee Mug orders. Upload one with a claim on a matching order (or a non-matching one to see the mismatch rule).
