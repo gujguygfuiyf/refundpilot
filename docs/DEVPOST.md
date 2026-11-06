@@ -8,7 +8,7 @@
 RefundPilot
 
 ## Elevator pitch / Tagline (≤ 200 characters)
-AI reads the damage photo, the merchant's policy calculates the suggestion, a human approves, and PayPal refunds. The model cannot directly set or execute a refund.
+Explainable refunds for small PayPal merchants—from damage photos to policy decisions, human approval, and a traceable payment record.
 
 ## Built with (tags)
 paypal, paypal-rest-api, gemini, python, fastapi, sqlalchemy, postgresql, neon, next.js, typescript, tailwindcss, ag-grid, render, github-actions
@@ -34,7 +34,10 @@ We wanted AI to make that call fast, without ever letting a model decide how muc
 4. The **merchant** sees the AI facts and the policy outcome side by side in an AG Grid queue and approves with one click (or overrides within the refundable balance, requests evidence, or rejects).
 5. **PayPal** executes the refund on the original capture through the Payments v2 API. RefundPilot shows "refunded" only when PayPal reports the refund `COMPLETED`, and the signed `PAYMENT.CAPTURE.REFUNDED` webhook confirms it.
 
-Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. A policy simulator shows how the same evidence pays out under Standard, Strict and Goodwill policies before a merchant adopts one.
+Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. While existing enterprise returns platforms offer photo inspection or rule-based automation separately, RefundPilot combines **end-to-end explainability and payment traceability** in a workflow you can verify live:
+- What recommendation does the **exact same evidence** produce under different merchant policies (Standard, Strict, Goodwill), and **which specific rule** decided it?
+- In **batch policy replay** (`/merchant/policy`), how does switching policies change the total suggested payout, the manual-review rate, and individual case outcomes across a merchant's queue?
+- Once a human approves, how does the decision trace directly to an idempotent **PayPal Payments v2** capture refund (`PayPal-Request-Id`) and a signature-verified `PAYMENT.CAPTURE.REFUNDED` webhook?
 
 ### How we built it
 - **PayPal**: Orders v2 to create and capture the sandbox orders buyers claim against; Payments v2 to read the capture's refundable balance before every refund, refund it, and reconcile pending refunds; Webhooks with signature verification (`/v1/notifications/verify-webhook-signature`).
@@ -73,9 +76,9 @@ Trustworthy AI in payments is mostly about boundaries: decide what the model is 
 
 ## Testing instructions (for judges)
 1. Open https://refundpilot-web.onrender.com. (If nobody used it recently the first load can take up to a minute; during the judging window it is kept awake.)
-2. Pick any order marked claimable and click **Report a problem**. Upload a photo of a damaged item. Test photos you can use: https://github.com/gujguygfuiyf/refundpilot/tree/main/demo-photos (lamp and mug).
+2. **Try a 1-click sample scenario at the top of the home page** (no file download needed): click **Clearly broken item**, **Blurry photo**, or **Suspected reused screenshot** to pre-fill a claimable order with the test photo and buyer note, then click **Submit claim**. (Raw test photos are also in https://github.com/gujguygfuiyf/refundpilot/tree/main/demo-photos.)
 3. Open https://refundpilot-web.onrender.com/merchant (no sign-in; the demo merchant token is prefilled and can only move PayPal **sandbox** money). Open the claim and click **Approve & refund via PayPal**. (To view the recorded demo claims and hard cases, click **All claims**; the default **Open** tab shows only pending claims.)
-4. Try the policy simulator at /merchant/policy.
+4. **Single-case & batch policy simulator** (`/merchant/policy`): compare how a single claim—or a **batch replay of 6 representative cases / recorded demo claims**—changes total suggested payout, manual-review rate, and per-case outcomes across Standard, Strict, and Goodwill policies.
 5. Each order can be claimed once; there are 30+ unused sandbox orders. Everything is PayPal sandbox; no real money moves.
 
 ---

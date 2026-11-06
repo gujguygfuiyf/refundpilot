@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry, themeQuartz, type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { api, ApiError, setMerchantToken } from "@/lib/api";
@@ -30,11 +31,12 @@ function StatCard({ title, value, hint }: { title: string; value: string | numbe
 }
 
 function Queue() {
+  const params = useSearchParams();
   const [rows, setRows] = useState<ClaimRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"open" | "all">("open");
+  const [filter, setFilter] = useState<"open" | "all">(params.get("tab") === "all" ? "all" : "open");
 
   const load = useCallback(async () => {
     try {
@@ -56,9 +58,18 @@ function Queue() {
     return () => clearInterval(t);
   }, [load]);
 
+  useEffect(() => {
+    if (params.get("tab") === "all") setFilter("all");
+  }, [params]);
+
+  const openRows = useMemo(
+    () => rows.filter((r) => !["COMPLETED", "REJECTED", "CANCELLED"].includes(r.status)),
+    [rows],
+  );
+
   const shown = useMemo(
-    () => (filter === "all" ? rows : rows.filter((r) => !["COMPLETED", "REJECTED", "CANCELLED"].includes(r.status))),
-    [rows, filter],
+    () => (filter === "all" ? rows : openRows),
+    [rows, openRows, filter],
   );
 
   const columns = useMemo<ColDef<ClaimRow>[]>(
@@ -98,7 +109,9 @@ function Queue() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Claims queue</h1>
-          <p className="mt-1 text-sm text-gray-600">AI describes the evidence, your policy suggests the amount, you approve. PayPal executes.</p>
+          <p className="mt-1 text-sm text-gray-600">
+            AI returns structured observations and uncertainty, your versioned policy calculates the suggestion, and you approve. PayPal executes.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={() => api.reconcile().then(load).catch((e) => setError(e.message))}>Reconcile with PayPal</Button>
@@ -114,13 +127,27 @@ function Queue() {
           <StatCard title="Refunded" value={money(stats.refunded_cents_total)} hint={`${stats.completed} claims completed`} />
         </div>
       )}
-      <div className="flex gap-1 text-sm">
-        {(["open", "all"] as const).map((f) => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`rounded-lg px-3 py-1.5 ${filter === f ? "bg-white font-medium shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-gray-100"}`}>
-            {f === "open" ? "Open" : "All claims"}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 text-sm">
+          {(["open", "all"] as const).map((f) => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`rounded-lg px-3 py-1.5 ${filter === f ? "bg-white font-medium shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-gray-100"}`}>
+              {f === "open" ? `Open (${openRows.length})` : `All claims (${rows.length})`}
+            </button>
+          ))}
+        </div>
+        {filter === "open" && openRows.length === 0 && rows.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs text-blue-900">
+            <span>No pending claims in the Open queue right now.</span>
+            <button
+              type="button"
+              onClick={() => setFilter("all")}
+              className="font-semibold text-brand-dark underline hover:text-brand"
+            >
+              View all {rows.length} recorded claims &amp; hard cases →
+            </button>
+          </div>
+        )}
       </div>
       <div style={{ height: 520 }}>
         <AgGridReact<ClaimRow>
@@ -131,7 +158,7 @@ function Queue() {
           getRowId={(p) => p.data.id}
           onRowClicked={(e) => e.data && setOpenId(e.data.id)}
           rowClass="cursor-pointer"
-          overlayNoRowsTemplate="No claims yet. Submit one from the buyer page."
+          overlayNoRowsTemplate="No open claims right now. Click 'All claims' above to inspect completed refunds and hard cases, or submit a new claim from the Buyer page."
         />
       </div>
       {openId && <ClaimDrawer id={openId} onClose={() => setOpenId(null)} onChanged={load} />}
@@ -142,7 +169,9 @@ function Queue() {
 export default function MerchantPage() {
   return (
     <TokenGate>
-      <Queue />
+      <Suspense fallback={<p className="text-sm text-gray-500">Loading queue…</p>}>
+        <Queue />
+      </Suspense>
     </TokenGate>
   );
 }
