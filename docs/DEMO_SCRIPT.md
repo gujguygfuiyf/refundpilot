@@ -30,7 +30,7 @@ v3 的改动依据评审反馈：开场 10 秒内进入具体退款，行业数�
 > Gemini compares the photo with the store's listing image and reports facts only: same lamp, arm broken, evidence sufficient, and what it can't know. Its output has no field for money.
 
 ### 0:38–0:48 · 规则决定金额（放大 R1-broken、$49、standard-1.1）
-> The amount comes from the merchant's written policy. Rule R1 matched: a full refund of forty-nine dollars, under policy standard one point one.
+> The amount comes from the merchant's written policy. Rule R1 matched: a full refund of forty-nine dollars, and the decision records which policy version decided it.
 
 ### 0:48–1:06 · 批准并退款（放大 Completed、refund ID、webhook 那一行）
 > The merchant approves with one click. RefundPilot refunds the original PayPal capture, and only marks the claim refunded once PayPal reports it completed. PayPal's webhook confirms it seconds later.

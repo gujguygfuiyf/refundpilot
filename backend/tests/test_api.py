@@ -25,7 +25,7 @@ def client(db):
     orig = claims_router._run_assessment_job
     def job(cid):
         from app.claims import ClaimService
-        ClaimService(db, pp, FakeAssessor(), "standard-1.1").run_assessment(cid)
+        ClaimService(db, pp, FakeAssessor(), "standard-1.2").run_assessment(cid)
     claims_router._run_assessment_job = job
     try:
         with TestClient(app, raise_server_exceptions=True) as c:   # lifespan runs create_all + seed on in-memory db
@@ -71,8 +71,8 @@ def test_simulate_is_pure(client):
          "needs_human_review": False, "confidence": 0.8, "observations": [], "limitations": []}
     out = {v: client.post("/policies/simulate", headers=MERCHANT,
                           json={"policy_version": v, "assessment": a, "order_cents": 10000}).json()["suggested_cents"]
-           for v in ("standard-1.1", "strict-1.0", "goodwill-1.1")}
-    assert out == {"standard-1.1": 3000, "strict-1.0": 1500, "goodwill-1.1": 5000}
+           for v in ("standard-1.2", "strict-1.1", "goodwill-1.2")}
+    assert out == {"standard-1.2": 3000, "strict-1.1": 1500, "goodwill-1.2": 5000}
     assert client.get("/merchant/claims", headers=MERCHANT).json() == []
 
 
@@ -149,7 +149,7 @@ def test_policy_list_shows_current_versions_only(client, db):
     db.add(Policy(version="standard-1.0", name="Standard", body={"rules": []}, body_sha256="old"))
     db.commit()
     versions = {p["version"] for p in client.get("/policies", headers=MERCHANT).json()}
-    assert versions == {"standard-1.1", "strict-1.0", "goodwill-1.1"}
+    assert versions == {"standard-1.2", "strict-1.1", "goodwill-1.2"}
     assert client.get("/policies/standard-1.0", headers=MERCHANT).status_code == 200    # still auditable
 
 

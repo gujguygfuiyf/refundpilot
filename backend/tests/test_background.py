@@ -60,7 +60,7 @@ def test_timeout_and_pending_refunds_raise_the_flag(db, svc, paypal, assessor):
     assert reconcile_needed.is_set()
 
     reconcile_needed.clear()
-    pending = ClaimService(db, FakePayPal({"CAP2": 4900}, refund_status="PENDING"), assessor, "standard-1.1")
+    pending = ClaimService(db, FakePayPal({"CAP2": 4900}, refund_status="PENDING"), assessor, "standard-1.2")
     c2 = submit(pending, order_id=2)
     assert pending.approve(c2.id).status == "PENDING"
     assert reconcile_needed.is_set() and pending.pending_refunds() >= 1

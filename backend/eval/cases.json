@@ -1,6 +1,6 @@
 {
   "about": "Predefined claim scenarios for RefundPilot. Each case is run through the real AI assessor and the deterministic policy engine (no database, no PayPal). 'expect' lists acceptable outcomes; 'max_cents' is the most the policy may suggest. Paying more than max_cents counts as an overpayment, the failure that matters most. Photos starting with syn- are AI-generated test images; var- are derived from the real photos by eval/make_variants.py.",
-  "defaults": {"days_since_delivery": 3, "prior_claims": 0, "policy": "standard-1.1"},
+  "defaults": {"days_since_delivery": 3, "prior_claims": 0, "policy": "standard-1.2"},
   "cases": [
     {"id": "D1", "group": "Genuine damage", "scenario": "Lamp arm snapped at the joint", "sku": "LAMP-02", "photos": ["demo-photos/lamp-broken.jpg"], "text": "The lamp arm snapped at the joint when I unpacked it.", "expect": ["FULL_REFUND"], "max_cents": 4900},
     {"id": "D2", "group": "Genuine damage", "scenario": "Mug arrived in pieces", "sku": "MUG-01", "photos": ["demo-photos/mug-broken.jpg"], "text": "The mug was broken when I opened the box.", "expect": ["FULL_REFUND"], "max_cents": 1900},
@@ -9,6 +9,7 @@
 
     {"id": "C1", "group": "Minor / cosmetic", "scenario": "Small scratch on the mug", "sku": "MUG-01", "photos": ["backend/eval/photos/syn-mug-scratch.jpg"], "text": "There is a scratch on the side of the mug.", "expect": ["PARTIAL_REFUND", "REVIEW"], "max_cents": 570},
     {"id": "C2", "group": "Minor / cosmetic", "scenario": "Scuff on the lamp base", "sku": "LAMP-02", "photos": ["backend/eval/photos/syn-lamp-scuff.jpg"], "text": "The base has a scuff mark.", "expect": ["PARTIAL_REFUND", "REVIEW"], "max_cents": 1470},
+    {"id": "C3", "group": "Minor / cosmetic", "scenario": "Scratch plus a small chip on the mug rim", "sku": "MUG-01", "photos": ["backend/eval/photos/syn-mug-chip.jpg"], "text": "The rim is chipped and there is a scratch.", "expect": ["FULL_REFUND", "PARTIAL_REFUND", "REVIEW"], "max_cents": 1900},
 
     {"id": "N1", "group": "No visible damage", "scenario": "Intact lamp, buyer says broken", "sku": "LAMP-02", "photos": ["backend/eval/photos/syn-lamp-intact.jpg"], "text": "The lamp is broken.", "expect": ["REVIEW", "REQUEST_EVIDENCE"], "max_cents": 0},
     {"id": "N2", "group": "No visible damage", "scenario": "Intact mug, buyer says shattered", "sku": "MUG-01", "photos": ["backend/eval/photos/syn-mug-intact.jpg"], "text": "Arrived shattered.", "expect": ["REVIEW", "REQUEST_EVIDENCE"], "max_cents": 0},

@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     ai_calls_per_day: int = 200
 
     # Behaviour
-    default_policy_version: str = "standard-1.1"
+    default_policy_version: str = "standard-1.2"
     delivered_offset_days: int = 2       # demo: delivered = captured + N days
     reconcile_interval_s: int = 60
     # Slow tick for work that isn't urgent (rolling demo delivery dates, a safety reconcile). Everything else in the

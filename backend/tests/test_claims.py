@@ -18,7 +18,7 @@ def test_pipeline_broken_goes_to_review(svc, db):
     assert c.status == "REVIEW_REQUIRED"
     assert c.latest_assessment.output["damage_type"] == "broken"
     assert c.latest_decision.outcome == "FULL_REFUND" and c.latest_decision.suggested_cents == 1900
-    assert c.latest_decision.policy_version == "standard-1.1"
+    assert c.latest_decision.policy_version == "standard-1.2"
     events = [a.event for a in db.query(AuditLog).filter_by(claim_id=c.id).order_by(AuditLog.id)]
     assert events[:4] == ["claim_submitted", "analysis_started", "assessed", "decided"]
 
@@ -96,7 +96,7 @@ def test_timeout_then_reconcile_replays_same_request_id(svc, paypal):
 def test_pending_refund_finalized_by_webhook_once(db, assessor):
     pp = FakePayPal({"CAP1": 1900, "CAP2": 4900}, refund_status="PENDING")
     from app.claims import ClaimService
-    svc = ClaimService(db, pp, assessor, "standard-1.1")
+    svc = ClaimService(db, pp, assessor, "standard-1.2")
     c = submit(svc)
     r = svc.approve(c.id)
     assert r.status == "PENDING" and svc.get_claim(c.id).status == "PROCESSING"
@@ -120,7 +120,7 @@ def test_reject_and_cancel_paths(svc):
 def test_redecide_under_other_policy(svc):
     c = submit(svc, text="scratch")                # cosmetic
     assert c.latest_decision.suggested_cents == 570   # 30% of 1900
-    svc.redecide(c.id, "goodwill-1.1")
+    svc.redecide(c.id, "goodwill-1.2")
     c = svc.get_claim(c.id)
-    assert c.policy_version == "goodwill-1.1" and c.latest_decision.suggested_cents == 950
+    assert c.policy_version == "goodwill-1.2" and c.latest_decision.suggested_cents == 950
     assert len(c.assessments) == 1                 # no new AI call

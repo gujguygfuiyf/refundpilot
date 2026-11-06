@@ -82,4 +82,4 @@ def assessor():
 
 @pytest.fixture
 def svc(db, paypal, assessor):
-    return ClaimService(db, paypal, assessor, "standard-1.1")
+    return ClaimService(db, paypal, assessor, "standard-1.2")
