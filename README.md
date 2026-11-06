@@ -15,7 +15,7 @@ Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct
 
 - **Live demo:** https://refundpilot-web.onrender.com (the merchant token is prefilled there; it can only move PayPal **sandbox** money).
   It runs on free hosting: after 15 idle minutes the first page load can take about a minute while the server wakes up.
-- **Video (under 3 min):** https://youtu.be/ZcQf-yQCIrw
+- **Video (under 3 min):** https://youtu.be/ClVgMo-wgOM
 - **Design doc:** [`docs/DESIGN.md`](docs/DESIGN.md)
 
 ## Why this split matters
@@ -25,7 +25,7 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 
 | Layer | Job | Can it move money? |
 |---|---|---|
-| **AI (Gemini vision; optional OpenAI backup)** | Describe the photos: does it match the product, what damage is visible, how good is the evidence, what can't be told | No. Its output schema has no amount field, so a prompt injection in the buyer's text cannot change the payout |
+| **AI (Gemini vision; optional OpenAI backup)** | Describe the photos with structured observations and uncertainty: does it match the product, what damage is visible, how good is the evidence, what can't be told | No. The model cannot directly set or execute a refund; its output schema has no amount field. Versioned policies calculate the suggestion, and a merchant approves every payment |
 | **Policy engine** | Pure function from evidence + order facts to an outcome and amount, using a versioned JSON policy | No, it only suggests |
 | **Merchant** | Approve (optionally override within the refundable balance), request more evidence, or reject | Yes, the only path to a refund |
 | **PayPal** | Execute the refund on the original capture | Yes, with a fixed `PayPal-Request-Id` per attempt |
@@ -45,10 +45,10 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 ## How we tested it
 
 29 predefined claim scenarios plus a 12-case held-out set, each run 3 times through the real Gemini assessor and
-policy engine (`cd backend && python -m eval.run_eval`). The first run found a real hole: a screenshot of someone
-else's damage photo was paid in full. Policy 1.2 fixed it. After that, the main set passed 87 of 87 runs and the
-held-out set, whose expected outcomes were committed before its photos existed, passed 36 of 36 runs; neither had an
-overpayment. Results, failures and limits: [docs/EVALUATION.md](docs/EVALUATION.md),
+policy engine (`cd backend && python -m eval.run_eval`). The first run found a real hole: a reused screenshot of someone
+else's damage photo incorrectly received a full-refund recommendation. Policy 1.2 fixed it. After that, the main set passed 87 of 87 runs and the
+held-out set, whose expected outcomes were committed before its photos existed, passed 36 of 36 runs; neither had a
+suggestion above its predefined cap. Results, failures and limits: [docs/EVALUATION.md](docs/EVALUATION.md),
 [docs/EVALUATION-heldout.md](docs/EVALUATION-heldout.md).
 
 ## Architecture
@@ -115,7 +115,7 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 1. **Buyer** (`/`): pick an order, click *Report a problem*, upload a photo, describe the issue.
 2. Watch the claim page: the evidence card fills in, then the decision card shows the rule, amount and policy version.
 3. **Merchant** (`/merchant`): open the claim from the queue, approve. The PayPal refund id appears and the status
-   turns `COMPLETED`.
+   turns `COMPLETED`. (Click **All claims** on the merchant page to inspect already-completed and hard-case claims; the default **Open** filter shows only pending claims.)
 4. **Policy simulator** (`/merchant/policy`): the same evidence under the Standard, Strict and Goodwill policies.
 
 ### Notes for judges
