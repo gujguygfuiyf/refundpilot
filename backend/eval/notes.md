@@ -14,3 +14,20 @@ The overpayments came from two scenarios plus one mislabeled test photo:
   chip missing from the rim, which the model reasonably called broken. That photo is now its own scenario (C3, chip on
   the rim, where a full refund is acceptable), and C1/A5 use a new scratch-only photo. In A5 the "completely
   shattered" text had no effect: in all 3 runs the model wrote that the mug was intact, not shattered as claimed.
+
+**Run 2 · 2026-11-06 · policy standard-1.2 · updated prompt**: 29 of 29 scenarios, 87 of 87 runs, 0 overpayments,
+no scenario changed result between runs, latency p50 7.8 s. S3 (screenshot) now goes to review with $0; C1 and A5
+(scratch only) get the 30% partial refund ($5.70); C3 (chip on the rim) gets a full refund.
+
+**Read this with care.** Run 2 uses the same scenarios that exposed the problems, so it shows the fixes work; it is not
+an unbiased estimate of accuracy on new claims. A held-out set written before looking at results is the next step.
+
+## What this evaluation does not show
+
+- Real-world variety: 29 scenarios, 3 products, and 7 of the photos are AI-generated.
+- Staged damage (a buyer breaking the item themselves) or a buyer reusing a real photo of their own earlier damage:
+  a photo can't reveal either. The policy's report window, one-claim-per-order rule and human approval are the
+  controls for those, not the model.
+- Severity judgement is still the model's: if it calls minor damage "broken", the policy pays for broken. The
+  amount is always capped at what is left on the order, and a person approves every refund.
+- One model (gemini-flash-latest) at temperature 0; other models or versions need their own run.
