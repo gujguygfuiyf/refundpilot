@@ -16,7 +16,7 @@ paypal, paypal-rest-api, gemini, python, fastapi, sqlalchemy, postgresql, neon, 
 ## Links
 - Live demo: https://refundpilot-web.onrender.com (merchant page: https://refundpilot-web.onrender.com/merchant, no sign-in needed)
 - Code: https://github.com/gujguygfuiyf/refundpilot (MIT)
-- Video: <VIDEO_URL>
+- Video: https://youtu.be/ZcQf-yQCIrw
 
 ---
 
