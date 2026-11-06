@@ -34,7 +34,7 @@ We wanted AI to make that call fast, without ever letting a model decide how muc
 4. The **merchant** sees the AI facts and the policy outcome side by side in an AG Grid queue and approves with one click (or overrides within the refundable balance, requests evidence, or rejects).
 5. **PayPal** executes the refund on the original capture through the Payments v2 API. RefundPilot shows "refunded" only when PayPal reports the refund `COMPLETED`, and the signed `PAYMENT.CAPTURE.REFUNDED` webhook confirms it.
 
-Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. While existing enterprise returns platforms offer photo inspection or rule-based automation separately, RefundPilot combines **end-to-end explainability and payment traceability** in a workflow you can verify live:
+Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. RefundPilot implements an **end-to-end verifiable loop from evidence to policy to PayPal execution** that you can inspect live:
 - What recommendation does the **exact same evidence** produce under different merchant policies (Standard, Strict, Goodwill), and **which specific rule** decided it?
 - In **batch policy replay** (`/merchant/policy`), how does switching policies change the total suggested payout, the manual-review rate, and individual case outcomes across a merchant's queue?
 - Once a human approves, how does the decision trace directly to an idempotent **PayPal Payments v2** capture refund (`PayPal-Request-Id`) and a signature-verified `PAYMENT.CAPTURE.REFUNDED` webhook?
@@ -79,7 +79,7 @@ Trustworthy AI in payments is mostly about boundaries: decide what the model is 
 2. **Try a 1-click sample scenario at the top of the home page** (no file download needed): click **Clearly broken item**, **Blurry photo**, or **Suspected reused screenshot** to pre-fill a claimable order with the test photo and buyer note, then click **Submit claim**. (Raw test photos are also in https://github.com/gujguygfuiyf/refundpilot/tree/main/demo-photos.)
 3. Open https://refundpilot-web.onrender.com/merchant (no sign-in; the demo merchant token is prefilled and can only move PayPal **sandbox** money). Open the claim and click **Approve & refund via PayPal**. (To view the recorded demo claims and hard cases, click **All claims**; the default **Open** tab shows only pending claims.)
 4. **Single-case & batch policy simulator** (`/merchant/policy`): compare how a single claim—or a **batch replay of 6 representative cases / recorded demo claims**—changes total suggested payout, manual-review rate, and per-case outcomes across Standard, Strict, and Goodwill policies.
-5. Each order can be claimed once; there are 30+ unused sandbox orders. Everything is PayPal sandbox; no real money moves.
+5. Each order can be claimed once; there are 30+ unused sandbox orders (15 `LAMP-02`, 15 `MUG-01`, 2 `HEAD-03`). Unclaimed demo orders automatically keep a fresh delivery date (`DEMO_ROLLING_DELIVERY=true` in the backend rolls unclaimed orders to "delivered 3 days ago" on startup and every 6 hours) so the 14-day report window stays open during the Dec 1–15 judging period, while already-claimed orders preserve their original dates so recorded decisions remain reproducible. Everything is PayPal sandbox; no real money moves.
 
 ---
 

@@ -11,23 +11,23 @@ const QUICK_SCENARIOS = [
   {
     key: "broken",
     title: "1. Clearly broken item",
-    badge: "Full refund path",
+    badge: "Full refund path ($49.00)",
     badgeTone: "green" as const,
-    desc: "Pre-fills a broken desk lamp photo and description → AI reports structured damage → Policy R1 suggests $49.00 → Merchant approves via PayPal.",
+    desc: "Pre-fills a broken desk lamp photo and description on a LAMP-02 order → AI reports structured damage → Policy R1 suggests $49.00 → Merchant approves via PayPal.",
   },
   {
     key: "blurry",
     title: "2. Blurry photo",
     badge: "Uncertainty → request evidence",
     badgeTone: "amber" as const,
-    desc: "Pre-fills an out-of-focus photo → AI flags unclear evidence quality → Policy R5 requests a clearer photo ($0.00 suggested).",
+    desc: "Pre-fills an out-of-focus lamp photo on a LAMP-02 order → AI flags unclear evidence quality → Policy R5 requests a clearer photo ($0.00 suggested).",
   },
   {
     key: "reused",
     title: "3. Suspected reused screenshot",
     badge: "Fraud guard → manual review",
     badgeTone: "violet" as const,
-    desc: "Pre-fills a phone screenshot of a photo → AI flags stock/reused suspicion → Policy 1.2 routes to human review instead of recommending a payout.",
+    desc: "Pre-fills a phone screenshot of a lamp photo on a LAMP-02 order → AI flags stock/reused suspicion → Policy 1.2 routes to human review ($0.00 suggested).",
   },
 ];
 
@@ -39,13 +39,10 @@ export default function OrdersPage() {
     api.orders().then(setOrders).catch((e) => setError(`Could not load orders: ${e.message}`));
   }, []);
 
-  const sampleOrder = useMemo(() => {
+  // Strictly match LAMP-02 for the three lamp sample presets so a lamp photo is never paired with a mug or headphones order.
+  const lampSampleOrder = useMemo(() => {
     if (!orders) return null;
-    return (
-      orders.find((o) => o.claimable && o.product.sku === "LAMP-02") ||
-      orders.find((o) => o.claimable) ||
-      null
-    );
+    return orders.find((o) => o.claimable && o.product.sku === "LAMP-02") || null;
   }, [orders]);
 
   return (
@@ -55,7 +52,7 @@ export default function OrdersPage() {
           <div>
             <div className="flex items-center gap-2">
               <Badge tone="blue">Quick start for judges</Badge>
-              <span className="text-xs text-gray-500">No file download needed · pre-fills photo &amp; description</span>
+              <span className="text-xs text-gray-500">No file download needed · pre-fills SKU-matched photo &amp; description</span>
             </div>
             <h2 className="mt-1.5 text-lg font-semibold text-gray-900">
               Try a sample scenario in one click, or inspect recorded claims
@@ -79,7 +76,7 @@ export default function OrdersPage() {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {QUICK_SCENARIOS.map((s) => {
-            const href = sampleOrder ? `/claims/new?order=${sampleOrder.id}&sample=${s.key}` : "#";
+            const href = lampSampleOrder ? `/claims/new?order=${lampSampleOrder.id}&sample=${s.key}` : "/merchant?tab=all";
             return (
               <div
                 key={s.key}
@@ -95,17 +92,22 @@ export default function OrdersPage() {
                   <p className="mt-2 text-xs leading-relaxed text-gray-600">{s.desc}</p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-gray-100">
-                  {sampleOrder ? (
+                  {lampSampleOrder ? (
                     <Link
                       href={href}
                       className="block w-full rounded-lg bg-brand px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-brand-dark"
                     >
-                      Load scenario on Order #{sampleOrder.id} →
+                      Load on Desk Lamp Order #{lampSampleOrder.id} →
+                    </Link>
+                  ) : orders ? (
+                    <Link
+                      href="/merchant?tab=all"
+                      className="block w-full rounded-lg bg-gray-100 px-3 py-1.5 text-center text-xs font-medium text-gray-800 hover:bg-gray-200"
+                    >
+                      All lamp orders claimed · View recorded claims →
                     </Link>
                   ) : (
-                    <span className="block text-center text-xs text-gray-400">
-                      {orders ? "No claimable orders left" : "Finding a claimable order…"}
-                    </span>
+                    <span className="block text-center text-xs text-gray-400">Finding a claimable LAMP-02 order…</span>
                   )}
                 </div>
               </div>
@@ -119,6 +121,7 @@ export default function OrdersPage() {
         <p className="mt-1 text-sm text-gray-600">
           Something wrong with an item? Report it with a photo. Each order below was paid in the PayPal sandbox,
           and each one can be claimed once, so orders you can still use are listed first.
+          {" "}<span className="text-gray-500">(Unclaimed demo orders automatically keep a fresh delivery date via <code>DEMO_ROLLING_DELIVERY</code> so the 14-day report window stays open during judging.)</span>
         </p>
       </div>
       <ErrorNote error={error} />

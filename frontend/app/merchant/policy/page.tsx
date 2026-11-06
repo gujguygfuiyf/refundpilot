@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type { ClaimRow, EvidenceAssessment, Policy, SimulationResult } from "@/lib/types";
 import { label, money } from "@/lib/format";
 import TokenGate from "@/components/TokenGate";
-import { Badge, Card, ErrorNote, OutcomeBadge, Spinner } from "@/components/ui";
+import { Badge, Button, Card, ErrorNote, OutcomeBadge, Spinner } from "@/components/ui";
 
 const BASE: EvidenceAssessment = {
   product_match: "confirmed",
@@ -34,6 +34,7 @@ interface BatchCase {
   title: string;
   sourceLabel: string;
   order_cents: number;
+  remaining_cents: number;
   days_since_delivery: number;
   prior_claims: number;
   assessment: EvidenceAssessment;
@@ -45,6 +46,7 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Desk Lamp · Severe broken arm ($49.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 4900,
+    remaining_cents: 4900,
     days_since_delivery: 3,
     prior_claims: 0,
     assessment: { ...BASE, damage_type: "broken", severity: "severe" },
@@ -54,6 +56,7 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Desk Lamp · Moderate cosmetic scuff ($49.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 4900,
+    remaining_cents: 4900,
     days_since_delivery: 4,
     prior_claims: 0,
     assessment: { ...BASE, damage_type: "cosmetic", severity: "moderate" },
@@ -63,6 +66,7 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Ceramic Mug · Minor surface scratch ($24.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 2400,
+    remaining_cents: 2400,
     days_since_delivery: 2,
     prior_claims: 0,
     assessment: { ...BASE, damage_type: "cosmetic", severity: "minor" },
@@ -72,6 +76,7 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Headphones · Reported at day 10 ($89.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 8900,
+    remaining_cents: 8900,
     days_since_delivery: 10,
     prior_claims: 0,
     assessment: { ...BASE, damage_type: "broken", severity: "severe" },
@@ -81,6 +86,7 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Desk Lamp · Blurry photo ($49.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 4900,
+    remaining_cents: 4900,
     days_since_delivery: 3,
     prior_claims: 0,
     assessment: { ...BASE, evidence_quality: "unclear", damage_type: "other", severity: "none", visible_damage: false },
@@ -90,11 +96,19 @@ const REPRESENTATIVE_BATCH: BatchCase[] = [
     title: "Desk Lamp · Suspected reused screenshot ($49.00)",
     sourceLabel: "Representative benchmark",
     order_cents: 4900,
+    remaining_cents: 4900,
     days_since_delivery: 2,
     prior_claims: 0,
     assessment: { ...BASE, stock_photo_suspected: true, needs_human_review: true },
   },
 ];
+
+function daysBetweenIso(deliveredIso: string, createdIso: string): number {
+  const a = new Date(deliveredIso).getTime();
+  const b = new Date(createdIso).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b)) return 3;
+  return Math.max(0, Math.floor((b - a) / 86400000));
+}
 
 const ENUMS: Record<string, string[]> = {
   product_match: ["confirmed", "likely", "unlikely", "mismatch", "cannot_tell"],
@@ -121,6 +135,8 @@ function Simulator() {
   const [batchCases, setBatchCases] = useState<BatchCase[]>(REPRESENTATIVE_BATCH);
   const [batchMatrix, setBatchMatrix] = useState<Record<string, Record<string, SimulationResult>>>({});
   const [batchBusy, setBatchBusy] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     api.policies().then(setPolicies).catch((e) => setError(e.message));
@@ -144,79 +160,105 @@ function Simulator() {
     return () => clearTimeout(t);
   }, [policies, a, orderCents, days, prior]);
 
-  // Load batch cases when source changes
-  useEffect(() => {
-    if (batchSource === "benchmark") {
-      setBatchCases(REPRESENTATIVE_BATCH);
-      return;
-    }
-    if (!claims.length) {
-      setBatchCases(REPRESENTATIVE_BATCH);
-      return;
-    }
-    let cancelled = false;
+  const runBatchReplay = useCallback(async () => {
+    if (!policies.length) return;
     setBatchBusy(true);
-    Promise.all(claims.slice(0, 8).map((c) => api.merchantClaim(c.id)))
-      .then((fullClaims) => {
-        if (cancelled) return;
-        const loaded: BatchCase[] = fullClaims
-          .filter((fc) => fc.assessment)
-          .map((fc) => ({
+    setBatchError(null);
+    setBatchMatrix({});
+
+    try {
+      let casesToRun: BatchCase[] = REPRESENTATIVE_BATCH;
+
+      if (batchSource === "recorded") {
+        const allRows = await api.merchantClaims();
+        const assessedRows = allRows.filter((c) => c.damage_type);
+        if (assessedRows.length === 0) {
+          throw new Error("No recorded claims with completed AI assessments were found.");
+        }
+        // Chronological order per order_id to reconstruct prior_claims and remaining_cents at the time of each claim
+        const sortedChron = [...allRows].sort(
+          (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime(),
+        );
+        const fullClaims = await Promise.all(assessedRows.slice(0, 8).map((c) => api.merchantClaim(c.id)));
+        const withAssessment = fullClaims.filter((fc) => fc.assessment);
+        if (withAssessment.length === 0) {
+          throw new Error("Could not load AI assessments for the recorded claims.");
+        }
+
+        casesToRun = withAssessment.map((fc) => {
+          const d = daysBetweenIso(fc.order.delivered_at, fc.created_at);
+          // Count prior non-cancelled claims on the same order created before this claim
+          const priorCount = sortedChron.filter(
+            (r) =>
+              r.order_id === fc.order.id &&
+              r.id !== fc.id &&
+              r.status !== "CANCELLED" &&
+              new Date(r.created_at).getTime() < new Date(fc.created_at).getTime(),
+          ).length;
+          // At claim evaluation time (before this claim's own refund was finalized), refundable balance is
+          // order.remaining_cents + any COMPLETED refund belonging to this claim itself.
+          const ownCompletedRefunds = (fc.refunds || [])
+            .filter((rf) => rf.status === "COMPLETED")
+            .reduce((acc, rf) => acc + rf.amount_cents, 0);
+          const remainingAtDecision = Math.min(
+            fc.order.amount_cents,
+            fc.order.remaining_cents + ownCompletedRefunds,
+          );
+
+          return {
             id: fc.id,
             title: `${fc.order.product.name} · Order #${fc.order.id} (${money(fc.order.amount_cents)})`,
             sourceLabel: `Recorded claim ${fc.id.slice(-6)}`,
             order_cents: fc.order.amount_cents,
-            days_since_delivery: 3,
-            prior_claims: 0,
+            remaining_cents: remainingAtDecision,
+            days_since_delivery: d,
+            prior_claims: priorCount,
             assessment: fc.assessment!.output,
-          }));
-        setBatchCases(loaded.length ? loaded : REPRESENTATIVE_BATCH);
-      })
-      .catch(() => {
-        if (!cancelled) setBatchCases(REPRESENTATIVE_BATCH);
-      })
-      .finally(() => {
-        if (!cancelled) setBatchBusy(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [batchSource, claims]);
+          };
+        });
+      }
 
-  // Run batch simulation across all policies for current batchCases
+      setBatchCases(casesToRun);
+
+      const entries = await Promise.all(
+        casesToRun.map(async (bc) => {
+          const resList = await Promise.all(
+            policies.map((p) =>
+              api.simulate({
+                policy_version: p.version,
+                assessment: bc.assessment,
+                order_cents: bc.order_cents,
+                remaining_cents: bc.remaining_cents,
+                days_since_delivery: bc.days_since_delivery,
+                prior_claims: bc.prior_claims,
+              }),
+            ),
+          );
+          return [bc.id, Object.fromEntries(resList.map((r) => [r.policy_version, r]))] as const;
+        }),
+      );
+
+      setBatchMatrix(Object.fromEntries(entries));
+    } catch (e) {
+      setBatchError(`Batch replay failed: ${(e as Error).message}`);
+      setBatchMatrix({});
+    } finally {
+      setBatchBusy(false);
+    }
+  }, [policies, batchSource]);
+
   useEffect(() => {
-    if (!policies.length || !batchCases.length) return;
-    let cancelled = false;
-    setBatchBusy(true);
-    Promise.all(
-      batchCases.map(async (bc) => {
-        const resList = await Promise.all(
-          policies.map((p) =>
-            api.simulate({
-              policy_version: p.version,
-              assessment: bc.assessment,
-              order_cents: bc.order_cents,
-              days_since_delivery: bc.days_since_delivery,
-              prior_claims: bc.prior_claims,
-            }),
-          ),
-        );
-        return [bc.id, Object.fromEntries(resList.map((r) => [r.policy_version, r]))] as const;
-      }),
-    )
-      .then((entries) => {
-        if (!cancelled) setBatchMatrix(Object.fromEntries(entries));
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setBatchBusy(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [policies, batchCases]);
+    runBatchReplay();
+  }, [runBatchReplay, retryCount]);
+
+  // Verify every case x policy cell succeeded before displaying totals
+  const batchComplete = useMemo(() => {
+    if (batchBusy || batchError || !policies.length || !batchCases.length) return false;
+    return batchCases.every((bc) => policies.every((p) => Boolean(batchMatrix[bc.id]?.[p.version])));
+  }, [batchBusy, batchError, policies, batchCases, batchMatrix]);
 
   const batchSummary = useMemo(() => {
+    if (!batchComplete) return [];
     return policies.map((p) => {
       let totalSuggested = 0;
       let reviewOrEvidenceCount = 0;
@@ -243,13 +285,14 @@ function Simulator() {
         changedVsFirst,
       };
     });
-  }, [policies, batchCases, batchMatrix]);
+  }, [batchComplete, policies, batchCases, batchMatrix]);
 
   async function loadClaim(id: string) {
     try {
       const c = await api.merchantClaim(id);
       if (c.assessment) setA(c.assessment.output);
       setOrderCents(c.order.amount_cents);
+      setDays(daysBetweenIso(c.order.delivered_at, c.created_at));
     } catch (e) {
       setError((e as Error).message);
     }
@@ -398,102 +441,124 @@ function Simulator() {
         <p className="mb-4 text-xs text-gray-600">
           Replays saved AI assessments across all three policies at once so a merchant can see the total suggested payout,
           manual-review / evidence-request rate, and exactly which cases change before adopting a policy.
-          {" "}Source: <strong>{batchSource === "benchmark" ? "6 predefined representative scenarios" : `${batchCases.length} recorded demo claims`}</strong>.
+          {" "}When replaying <strong>Recorded claims</strong>, each claim uses its actual <code>days_since_delivery</code> at submission time (<code>created_at − delivered_at</code>), actual prior claim count on that order, and pre-decision refundable balance.
         </p>
 
         {batchBusy && (
-          <p className="mb-3 flex items-center gap-2 text-xs text-gray-500">
-            <Spinner /> Replaying {batchCases.length} cases across {policies.length} policies…
+          <p className="mb-4 flex items-center gap-2 text-xs text-gray-500">
+            <Spinner /> Computing batch policy replay across {policies.length || 3} policies…
           </p>
         )}
 
-        <div className="mb-5 grid gap-4 sm:grid-cols-3">
-          {batchSummary.map(({ policy: p, totalSuggested, reviewRate, reviewOrEvidenceCount, changedVsFirst }, idx) => (
-            <div key={p.version} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-gray-900">{p.name}</span>
-                <code className="rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200">{p.version}</code>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div>
-                  <span className="block text-[11px] text-gray-500 uppercase">Total suggested</span>
-                  <span className="text-xl font-semibold text-gray-900">{money(totalSuggested)}</span>
-                </div>
-                <div>
-                  <span className="block text-[11px] text-gray-500 uppercase">Review / Evidence</span>
-                  <span className="text-xl font-semibold text-gray-900">
-                    {reviewRate}% <span className="text-xs font-normal text-gray-500">({reviewOrEvidenceCount}/{batchCases.length})</span>
-                  </span>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-gray-500">
-                {idx === 0
-                  ? "Baseline policy for comparison"
-                  : `${changedVsFirst} of ${batchCases.length} cases change outcome or amount vs. ${policies[0]?.name}`}
-              </p>
-            </div>
-          ))}
-        </div>
+        {batchError && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-red-50 px-4 py-3 text-xs text-red-800 ring-1 ring-red-200">
+            <span>{batchError}</span>
+            <Button type="button" variant="secondary" onClick={() => setRetryCount((n) => n + 1)}>
+              Retry batch replay
+            </Button>
+          </div>
+        )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 text-gray-500 uppercase">
-                <th className="py-2 pr-4 font-medium">Case &amp; source</th>
-                {policies.map((p) => (
-                  <th key={p.version} className="py-2 px-3 font-medium">
-                    {p.name} (<code className="lowercase">{p.version}</code>)
-                  </th>
-                ))}
-                <th className="py-2 pl-3 font-medium">Policy diff</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {batchCases.map((bc) => {
-                const rowRes = policies.map((p) => batchMatrix[bc.id]?.[p.version]);
-                const allSame =
-                  rowRes.every((r) => r && r.outcome === rowRes[0]?.outcome && r.suggested_cents === rowRes[0]?.suggested_cents);
-                return (
-                  <tr key={bc.id} className={allSame ? "bg-white" : "bg-blue-50/30"}>
-                    <td className="py-2.5 pr-4">
-                      <p className="font-medium text-gray-900">{bc.title}</p>
-                      <p className="text-[11px] text-gray-500">
-                        {bc.sourceLabel} · delivered {bc.days_since_delivery}d ago
-                      </p>
-                    </td>
-                    {policies.map((p) => {
-                      const r = batchMatrix[bc.id]?.[p.version];
-                      return (
-                        <td key={p.version} className="py-2.5 px-3 align-top">
-                          {r ? (
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-semibold text-gray-900">{money(r.suggested_cents)}</span>
-                                <OutcomeBadge outcome={r.outcome} />
-                              </div>
-                              <p className="text-[11px] text-gray-500">
-                                <code>{r.rule_id}</code>
-                              </p>
-                            </div>
+        {batchComplete && (
+          <>
+            <div className="mb-3 flex items-center gap-2 text-xs text-gray-500">
+              <span>Active sample source:</span>
+              <Badge tone="blue">
+                {batchSource === "benchmark"
+                  ? "6 predefined representative scenarios"
+                  : `${batchCases.length} recorded demo claims (actual claim-time inputs)`}
+              </Badge>
+            </div>
+
+            <div className="mb-5 grid gap-4 sm:grid-cols-3">
+              {batchSummary.map(({ policy: p, totalSuggested, reviewRate, reviewOrEvidenceCount, changedVsFirst }, idx) => (
+                <div key={p.version} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-gray-900">{p.name}</span>
+                    <code className="rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200">{p.version}</code>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="block text-[11px] text-gray-500 uppercase">Total suggested</span>
+                      <span className="text-xl font-semibold text-gray-900">{money(totalSuggested)}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[11px] text-gray-500 uppercase">Review / Evidence</span>
+                      <span className="text-xl font-semibold text-gray-900">
+                        {reviewRate}% <span className="text-xs font-normal text-gray-500">({reviewOrEvidenceCount}/{batchCases.length})</span>
+                      </span>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {idx === 0
+                      ? "Baseline policy for comparison"
+                      : `${changedVsFirst} of ${batchCases.length} cases change outcome or amount vs. ${policies[0]?.name}`}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-500 uppercase">
+                    <th className="py-2 pr-4 font-medium">Case &amp; claim-time inputs</th>
+                    {policies.map((p) => (
+                      <th key={p.version} className="py-2 px-3 font-medium">
+                        {p.name} (<code className="lowercase">{p.version}</code>)
+                      </th>
+                    ))}
+                    <th className="py-2 pl-3 font-medium">Policy diff</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {batchCases.map((bc) => {
+                    const rowRes = policies.map((p) => batchMatrix[bc.id]?.[p.version]);
+                    const allSame =
+                      rowRes.every((r) => r && r.outcome === rowRes[0]?.outcome && r.suggested_cents === rowRes[0]?.suggested_cents);
+                    return (
+                      <tr key={bc.id} className={allSame ? "bg-white" : "bg-blue-50/30"}>
+                        <td className="py-2.5 pr-4">
+                          <p className="font-medium text-gray-900">{bc.title}</p>
+                          <p className="text-[11px] text-gray-500">
+                            {bc.sourceLabel} · {bc.days_since_delivery}d after delivery · prior={bc.prior_claims} · refundable={money(bc.remaining_cents)}
+                          </p>
+                        </td>
+                        {policies.map((p) => {
+                          const r = batchMatrix[bc.id]?.[p.version];
+                          return (
+                            <td key={p.version} className="py-2.5 px-3 align-top">
+                              {r ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-gray-900">{money(r.suggested_cents)}</span>
+                                    <OutcomeBadge outcome={r.outcome} />
+                                  </div>
+                                  <p className="text-[11px] text-gray-500">
+                                    <code>{r.rule_id}</code>
+                                  </p>
+                                </div>
+                              ) : (
+                                <span className="text-gray-400">…</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="py-2.5 pl-3 align-top">
+                          {allSame ? (
+                            <span className="text-gray-400">Identical across policies</span>
                           ) : (
-                            <span className="text-gray-400">…</span>
+                            <Badge tone="blue">Payout / rule changes</Badge>
                           )}
                         </td>
-                      );
-                    })}
-                    <td className="py-2.5 pl-3 align-top">
-                      {allSame ? (
-                        <span className="text-gray-400">Identical across policies</span>
-                      ) : (
-                        <Badge tone="blue">Payout / rule changes</Badge>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </Card>
     </div>
   );
