@@ -175,7 +175,9 @@ class GeminiAssessor:
 
     def __init__(self, api_key: str, model: str):
         from google import genai
-        self.client = genai.Client(api_key=api_key)
+        from google.genai import types
+        # Pin the API version: google-genai 3.x defaults to v1, where the "-latest" model aliases don't exist.
+        self.client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1beta"))
         self.model = model
 
     def assess(self, inp: AssessmentInput) -> AssessmentResult:

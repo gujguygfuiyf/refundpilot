@@ -44,3 +44,18 @@ def test_reference_fetch_failure_is_not_cached(monkeypatch):
     assert ai.fetch_reference(url) is None            # first call fails...
     assert ai.fetch_reference(url) is not None        # ...and the next one tries again
     assert ai.fetch_reference(url) is not None and calls["n"] == 2   # successes are cached
+
+
+def test_gemini_client_pins_the_api_version(monkeypatch):
+    """google-genai 3.0 switched the default to v1, where gemini-flash-latest 404s; the live demo broke on redeploy."""
+    from google import genai
+    from app.ai import GeminiAssessor
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, **kw):
+            seen.update(kw)
+
+    monkeypatch.setattr(genai, "Client", FakeClient)
+    GeminiAssessor("key", "gemini-flash-latest")
+    assert seen["http_options"].api_version == "v1beta"
