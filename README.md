@@ -42,6 +42,15 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
   deduplicated by event id, and finalizes the refund exactly once.
 - The UI shows "Refunded" only when PayPal reports the refund as `COMPLETED`.
 
+## How we tested it
+
+29 predefined claim scenarios plus a 12-case held-out set, each run 3 times through the real Gemini assessor and
+policy engine (`cd backend && python -m eval.run_eval`). The first run found a real hole: a screenshot of someone
+else's damage photo was paid in full. Policy 1.2 fixed it. After that, the main set passed 87 of 87 runs and the
+held-out set, whose expected outcomes were committed before its photos existed, passed 36 of 36 runs; neither had an
+overpayment. Results, failures and limits: [docs/EVALUATION.md](docs/EVALUATION.md),
+[docs/EVALUATION-heldout.md](docs/EVALUATION-heldout.md).
+
 ## Architecture
 
 ```mermaid
