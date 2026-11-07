@@ -25,7 +25,7 @@ services:
       - key: AI_PROVIDER
         value: gemini
       - key: GEMINI_MODEL
-        value: gemini-flash-latest
+        value: gemini-3.8-flash
       # Added later in the dashboard: PAYPAL_WEBHOOK_ID (after registering the webhook), and optionally
       # OPENAI_API_KEY + OPENAI_MODEL for an OpenAI backup.
       - key: MERCHANT_TOKEN          # random; the web service copies it so judges skip sign-in

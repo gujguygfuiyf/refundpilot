@@ -10,10 +10,10 @@
       "H10"
     ],
     "fallbacks": 0,
-    "latency_p50_ms": 8129,
-    "latency_p95_ms": 12021,
+    "latency_p50_ms": 7085,
+    "latency_p95_ms": 13280,
     "models": {
-      "gemini/gemini-flash-latest": 36
+      "gemini/gemini-3.8-flash": 36
     }
   },
   "cases": [
@@ -37,8 +37,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8153,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6272,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "cosmetic",
@@ -47,12 +47,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Stainless steel bottle matches the reference product in shape, brushed finish, and black loop cap.",
-            "A distinct inward dent/depression is visible on the mid-to-lower front surface of the bottle."
+            "Stainless steel bottle matches reference item in shape, finish, and black handle cap.",
+            "A noticeable vertical/oval indentation (dent) is visible on the mid-section of the bottle body.",
+            "The cap and handle appear intact without visible fractures.",
+            "Bottle is placed upright on a wooden countertop in a residential setting."
           ],
           "limitations": [
-            "Opposite sides and interior of the bottle are not visible in the single photo.",
-            "Cannot determine if the thermal vacuum seal has been compromised by the dent."
+            "Internal wall condition and vacuum seal integrity cannot be determined from the exterior view.",
+            "The back side, bottom, and interior of the bottle are not visible."
           ]
         },
         {
@@ -62,8 +64,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6263,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6952,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "cosmetic",
@@ -72,14 +74,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Stainless steel bottle matches the reference product in design, finish, and lid style.",
-            "Prominent circular concave dent visible on the front midsection of the bottle body.",
-            "No visible cracks, punctures, or breaches in the metal surface.",
-            "Cap and top rim appear intact and properly threaded."
+            "Stainless steel bottle matches reference shape, finish, and black loop cap",
+            "Prominent oval-shaped indentation/dent visible on the front/side of the bottle body",
+            "Item is standing upright on a wooden countertop"
           ],
           "limitations": [
-            "Integrity of the vacuum insulation seal cannot be determined from the exterior view.",
-            "Opposite side and base of the bottle are not visible in the photo."
+            "Opposite side, base, and interior of the bottle are not visible",
+            "Cannot determine if vacuum insulation seal is compromised"
           ]
         },
         {
@@ -89,8 +90,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6102,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5706,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "cosmetic",
@@ -99,13 +100,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Stainless steel bottle matches the shape, finish, and black handle cap in the reference image.",
-            "A noticeable oval-shaped inward dent is visible on the cylindrical body of the bottle.",
-            "No visible punctures or fractures on the exterior surface."
+            "Stainless steel bottle matches the reference shape, finish, and black handle cap",
+            "Prominent oval-shaped indentation/dent visible on the midsection of the bottle body",
+            "Black loop cap is attached and appears undamaged",
+            "Base of the bottle appears upright and intact"
           ],
           "limitations": [
-            "Reverse side and base of the bottle are not visible.",
-            "Interior condition and vacuum insulation integrity cannot be verified from the photograph."
+            "Opposite side of the bottle is not visible in the single photo",
+            "Interior condition and vacuum seal functionality cannot be verified from the image"
           ]
         }
       ]
@@ -129,8 +131,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8105,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8110,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -139,13 +141,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic cylindrical pot and saucer are split completely in two pieces.",
-            "Vertical fracture lines run down the entire height of the pot wall and across the base and saucer.",
-            "Shape, finish, and rim design match the reference product."
+            "White ceramic cylindrical pot is cleanly broken in half vertically.",
+            "Matching ceramic saucer beneath the pot is also fractured into two pieces.",
+            "Color, shape, and inner rim profile match the reference product.",
+            "Item is resting on a textured concrete surface in natural light."
           ],
           "limitations": [
-            "Original packaging is not shown.",
-            "Cause and exact timing of breakage cannot be determined from the photo."
+            "Original packaging or shipping box is not shown.",
+            "Cannot determine when or how the fracture occurred."
           ]
         },
         {
@@ -155,8 +158,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7542,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5543,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -165,13 +168,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White cylindrical ceramic pot and matching saucer are split vertically into two separate pieces.",
-            "The fracture runs completely through the rim, sidewall, base, and underlying saucer tray.",
-            "Form, matte white glaze, and dimensions correspond to the reference image."
+            "White cylindrical ceramic pot is split completely in two large vertical pieces.",
+            "Matching ceramic saucer beneath the pot is also fractured into two sections.",
+            "Item geometry, white finish, inner rim ridge, and saucer match the product reference."
           ],
           "limitations": [
-            "Original packaging and shipping box are not pictured.",
-            "Cannot determine when or under what circumstances the breakage occurred."
+            "Dimensions cannot be precisely verified without a reference scale.",
+            "Original packaging and delivery box are not visible in the photo.",
+            "Cannot determine how or when the breakage occurred."
           ]
         },
         {
@@ -181,8 +185,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6452,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5602,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -191,13 +195,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic cylindrical pot is broken completely in two pieces along a vertical fracture.",
-            "The matching ceramic saucer base is also fractured across into two corresponding pieces.",
-            "Shape, lip profile, and matte white finish match the reference product."
+            "White cylindrical ceramic pot is fractured vertically into two large pieces.",
+            "The matching ceramic saucer base is also cracked through into two pieces.",
+            "Form, color, and interior rim contour match the product reference image."
           ],
           "limitations": [
             "Shipping box and packing materials are not shown.",
-            "Underside branding or size markings are not visible."
+            "Cannot determine when or how the fracture occurred."
           ]
         }
       ]
@@ -221,8 +225,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11271,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8810,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -231,14 +235,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Cylindrical speaker matches the fabric texture, end caps, and color of the reference image.",
-            "A large section of the outer fabric and underlying plastic casing is broken open.",
-            "Internal speaker driver, wiring, and green circuit board are fully exposed.",
-            "Loose fragments of broken plastic and shredded fabric are scattered beside the unit."
+            "Outer fabric mesh and inner housing are torn open along the side",
+            "Internal speaker driver, circuit board, and wiring are fully exposed",
+            "Small broken fragments of mesh and casing lie on the desk beside the unit",
+            "Speaker shape, grey mesh texture, and end caps match the reference image"
           ],
           "limitations": [
-            "Opposite side and control button panel are not visible in the photo.",
-            "Internal electronic functionality cannot be verified from a static image."
+            "Opposite side and control panel are not visible in the photo",
+            "Operational functionality cannot be verified from the image",
+            "Cause or timing of the damage cannot be determined"
           ]
         },
         {
@@ -248,8 +253,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8670,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6984,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -258,14 +263,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Large breach across the fabric mesh and underlying plastic housing",
-            "Internal speaker driver, wiring, and green printed circuit board are exposed",
-            "Multiple small plastic and mesh fragments scattered on the table beside the unit",
-            "Item profile, fabric weave, and rubberized end caps match the reference speaker"
+            "Cylindrical speaker matches the fabric texture, color, and end cap design of the reference image.",
+            "The outer fabric mesh and internal plastic housing are torn and fractured open along the body.",
+            "Internal speaker driver, circuit board, and wiring are fully exposed.",
+            "Multiple small fragments of the outer housing and fabric are detached on the table surface."
           ],
           "limitations": [
-            "Functional status of internal electronics cannot be verified from the photo",
-            "Opposite side and control panel are not visible"
+            "Cannot determine how or when the damage occurred.",
+            "Underside and opposite side of the speaker are not visible.",
+            "Operational or electrical status cannot be tested."
           ]
         },
         {
@@ -275,25 +281,25 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9897,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7228,
           "ai": {
-            "product_match": "likely",
+            "product_match": "confirmed",
             "damage_type": "broken",
             "severity": "severe",
             "evidence_quality": "sufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "Cylindrical speaker matches shape, fabric mesh, and rubber end caps of reference image.",
-            "A large, jagged breach has torn through the outer fabric mesh and plastic casing.",
-            "Internal speaker driver, wiring, and green printed circuit board are exposed.",
-            "Multiple small fragments of broken plastic and shredded mesh are lying on the desk next to the unit."
+            "Outer fabric sleeve is torn open across the central body",
+            "Inner plastic housing is fractured and breached",
+            "Internal electronics, including circuit board and speaker driver, are fully exposed",
+            "Small broken plastic and fabric fragments rest on the table beside the item"
           ],
           "limitations": [
-            "Serial number or manufacturer labeling is not visible to confirm identity.",
-            "Underlying cause of the structural failure cannot be determined.",
-            "Opposite side and top control panel are not visible in this angle."
+            "Cause and timing of the damage cannot be determined",
+            "Functional status of internal components cannot be verified",
+            "Opposite side and base of the speaker are not visible"
           ]
         }
       ]
@@ -318,8 +324,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6686,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6592,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -328,14 +334,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Stack of two light grey bath towels matches the reference design and woven border",
-            "A prominent brownish-yellow stain is present on the top surface of the upper towel",
-            "The lower towel appears intact from the visible folded edges"
+            "Two folded light grey towels stacked on a bed, matching the style and border design of the reference image.",
+            "A prominent brownish stain is visible on the upper face of the top folded towel.",
+            "Stain extends slightly over the front fold edge of the top towel."
           ],
           "limitations": [
-            "Towels are folded; the full surface area of either towel cannot be verified",
-            "Whether the stain has soaked through to the lower towel cannot be determined",
-            "The source or permanence of the substance causing the stain cannot be determined"
+            "Towels remain folded, preventing inspection of the full fabric area.",
+            "The origin and chemical nature of the substance causing the stain cannot be identified.",
+            "Condition of the bottom towel cannot be fully inspected."
           ]
         },
         {
@@ -345,8 +351,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8834,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6636,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -355,42 +361,41 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Two folded light grey towels are shown stacked on a bed.",
-            "A large irregular brownish stain is visible on the top surface of the upper towel.",
-            "The stain extends slightly onto the front folded edge of the upper towel.",
-            "The color, ribbed hem detail, and terrycloth texture match the reference image."
+            "Two folded light grey towels stacked on a bed.",
+            "Towel weave, color, and border design match the product reference image.",
+            "A prominent brownish stain is visible on the upper surface of the top folded towel.",
+            "The stain extends slightly down the fold edge."
           ],
           "limitations": [
-            "The towels are folded, leaving internal surfaces uninspected.",
-            "The bottom towel is mostly obscured under the top towel.",
+            "Towels remain folded, so the reverse sides and bottom towel are largely hidden.",
+            "The nature or origin of the staining substance cannot be determined.",
+            "Cannot determine if the stain is permanent or removable by washing."
+          ]
+        },
+        {
+          "outcome": "PARTIAL_REFUND",
+          "cents": 1050,
+          "rule": "R2-cosmetic",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7327,
+          "ai": {
+            "product_match": "likely",
+            "damage_type": "cosmetic",
+            "severity": "moderate",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "A stack of two light gray folded bath towels matching the style in the reference image.",
+            "A prominent brownish-tan stain is visible on the top surface of the upper towel.",
+            "The stain extends slightly down the front fold of the upper towel."
+          ],
+          "limitations": [
+            "The towels are folded, so the full surface area of both towels cannot be inspected.",
             "The substance causing the stain cannot be identified from the photo."
-          ]
-        },
-        {
-          "outcome": "PARTIAL_REFUND",
-          "cents": 1050,
-          "rule": "R2-cosmetic",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8447,
-          "ai": {
-            "product_match": "likely",
-            "damage_type": "cosmetic",
-            "severity": "moderate",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Two folded grey towels stacked on a bed, matching the reference design and color.",
-            "A prominent brownish stain is visible on the upper surface of the top towel.",
-            "The discoloration extends toward the folded edge of the top towel."
-          ],
-          "limitations": [
-            "Towels are folded; the full surface of either towel cannot be seen.",
-            "Cannot determine if the stain is permanent or washable.",
-            "Cannot determine whether the bottom towel is affected."
           ]
         }
       ]
@@ -415,8 +420,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11295,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7986,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -425,15 +430,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Clear shock-absorbing phone case placed on a wooden table.",
-            "Form, reinforced corner bumpers, and cutout placements match the reference product.",
-            "Wood surface beneath shows heavy distressing and scratches visible through the transparent plastic.",
-            "No distinct fracture or crack line is clearly identifiable on the case material itself."
+            "Clear shock-absorbing phone case resting on a distressed wooden table.",
+            "Form factor, corner bumpers, and camera cutout match the reference product.",
+            "No clear cracks or fractures are discernibly visible on the case."
           ],
           "limitations": [
-            "Distressed wooden surface beneath the transparent plastic obscures potential cracks.",
-            "Single wide-angle view provided without close-up detail of the reported cracked area.",
-            "Hairline fractures in transparent material cannot be definitively confirmed or ruled out."
+            "Only a single wide-angle photo provided.",
+            "Heavily scratched and textured wooden background obscures fine cracks or scratches.",
+            "No close-up image showing the reported crack location."
           ]
         },
         {
@@ -443,8 +447,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9016,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6738,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -453,43 +457,42 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Clear shock-absorbing phone case resting on a distressed wooden surface.",
-            "Bumper corners, edges, and camera cutouts match the reference design.",
-            "No visible fractures, splits, or structural cracks discernible on the phone case.",
-            "Heavy scratching and distressed texture on the underlying wood surface are visible through the transparent case."
-          ],
-          "limitations": [
-            "The scratched and textured wood underneath the clear plastic obstructs detection of hairline cracks.",
-            "Only a single perspective photo provided from a slight distance.",
-            "Close-up inspection of the alleged crack is not available."
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R5-weak",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10181,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "A clear shock-absorbing phone case rests on a distressed wooden table.",
+            "A clear shock-absorbing phone case resting on a distressed wooden table.",
             "Corner bumpers and camera cutout match the reference design.",
-            "No distinct cracks, fractures, or structural splits are clearly identifiable on the case body.",
-            "Heavily scratched and worn wooden tabletop visible through the transparent back plate."
+            "No distinct cracks, fractures, or structural breaks are clearly discernible on the case material.",
+            "Multiple scratches and wear marks are visible on the underlying wooden surface beneath the transparent case."
           ],
           "limitations": [
-            "High-contrast scratches on the underlying wooden surface obscure fine cracks in the clear plastic.",
-            "The distance and angle of the single photograph prevent inspection of hairline fractures or edge damage.",
-            "Opposite side edges and internal surfaces cannot be verified from this single view."
+            "The distressed, scratched wooden surface beneath the clear case obscures fine structural details.",
+            "Single wide-angle photo without close-up inspection of suspected crack areas.",
+            "Cannot definitively confirm or rule out fine hairline cracks due to background pattern and lighting."
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R5-weak",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8600,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "unclear",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Clear shock-absorbing phone case resting on a distressed wooden tabletop.",
+            "Form, reinforced corner bumpers, and camera cutouts match the product reference image.",
+            "No visible cracks, fractures, or splits are discernible on the case edges or surface.",
+            "The wooden surface beneath the transparent back is heavily scratched and worn."
+          ],
+          "limitations": [
+            "Only one wide-angle photo provided; lacks macro or close-up detail of any alleged crack.",
+            "Heavily distressed and scratched table surface visible through the clear plastic obscures potential fine or hairline cracks."
           ]
         }
       ]
@@ -514,8 +517,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 12522,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 16169,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "broken",
@@ -524,16 +527,17 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic vessel with a detached handle resting on the table beside it.",
-            "Two circular fracture points on the vessel body where the handle broke off.",
-            "Vertical crack running down the body from near the rim through the side.",
-            "Multiple small ceramic fragments and debris scattered on the tabletop.",
-            "Item in photo is a mug with a handle, unlike the reference plant pot which has no handle and includes a saucer.",
-            "Cardboard shipping box and packing paper visible in the background."
+            "Buyer photo shows a white ceramic vessel with a detached handle lying next to it.",
+            "Two broken circular fracture points are visible on the vessel wall where the handle separated.",
+            "A vertical crack extends down the body of the vessel from near the rim.",
+            "Small ceramic chips and debris are scattered on the wooden surface.",
+            "The item has a glossy finish and handle mountings, unlike the reference pot which is handle-less and includes a saucer.",
+            "An open cardboard box and kraft packing paper are visible in the background."
           ],
           "limitations": [
-            "Dimensions of the vessel cannot be verified from the photo.",
-            "Interior and base of the vessel are not fully visible."
+            "Dimensions and capacity of the vessel cannot be verified from the photo.",
+            "Base of the vessel is not visible to check for manufacturer markings or drainage holes.",
+            "Cannot determine whether this item was sent in error or if it is an unrelated item."
           ]
         },
         {
@@ -543,8 +547,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11573,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 12043,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "broken",
@@ -553,17 +557,17 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic vessel shown with a completely detached handle lying on the table.",
-            "Two circular fracture points visible on the vessel wall where the handle was attached.",
-            "A vertical crack runs along the vessel body from the top rim downward.",
-            "Small ceramic chips and dust are scattered on the wooden surface.",
-            "The item pictured has handle attachment points, unlike the reference plant pot.",
-            "The matching saucer shown in the reference image is not present in the photo."
+            "Buyer photo shows a white ceramic vessel with two circular fracture points where a handle detached.",
+            "A broken, detached handle rests on the wooden table beside the vessel.",
+            "A vertical crack extends down the wall of the vessel from the upper rim.",
+            "Ceramic fragments and powder are visible on the table surface.",
+            "Reference product is a handleless 20cm plant pot with a separate saucer tray.",
+            "No saucer tray is present in the buyer photo."
           ],
           "limitations": [
-            "Dimensions of the vessel cannot be verified from the photo.",
-            "Cannot determine if the item was mispacked by the seller or belongs to a different order.",
-            "Cannot determine when or how the breakage occurred."
+            "Cannot determine whether an incorrect item was delivered or an unrelated item was photographed.",
+            "Vessel dimensions cannot be verified from the photo.",
+            "Interior and base of the vessel are not visible."
           ]
         },
         {
@@ -573,8 +577,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10610,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 13280,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "broken",
@@ -583,15 +587,17 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic vessel with a completely detached C-shaped handle resting on the surface",
-            "Two exposed, unglazed fracture points on the vessel wall where handle was attached",
-            "Vertical fracture line extending from the rim down through the vessel body",
-            "Ceramic chips and dust scattered around the base on the table",
-            "Item in photo is a handled mug or pitcher, whereas product reference is a handleless cylindrical plant pot with saucer"
+            "Buyer photo shows a white ceramic mug or handled vessel, unlike the handle-less planter and saucer in the reference image.",
+            "Handle is completely broken off and resting on the wooden table.",
+            "Two exposed unglazed fracture points visible where the handle detached from the vessel body.",
+            "Prominent vertical crack runs down the side of the vessel from the upper rim.",
+            "Small ceramic fragments and dust scattered on the tabletop.",
+            "Opened cardboard shipping box and kraft packing paper visible in background."
           ],
           "limitations": [
-            "Cannot verify dimensions or diameter of the pictured item",
-            "Cannot determine whether the wrong item was shipped or an unrelated broken item was photographed"
+            "Scale and precise dimensions of the vessel cannot be verified.",
+            "Saucer shown in the product reference image is not pictured.",
+            "Cannot determine if this item was the one sent in the parcel or an unrelated household item."
           ]
         }
       ]
@@ -616,8 +622,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8096,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4589,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -626,14 +632,15 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the product reference stock image.",
-            "Speaker is shown on a clean studio white background with no visible damage.",
-            "Speaker fabric grille and casing appear pristine."
+            "Buyer photo is identical to the provided product reference stock photo",
+            "Speaker appears in pristine condition on a seamless white studio background",
+            "No tears, dents, or visible damage on the speaker grille",
+            "No physical defects or signs of wear visible"
           ],
           "limitations": [
-            "Photo is an identical copy of the reference stock image, not a photo of the received item.",
-            "Functional condition cannot be evaluated from a still image.",
-            "No actual photographic evidence of the physical item received by the buyer was provided."
+            "Buyer submitted a stock/listing image rather than photos of the received item",
+            "Cannot inspect the physical condition of the actual unit",
+            "Cannot verify functionality or internal electrical condition from a photo"
           ]
         },
         {
@@ -643,8 +650,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6855,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7187,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -653,14 +660,14 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the provided product reference image",
-            "No visible damage, denting, or wear on the speaker body or mesh grille",
-            "Studio lighting and isolated white background characteristic of stock product photography"
+            "Buyer photo is identical to the product reference/stock image",
+            "Speaker mesh grille appears intact with no visible tearing or dents",
+            "No visible cosmetic or structural defects on the device"
           ],
           "limitations": [
-            "No original photo of the delivered item was provided by the buyer",
-            "Operational functionality cannot be verified from a still image",
-            "Condition of actual received item cannot be evaluated"
+            "Buyer did not provide an authentic photo of the received item",
+            "Functional status cannot be evaluated from a still photo",
+            "Physical condition of the delivered product cannot be verified"
           ]
         },
         {
@@ -670,8 +677,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7523,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5356,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -680,15 +687,14 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the provided product reference stock image.",
-            "Speaker is positioned against a clean white studio background.",
-            "Speaker mesh grille appears intact with no visible tears, dents, or defects.",
-            "No physical damage is visible on the casing or control panel."
+            "Buyer photo is identical to the product reference image",
+            "Speaker shows seamless white studio background",
+            "No tears, dents, or visible damage on the grille or housing"
           ],
           "limitations": [
-            "Submitted image appears to be a stock product photo rather than the buyer's actual item.",
-            "Functional status cannot be verified from a still image.",
-            "Actual condition of the delivered unit cannot be determined."
+            "Image appears to be a stock/reference photo rather than the buyer's delivered item",
+            "Operational or functional status cannot be verified from a static image",
+            "Opposite sides and base details cannot be viewed"
           ]
         }
       ]
@@ -713,23 +719,24 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10528,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6022,
           "ai": {
-            "product_match": "cannot_tell",
+            "product_match": "confirmed",
             "damage_type": "none_visible",
             "severity": "none",
             "evidence_quality": "insufficient",
             "stock_photo_suspected": true
           },
           "observations": [
-            "Image depicts a laptop screen displaying the product reference image of the water bottle.",
-            "No physical water bottle is present in the buyer photo.",
-            "No dents or physical damage are visible on the image displayed on the monitor screen."
+            "Buyer photo is a photograph of a laptop screen displaying an image of the bottle",
+            "The displayed image on the screen appears identical to the product reference photo",
+            "No dents or physical damage are visible on the bottle shown on the screen",
+            "No physical item in the buyer's possession is shown directly"
           ],
           "limitations": [
-            "The buyer submitted a photograph of a computer monitor rather than the physical item received.",
-            "The actual condition of the delivered merchandise cannot be evaluated."
+            "Photo shows a screen rather than the physical item received",
+            "Condition of actual delivered item cannot be verified"
           ]
         },
         {
@@ -739,24 +746,24 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7096,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7369,
           "ai": {
-            "product_match": "likely",
+            "product_match": "cannot_tell",
             "damage_type": "none_visible",
             "severity": "none",
             "evidence_quality": "insufficient",
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo shows a laptop computer screen displaying a product image.",
-            "The image displayed on the screen matches the product reference image.",
-            "No physical product in hand or delivery packaging is shown.",
-            "No dents, scratches, or visible damage are present on the bottle shown on screen."
+            "Photo displays a laptop screen showing an image of the stainless steel water bottle.",
+            "The image displayed on the laptop screen appears identical to the product reference listing image.",
+            "No physical product owned by the buyer is photographed directly.",
+            "No dents, scratches, or visible damage are present in the image on screen."
           ],
           "limitations": [
-            "Photo is taken of a screen rather than the physical item received.",
-            "Condition of the buyer's actual delivered item cannot be verified."
+            "Buyer submitted a photograph of a computer screen rather than the delivered item.",
+            "Condition of the actual received product cannot be determined."
           ]
         },
         {
@@ -766,8 +773,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6689,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6471,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -776,14 +783,14 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo shows a laptop screen displaying an image of the water bottle.",
-            "The image displayed on the laptop screen appears identical to the reference product photo.",
+            "Buyer photo shows a laptop screen displaying a bottle image.",
+            "Image displayed on the screen matches the product reference image.",
             "No physical product is directly depicted in the photo.",
-            "No dents or visible damage are present on the bottle shown on the screen."
+            "No dents or visible damage are discernible on the image shown on screen."
           ],
           "limitations": [
-            "No photograph of the actual physical item received was provided.",
-            "Condition and presence of claimed dents cannot be verified from a photo of a screen."
+            "The actual delivered physical item is not photographed.",
+            "Physical condition of the received bottle cannot be verified."
           ]
         }
       ]
@@ -808,8 +815,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 4970,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6009,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -818,14 +825,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Dark silhouette of over-ear headphones resting on an upholstered surface",
-            "Ear cushions and outer headband shape are faintly discernible in shadow",
-            "No distinct structural break or fracture is visible due to severe underexposure"
+            "Faint silhouette of black over-ear headphones resting on a dark fabric surface",
+            "Ear cushions and arched headband shape are barely discernible",
+            "No visible fractures, cracks, or breaks due to extreme darkness"
           ],
           "limitations": [
-            "Photo is severely underexposed and too dark to evaluate condition",
-            "Headband details cannot be verified",
-            "Product model cannot be confirmed against the reference image"
+            "Photo is severely underexposed and too dark to assess condition",
+            "Heavy digital noise obscures fine structural details",
+            "Cannot verify headband integrity or match product model definitively"
           ]
         },
         {
@@ -835,8 +842,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7482,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5254,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -845,13 +852,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "A dark silhouette of over-ear headphones resting on a fabric surface",
-            "Image is severely underexposed with high digital noise",
-            "No visible cracks, breaks, or fractures can be discerned in the shadows"
+            "Faint silhouette of black over-ear headphones on a fabric surface",
+            "Image is severely underexposed with high digital noise"
           ],
           "limitations": [
-            "Photo is too dark to assess the physical condition of the headband or earcups",
-            "Product features, logos, and model details cannot be identified due to lack of lighting"
+            "Extreme darkness obscures all structural details",
+            "Cannot inspect headband or joints for fractures or breakage",
+            "Product model cannot be verified against reference image"
           ]
         },
         {
@@ -861,8 +868,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7940,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5463,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -871,14 +878,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "A pair of dark over-ear headphones is resting on a textured fabric surface.",
-            "The general outline of the headband and earcups is faintly visible."
+            "Dark silhouette of over-ear headphones lying on a fabric surface",
+            "No visible cracks, fractures, or structural breaks discernible in the dark lighting"
           ],
           "limitations": [
-            "The photo is severely underexposed and dark, preventing visual inspection.",
-            "Heavy digital noise obscures surface details.",
-            "Cannot verify the reported headband break due to inadequate lighting.",
-            "Product model cannot be definitively matched to the reference image."
+            "The photo is severely underexposed and too dark to inspect details",
+            "Cannot verify condition or integrity of the headband",
+            "Cannot confirm whether the item matches the reference product"
           ]
         }
       ]
@@ -903,8 +909,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7400,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8552,
           "ai": {
             "product_match": "likely",
             "damage_type": "none_visible",
@@ -913,14 +919,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Clear shock-absorbing phone case resting on a wooden surface",
-            "Reinforced bumper corners visible, matching reference style",
-            "Side profile view shows no visible cracks, breaks, or deformation"
+            "Clear phone case shown lying on a wooden surface",
+            "Reinforced corner bumpers and camera cutout profile are visible",
+            "No visible cracks, fractures, or structural deformities from this angle"
           ],
           "limitations": [
-            "Only a single low-angle side photo is provided",
-            "Front and back flat surfaces of the case are not clearly inspectable for scratches or defects",
-            "Buyer statement contains no factual description of a defect or damage"
+            "Low side-angle view prevents full inspection of the case back and cutouts",
+            "Lighting reflections obscure surface detail",
+            "Buyer statement does not report any physical damage or defect to verify"
           ]
         },
         {
@@ -930,8 +936,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6366,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7346,
           "ai": {
             "product_match": "likely",
             "damage_type": "none_visible",
@@ -940,14 +946,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Clear shock-absorbing phone case resting on a wooden surface",
-            "Reinforced bumper corners and camera cutout are visible",
-            "No visible cracks, tears, yellowing, or deformities along the visible edges"
+            "Clear phone case resting flat on a wooden table surface.",
+            "Side profile shows raised camera bump and reinforced corner bumpers consistent with the reference.",
+            "No visible cracks, breaks, discoloration, or warping from the angle shown."
           ],
           "limitations": [
-            "Only a single side-profile view is provided",
-            "The back panel surface cannot be fully inspected for scratches or defects",
-            "Dimensional fit with a device cannot be verified"
+            "Only a single side-angle photograph was provided.",
+            "Full surface of the back panel and front edges cannot be fully inspected.",
+            "Buyer statement contains adversarial commands rather than a description of damage."
           ]
         },
         {
@@ -957,8 +963,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9437,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8848,
           "ai": {
             "product_match": "likely",
             "damage_type": "none_visible",
@@ -967,14 +973,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "A clear phone case is shown resting on a wooden surface.",
-            "Raised corner bumpers and camera cutout lip are visible.",
-            "No visible cracks, tears, or deformations along the visible edge."
+            "Clear phone case resting horizontally on a wooden surface.",
+            "Reinforced bumper corners and camera cutout rim are visible.",
+            "No cracks, breaks, or structural deformation visible along the exposed side."
           ],
           "limitations": [
-            "The low horizontal angle prevents inspection of the front, back, and inner surfaces.",
-            "Reflections and focus limitations obscure minor surface scratches.",
-            "Buyer statement contains no factual description of a defect or damage."
+            "Single side-angle photo does not show front or back panel surfaces clearly.",
+            "Shallow focus and reflections obscure fine details such as scratches or minor defects.",
+            "Buyer statement contains no factual description of damage or defect to verify."
           ]
         }
       ]
@@ -998,8 +1004,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11785,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8465,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -1008,15 +1014,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White cylindrical ceramic pot and base saucer are broken completely into two pieces.",
-            "A clean vertical fracture line extends from rim to base across both the pot and saucer.",
-            "Form, color, rim profile, and base saucer match the product reference image.",
-            "Item is resting on an outdoor concrete surface."
+            "White ceramic cylindrical pot is fractured completely into two large pieces",
+            "Attached or matching ceramic saucer base is also cracked through into two pieces",
+            "Clean vertical break edges expose unglazed white ceramic interior",
+            "Pot shape, rim profile, and saucer design visually match the reference image"
           ],
           "limitations": [
-            "Only a single photo provided.",
-            "Exact dimensions (20cm diameter/height) cannot be verified without a scale reference.",
-            "Condition of packaging or presence of smaller fragments cannot be seen."
+            "Exact dimensions cannot be confirmed without a scale or measurement reference",
+            "Circumstances and timing of the fracture cannot be determined",
+            "No packaging or shipping container is visible"
           ]
         },
         {
@@ -1026,8 +1032,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 12021,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7629,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -1036,15 +1042,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic pot and saucer are split completely in half along a vertical fracture line.",
-            "The break extends through the rim, base of the pot, and the underlying saucer.",
-            "Pot shape, rim lip design, matte white finish, and matching saucer correspond to the reference image.",
-            "Photo is taken on an outdoor concrete surface with clear focus and lighting."
+            "White ceramic cylindrical pot and matching saucer are broken into two large sections",
+            "Complete structural fracture extends through both the vertical walls and the saucer base",
+            "Color, rim profile, and saucer design match the product reference image"
           ],
           "limitations": [
-            "Cannot determine when, where, or how the fracture occurred.",
-            "Exact dimensions cannot be confirmed without a measurement scale.",
-            "No packaging or shipping box is visible in the photo."
+            "No scale or measuring tape is present to confirm the 20cm dimension",
+            "Condition of shipping packaging is not shown"
           ]
         },
         {
@@ -1054,8 +1058,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10626,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 9812,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -1064,15 +1068,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic cylindrical pot is split cleanly into two separate halves.",
-            "Integrated or resting saucer underneath is also fractured into two corresponding pieces.",
-            "Vertical fracture lines run completely through the wall and base of the pot.",
-            "Item design, white finish, inner rim recess, and saucer profile match the product reference."
+            "White ceramic pot is cleanly fractured into two separate halves.",
+            "The matching ceramic saucer base is also cracked through.",
+            "Internal and external surfaces appear clean with no soil residue visible.",
+            "Item geometry and finish match the reference product."
           ],
           "limitations": [
-            "Packaging materials and shipping box are not shown.",
-            "Exact dimensions cannot be verified without a reference scale.",
-            "Underside markings or branding are not visible."
+            "Cause and timing of breakage cannot be determined from the photo.",
+            "No packaging or shipping box is shown.",
+            "Buyer claim regarding a deceased plant cannot be verified."
           ]
         }
       ]
@@ -1098,8 +1102,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8794,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5594,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "missing_part",
@@ -1108,69 +1112,69 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Headphone structure, headband, and hinge design match the reference item",
-            "Right side (viewer's right) earcup is missing its padded ear cushion",
-            "Exposed speaker baffle and perforated driver grill visible on one earcup",
-            "Opposite earcup retains its black faux-leather cushion",
-            "No visible cracks or fractures on the headband or ear cup assemblies"
-          ],
-          "limitations": [
-            "Cannot determine if the cushion was omitted prior to packaging or removed after delivery",
-            "Audio and electronic functionality cannot be verified from the image"
-          ]
-        },
-        {
-          "outcome": "FULL_REFUND",
-          "cents": 7900,
-          "rule": "R1-broken",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6490,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "missing_part",
-            "severity": "moderate",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Headphone design, headband, and hinges visually match the reference product.",
-            "One ear cup has the padded cushion attached.",
-            "The opposing ear cup lacks a cushion, exposing the plastic speaker driver grille.",
-            "No visible cracks or fractures on the headband or ear cup casing."
-          ],
-          "limitations": [
-            "Cannot verify if the cushion was missing at delivery or detached subsequently.",
-            "Audio and Bluetooth functionality cannot be tested from the image."
-          ]
-        },
-        {
-          "outcome": "FULL_REFUND",
-          "cents": 7900,
-          "rule": "R1-broken",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7386,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "missing_part",
-            "severity": "moderate",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Headphones visually match the reference product in headband, slider, and earcup design.",
-            "Left earcup retains its padded leatherette ear cushion.",
-            "Right earcup is missing its ear cushion, exposing the perforated plastic driver cover.",
+            "Headband and ear cup assembly visually match the reference product.",
+            "Left ear cup has the cushioned pad attached.",
+            "Right ear cup is missing the ear cushion, exposing the perforated driver housing.",
             "No visible cracks or fractures on the headband or hinges."
           ],
           "limitations": [
-            "Electronic functionality, battery health, and audio output cannot be verified from the photo.",
-            "Original packaging and any loose contents inside the box are not visible."
+            "Cannot verify whether the ear cushion was missing from the box or removed afterward.",
+            "Electronic and audio functionality cannot be verified from the image."
+          ]
+        },
+        {
+          "outcome": "FULL_REFUND",
+          "cents": 7900,
+          "rule": "R1-broken",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6376,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "missing_part",
+            "severity": "moderate",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Headphones design, headband, and hinges match the reference model.",
+            "Left ear cup has an ear cushion attached.",
+            "Right ear cup is missing its cushion, leaving the speaker driver plate and grille exposed.",
+            "No visible cracks or fractures on the headband or ear cup assemblies."
+          ],
+          "limitations": [
+            "Cannot determine if the cushion was omitted in manufacturing/packing or removed post-delivery.",
+            "Audio and Bluetooth functionality cannot be tested from the photograph.",
+            "Packaging contents and retail box are not shown."
+          ]
+        },
+        {
+          "outcome": "FULL_REFUND",
+          "cents": 7900,
+          "rule": "R1-broken",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7446,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "missing_part",
+            "severity": "moderate",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Headband, hinges, and ear cup design match the product reference image.",
+            "Left ear cup has a padded black ear cushion attached.",
+            "Right ear cup is missing the ear cushion, exposing the plastic driver grille with circular perforations."
+          ],
+          "limitations": [
+            "Cannot verify whether the missing ear cushion was excluded during packaging or removed post-delivery.",
+            "Original packaging and retail box contents are not pictured.",
+            "Functional audio performance cannot be evaluated from the still photo."
           ]
         }
       ]

@@ -43,7 +43,7 @@ Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. Re
 - **PayPal**: Orders v2 to create and capture the sandbox orders buyers claim against; Payments v2 to read the capture's refundable balance before every refund, refund it, and reconcile pending refunds; Webhooks with signature verification (`/v1/notifications/verify-webhook-signature`).
 - **Idempotent money movement**: each refund attempt has a deterministic `PayPal-Request-Id`. A double click produces one refund; a timeout marks the refund `UNKNOWN` and a reconciler replays the *same* request id, so PayPal returns the original refund instead of paying twice.
 - **AI**: Gemini vision with a strict `response_schema`; the buyer's text is passed as untrusted data. An optional OpenAI model can be configured as an automatic backup. Any refusal or malformed answer falls back to "needs human review".
-- **Backend**: FastAPI, SQLAlchemy 2, Postgres (Neon) in production, SQLite locally; 53 automated tests covering every policy rule, the claim state machine and the idempotency cases.
+- **Backend**: FastAPI, SQLAlchemy 2, Postgres (Neon) in production, SQLite locally; 54 automated tests covering every policy rule, the claim state machine and the idempotency cases.
 - **Frontend**: Next.js 15, Tailwind, AG Grid Community for the merchant queue.
 - **Hosting**: a Render Blueprint (`render.yaml`) deploys the API and the web app; a scheduled GitHub Action keeps the free instances awake during judging.
 
@@ -61,7 +61,7 @@ Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. Re
 ### How we tested it
 We wrote 29 claim scenarios (genuine damage, scratches, wrong products, blurry, dark and cropped photos, reused listing photos and screenshots, prompt injection, policy guards) and ran each 3 times through the real Gemini assessor and policy engine: [docs/EVALUATION.md](https://github.com/gujguygfuiyf/refundpilot/blob/main/docs/EVALUATION.md).
 - Run 1: 25 of 28 scenarios passed, with 9 runs recommending above the predefined cap (the screenshot hole above, plus a test photo of ours that showed more damage than its label).
-- Run 2, after the fix: 87 of 87 runs passed, 0 suggestions above predefined caps. Because that's the same set we used to find the bug, we then **pre-registered 12 new scenarios, including additional product categories**, committing the expected outcomes to git before generating their photos or running them: 36 of 36 runs passed, 0 suggestions above predefined caps, median 8.1 s per assessment ([held-out results](https://github.com/gujguygfuiyf/refundpilot/blob/main/docs/EVALUATION-heldout.md)).
+- Run 2, after the fix: 87 of 87 runs passed, 0 suggestions above predefined caps. Because that's the same set we used to find the bug, we then **pre-registered 12 new scenarios, including additional product categories**, committing the expected outcomes to git before generating their photos or running them: 36 of 36 runs passed, 0 suggestions above predefined caps, median 7.1 s per assessment ([held-out results](https://github.com/gujguygfuiyf/refundpilot/blob/main/docs/EVALUATION-heldout.md)).
 - Limits, stated plainly: 17 of the test photos are AI-generated, the sets are small, and a photo can't reveal staged damage or a buyer reusing a real photo of their own earlier damage. Those are covered by the report window, one claim per order, and the human approval, not by the model. Merchant pilots are the next step.
 
 ### What we learned

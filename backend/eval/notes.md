@@ -30,4 +30,4 @@ an unbiased estimate of accuracy on new claims. A held-out set written before lo
   controls for those, not the model.
 - Severity judgement is still the model's: if it calls minor damage "broken", the policy pays for broken. The
   amount is always capped at what is left on the order, and a person approves every refund.
-- One model (gemini-flash-latest) at temperature 0; other models or versions need their own run.
+- One model (gemini-3.8-flash) at temperature 0; other models or versions need their own run.

@@ -11,23 +11,23 @@ const QUICK_SCENARIOS = [
   {
     key: "broken",
     title: "1. Clearly broken item",
-    badge: "Full refund path ($49.00)",
+    badge: "Expected: Full refund ($49.00)",
     badgeTone: "green" as const,
-    desc: "Pre-fills a broken desk lamp photo and description on a LAMP-02 order → AI reports structured damage → Policy R1 suggests $49.00 → Merchant approves via PayPal.",
+    desc: "Expected under Standard policy: pre-fills a broken desk lamp photo on a LAMP-02 order → AI reports broken damage & sufficient evidence → Rule R1-broken suggests $49.00.",
   },
   {
     key: "blurry",
     title: "2. Blurry photo",
-    badge: "Uncertainty → request evidence",
+    badge: "Expected: Request evidence ($0.00)",
     badgeTone: "amber" as const,
-    desc: "Pre-fills an out-of-focus lamp photo on a LAMP-02 order → AI flags unclear evidence quality → Policy R5 requests a clearer photo ($0.00 suggested).",
+    desc: "Expected under Standard policy: pre-fills an out-of-focus lamp photo on a LAMP-02 order → AI reports insufficient evidence quality → Rule R5-weak requests a clearer photo ($0.00).",
   },
   {
     key: "reused",
     title: "3. Suspected reused screenshot",
-    badge: "Fraud guard → manual review",
+    badge: "Expected: Manual review ($0.00)",
     badgeTone: "violet" as const,
-    desc: "Pre-fills a phone screenshot of a lamp photo on a LAMP-02 order → AI flags stock/reused suspicion → Policy 1.2 routes to human review ($0.00 suggested).",
+    desc: "Expected under Standard policy: pre-fills a phone screenshot of a lamp photo on a LAMP-02 order → AI flags stock_photo_suspected=true → Rule R6-stock routes to human review ($0.00).",
   },
 ];
 

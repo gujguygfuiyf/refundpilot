@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # AI: primary = Gemini; OpenAI is an optional backup, used only if OPENAI_API_KEY is set.
     # AI_PROVIDER picks which one is tried first: gemini (default) | openai. "auto" is accepted as gemini.
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-flash-latest"
+    gemini_model: str = "gemini-3.8-flash"
     openai_api_key: str = ""
     openai_model: str = "gpt-5"          # only used with OPENAI_API_KEY; set to a vision model on your account
     ai_provider: str = "gemini"

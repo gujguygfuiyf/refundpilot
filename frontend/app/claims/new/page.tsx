@@ -8,105 +8,160 @@ import { compressImage, money } from "@/lib/format";
 import PhotoPicker from "@/components/PhotoPicker";
 import { Badge, Button, Card, ErrorNote, Spinner } from "@/components/ui";
 
-interface SamplePreset {
+// Default from backend/policies/standard.json (version standard-1.2, rule R2-cosmetic percent: 30)
+const STANDARD_COSMETIC_PERCENT = 30;
+
+type ExpectationKind = "full" | "partial" | "evidence" | "review";
+
+interface SamplePresetSpec {
   key: string;
   label: string;
-  badge: string;
+  kind: ExpectationKind;
   photo: string;
   filename: string;
   text: string;
+  aiSummary: string;
+  ruleId: string;
+}
+
+interface ResolvedPreset extends SamplePresetSpec {
+  badge: string;
   hint: string;
 }
 
-const SKU_SAMPLES: Record<string, SamplePreset[]> = {
+const SKU_SAMPLE_SPECS: Record<string, SamplePresetSpec[]> = {
   "LAMP-02": [
     {
       key: "broken",
       label: "1. Clearly broken lamp",
-      badge: "Full refund ($49.00)",
+      kind: "full",
       photo: "/samples/lamp-broken.jpg",
       filename: "lamp-broken.jpg",
       text: "The desk lamp arrived with the upper arm snapped at the hinge.",
-      hint: "Gemini reports confirmed product match & severe broken damage → Rule R1 suggests full $49.00 refund.",
+      aiSummary: "confirmed product match, broken damage, sufficient evidence",
+      ruleId: "R1-broken",
     },
     {
       key: "blurry",
       label: "2. Blurry photo",
-      badge: "Request clearer evidence",
+      kind: "evidence",
       photo: "/samples/lamp-blurry.jpg",
       filename: "lamp-blurry.jpg",
       text: "The arm is broken.",
-      hint: "Gemini flags unclear evidence quality → Rule R5-weak requests a clearer photo ($0.00 suggested).",
+      aiSummary: "cannot_tell product match, insufficient evidence quality",
+      ruleId: "R5-weak",
     },
     {
       key: "reused",
       label: "3. Suspected reused screenshot",
-      badge: "Route to manual review",
+      kind: "review",
       photo: "/samples/lamp-screenshot.jpg",
       filename: "lamp-screenshot.jpg",
       text: "Arrived broken out of the box, please refund.",
-      hint: "Gemini flags screenshot/reused photo suspicion → Policy 1.2 routes to manual review ($0.00 suggested).",
+      aiSummary: "stock_photo_suspected=true (screenshot/reused image)",
+      ruleId: "R6-stock",
     },
   ],
   "MUG-01": [
     {
       key: "broken",
-      label: "1. Broken mug handle",
-      badge: "Full refund ($24.00)",
+      label: "1. Broken mug",
+      kind: "full",
       photo: "/samples/mug-broken.jpg",
       filename: "mug-broken.jpg",
       text: "The mug arrived with the handle snapped off in the box.",
-      hint: "Gemini reports confirmed product match & broken handle → Rule R1 suggests full $24.00 refund.",
+      aiSummary: "likely product match, broken damage, sufficient evidence",
+      ruleId: "R1-broken",
     },
     {
       key: "blurry",
       label: "2. Blurry mug photo",
-      badge: "Request clearer evidence",
+      kind: "evidence",
       photo: "/samples/mug-blurry.jpg",
       filename: "mug-blurry.jpg",
       text: "The handle is broken.",
-      hint: "Gemini flags unclear evidence quality → Rule R5-weak requests a clearer photo ($0.00 suggested).",
+      aiSummary: "cannot_tell product match, insufficient evidence quality",
+      ruleId: "R5-weak",
     },
     {
       key: "scratch",
       label: "3. Minor cosmetic scratch",
-      badge: "Partial refund ($3.60 / 15%)",
+      kind: "partial",
       photo: "/samples/mug-scratch.jpg",
       filename: "mug-scratch.jpg",
       text: "There is a visible scuff mark on the side of the mug.",
-      hint: "Gemini reports minor cosmetic damage → Standard policy suggests a 15% partial refund ($3.60).",
+      aiSummary: "likely product match, cosmetic damage, sufficient evidence",
+      ruleId: "R2-cosmetic",
     },
   ],
   "HEAD-03": [
     {
       key: "broken",
       label: "1. Snapped headband",
-      badge: "Full refund ($89.00)",
+      kind: "full",
       photo: "/samples/head-broken.jpg",
       filename: "head-broken.jpg",
       text: "The headphones arrived with the headband snapped on one side.",
-      hint: "Gemini reports confirmed product match & severe broken damage → Rule R1 suggests full $89.00 refund.",
+      aiSummary: "confirmed product match, broken damage, sufficient evidence",
+      ruleId: "R1-broken",
     },
     {
       key: "blurry",
       label: "2. Too dark / unclear photo",
-      badge: "Request clearer evidence",
+      kind: "evidence",
       photo: "/samples/head-dark.jpg",
       filename: "head-dark.jpg",
       text: "The earcup is cracked.",
-      hint: "Gemini flags insufficient/unclear lighting → Rule R5-weak requests a clearer photo ($0.00 suggested).",
+      aiSummary: "cannot_tell product match, insufficient evidence quality",
+      ruleId: "R5-weak",
     },
     {
       key: "missing",
       label: "3. Missing ear cushion",
-      badge: "Full refund ($89.00)",
+      kind: "full",
       photo: "/samples/head-missing.jpg",
       filename: "head-missing.jpg",
       text: "One of the ear cushions was missing when I opened the box.",
-      hint: "Gemini reports confirmed product match & missing part → Policy suggests a full refund.",
+      aiSummary: "confirmed product match, missing_part damage, sufficient evidence",
+      ruleId: "R1-broken",
     },
   ],
 };
+
+function resolvePreset(spec: SamplePresetSpec, order: Order, cosmeticPercent: number): ResolvedPreset {
+  const fullCents = Math.min(order.amount_cents, order.remaining_cents);
+  const partialCents = Math.floor((fullCents * cosmeticPercent) / 100);
+  const zeroFmt = money(0, order.currency);
+
+  if (spec.kind === "full") {
+    const fullFmt = money(fullCents, order.currency);
+    return {
+      ...spec,
+      badge: `Expected: Full refund (${fullFmt})`,
+      hint: `Expected under Standard policy: AI reports ${spec.aiSummary} → Rule ${spec.ruleId} suggests FULL_REFUND of ${fullFmt}.`,
+    };
+  }
+  if (spec.kind === "partial") {
+    const partFmt = money(partialCents, order.currency);
+    return {
+      ...spec,
+      badge: `Expected: ${cosmeticPercent}% partial refund (${partFmt})`,
+      hint: `Expected under Standard policy: AI reports ${spec.aiSummary} → Rule ${spec.ruleId} (${cosmeticPercent}%) suggests PARTIAL_REFUND of ${partFmt}.`,
+    };
+  }
+  if (spec.kind === "evidence") {
+    return {
+      ...spec,
+      badge: `Expected: Request evidence (${zeroFmt})`,
+      hint: `Expected under Standard policy: AI reports ${spec.aiSummary} → Rule ${spec.ruleId} suggests REQUEST_EVIDENCE (${zeroFmt}).`,
+    };
+  }
+  return {
+    ...spec,
+    badge: `Expected: Manual review (${zeroFmt})`,
+    hint: `Expected under Standard policy: AI reports ${spec.aiSummary} → Rule ${spec.ruleId} routes to REVIEW (${zeroFmt}).`,
+  };
+}
 
 function NewClaimForm() {
   const router = useRouter();
@@ -114,6 +169,7 @@ function NewClaimForm() {
   const orderId = Number(params.get("order"));
   const initialSample = params.get("sample");
   const [order, setOrder] = useState<Order | null>(null);
+  const [cosmeticPercent, setCosmeticPercent] = useState<number>(STANDARD_COSMETIC_PERCENT);
   const [text, setText] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [activeSample, setActiveSample] = useState<string | null>(null);
@@ -121,12 +177,30 @@ function NewClaimForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Read R2-cosmetic percent from backend GET /policies/standard-1.2 if available; fall back to STANDARD_COSMETIC_PERCENT (30)
+    api
+      .policies()
+      .then((list) => {
+        const std = list.find((p) => p.version.startsWith("standard-")) || list[0];
+        const rules = (std?.body?.rules as Array<{ id?: string; percent?: number }> | undefined) || [];
+        const r2 = rules.find((r) => r.id === "R2-cosmetic" && typeof r.percent === "number");
+        if (r2 && typeof r2.percent === "number") {
+          setCosmeticPercent(r2.percent);
+        }
+      })
+      .catch(() => {
+        /* keep STANDARD_COSMETIC_PERCENT = 30 from standard-1.2 */
+      });
+  }, []);
+
   const presets = useMemo(() => {
     if (!order) return [];
-    return SKU_SAMPLES[order.product.sku] || [];
-  }, [order]);
+    const specs = SKU_SAMPLE_SPECS[order.product.sku] || [];
+    return specs.map((s) => resolvePreset(s, order, cosmeticPercent));
+  }, [order, cosmeticPercent]);
 
-  const applySample = useCallback(async (preset: SamplePreset) => {
+  const applySample = useCallback(async (preset: SamplePresetSpec) => {
     setLoadingSample(true);
     setError(null);
     try {
@@ -157,7 +231,7 @@ function NewClaimForm() {
 
   useEffect(() => {
     if (order && initialSample) {
-      const match = (SKU_SAMPLES[order.product.sku] || []).find((p) => p.key === initialSample);
+      const match = (SKU_SAMPLE_SPECS[order.product.sku] || []).find((p) => p.key === initialSample);
       if (match) applySample(match);
     }
   }, [order, initialSample, applySample]);
@@ -229,7 +303,7 @@ function NewClaimForm() {
               </div>
               {currentPreset && (
                 <p className="mt-3 rounded-lg bg-blue-50/80 px-3 py-2 text-xs text-blue-900">
-                  <strong>Expected behavior:</strong> {currentPreset.hint}
+                  {currentPreset.hint}
                 </p>
               )}
             </Card>

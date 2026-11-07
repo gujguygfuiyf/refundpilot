@@ -6,12 +6,14 @@
     "cases_passed": 29,
     "runs_passed": 87,
     "overpayments": 0,
-    "inconsistent_cases": [],
+    "inconsistent_cases": [
+      "N1"
+    ],
     "fallbacks": 0,
-    "latency_p50_ms": 7816,
-    "latency_p95_ms": 11116,
+    "latency_p50_ms": 6798,
+    "latency_p95_ms": 9608,
     "models": {
-      "gemini/gemini-flash-latest": 87
+      "gemini/gemini-3.8-flash": 87
     }
   },
   "cases": [
@@ -34,8 +36,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7816,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6058,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -44,14 +46,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference design, base, and joint construction",
-            "Visible fracture with jagged edges on the upper arm near the elbow joint",
-            "Second severe break along the upper arm segment causing the head to droop downward",
-            "Cardboard shipping box, bubble wrap, and molded foam packaging visible behind the lamp"
+            "White adjustable desk lamp matching reference design, base, and joints",
+            "Severe structural fracture through the upper arm near the elbow joint",
+            "Additional complete fracture through the upper arm section towards the light head",
+            "Lamp head hangs downwards due to fractured support arm",
+            "Original packaging box, bubble wrap, and molded foam inserts visible in the background"
           ],
           "limitations": [
-            "Internal wiring continuity and electronic functionality cannot be verified",
-            "Cannot determine the precise timing or cause of the fractures"
+            "Internal electrical wiring status cannot be determined from the exterior view",
+            "Functional operation of the LED panel or USB charging port cannot be verified from a still photo"
           ]
         },
         {
@@ -61,8 +64,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7655,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8495,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -71,14 +74,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference design and form factor",
-            "Visible fracture line directly adjacent to the upper elbow joint",
-            "Second structural break visible along the upper arm segment near the lamp head",
-            "Opened shipping box, foam inserts, and bubble wrap visible behind the lamp"
+            "White desk lamp matches the design, joint structure, and head shape of the reference product",
+            "Visible fracture and displacement along the upper arm segment adjacent to the elbow joint",
+            "Secondary fracture and sagging along the upper arm toward the lamp head",
+            "Open shipping box, bubble wrap, and molded foam packaging visible beside the lamp"
           ],
           "limitations": [
-            "Electrical functionality cannot be determined from the still photo",
-            "Base angle does not show the USB port"
+            "Electrical functionality cannot be determined from a still image",
+            "Internal wiring integrity within the fractured arm cannot be verified"
           ]
         },
         {
@@ -88,8 +91,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10260,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5983,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -98,15 +101,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference item in base shape, arm geometry, and lamp head design.",
-            "Multiple fractures and sheared plastic casing visible along the upper arm section.",
-            "Plastic arm segment is broken into separate sections near the upper joint and near the lamp head.",
-            "Packaging materials including cardboard box, bubble wrap, and molded foam packaging are visible next to the item."
+            "White desk lamp matches the reference design and form factor.",
+            "Multiple fractures and breaks visible along the upper arm segment.",
+            "The lamp head is sagging downward due to structural failure of the arm.",
+            "Original packaging box, bubble wrap, and molded foam inserts are visible on the desk."
           ],
           "limitations": [
-            "Electrical operation and LED functionality cannot be tested from a still photo.",
-            "USB charging port location on the base is obscured from this angle.",
-            "Cannot verify when or under what circumstances the break occurred."
+            "Electrical functionality cannot be determined from the photo.",
+            "The USB port side of the base is turned away and cannot be viewed."
           ]
         }
       ]
@@ -130,8 +132,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7695,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 9006,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -140,16 +142,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matching the reference shape and color.",
-            "Handle is completely snapped off at both upper and lower attachment points.",
-            "Detached handle sits on the tabletop next to the mug body.",
-            "Prominent vertical crack extends from the rim down the body of the mug.",
+            "Handle is completely detached at both upper and lower attachment points.",
+            "Detached handle piece lies beside the mug on the wooden surface.",
+            "Vertical fracture line extends from near the rim downwards along the body of the mug.",
             "Small ceramic chips and dust are visible on the table surface.",
-            "Open cardboard box and crumpled packing paper appear in the background."
+            "Opened cardboard shipping box and brown paper packaging are visible in the background."
           ],
           "limitations": [
-            "Opposite side of the mug cylinder is not visible.",
-            "Cannot verify interior condition or bottom base from this angle."
+            "Underneath side and opposite face of the mug are not visible.",
+            "Cannot determine exact time or cause of breakage from the photo."
           ]
         },
         {
@@ -159,8 +160,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7536,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8123,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -169,15 +170,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches shape and color of reference product.",
-            "Handle is completely severed at both attachment points.",
-            "Vertical fracture extends down the side of the mug body.",
-            "Detached handle piece and small ceramic chips rest on the table.",
-            "Opened shipping box and brown paper packaging visible behind the mug."
+            "Handle is completely severed from the mug body at both attachment points.",
+            "Detached ceramic handle lies on the surface beside the mug.",
+            "Prominent vertical crack runs down the side of the mug body adjacent to the handle mounts.",
+            "Ceramic chips and fine debris are scattered across the wooden table.",
+            "Opened cardboard box and crumpled paper packaging are visible in the background."
           ],
           "limitations": [
-            "Underside base markings and dimensions cannot be verified from image angle.",
-            "Timing and cause of breakage cannot be determined."
+            "Opposite side and interior of the mug are not visible in the photo.",
+            "Time and cause of damage cannot be determined from the photograph."
           ]
         },
         {
@@ -187,26 +188,24 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8316,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7925,
           "ai": {
-            "product_match": "confirmed",
+            "product_match": "likely",
             "damage_type": "broken",
             "severity": "severe",
             "evidence_quality": "sufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "Handle is completely snapped off from both upper and lower attachment points.",
-            "Detached handle piece lies adjacent to the mug.",
-            "Prominent vertical crack runs from the top rim down through the mug body.",
-            "Rough, exposed ceramic core visible at both fracture points.",
-            "Small ceramic chips and dust particles scattered on the table.",
-            "Opened cardboard shipping box and brown paper packaging visible behind the mug."
+            "Handle is completely severed from both upper and lower attachment points on the mug body.",
+            "Detached handle piece lies on the surface beside the mug.",
+            "Vertical fracture line extends from near the top rim downward past the handle joint.",
+            "Multiple small ceramic fragments and debris visible on the table surface.",
+            "Opened cardboard shipping carton and crumpled packing paper visible in the background."
           ],
           "limitations": [
-            "Internal surface and opposite side of the mug are not visible.",
-            "Exact cause and timing of the fracture cannot be determined from the photograph."
+            "Opposite side and interior of the mug are not visible in the single photo."
           ]
         }
       ]
@@ -230,26 +229,26 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9294,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8872,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
-            "severity": "moderate",
+            "severity": "severe",
             "evidence_quality": "sufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches the general form, color, and finish of the reference product",
-            "The handle is completely detached from the mug body",
-            "Both upper and lower handle joint areas on the mug wall show exposed fracture surfaces",
-            "The detached handle is visible lying next to the mug in one piece",
-            "No other cracks or breaks are visible on the outer mug cylinder"
+            "White ceramic mug standing upright on a countertop.",
+            "Handle is completely detached and lying beside the mug.",
+            "Fracture surfaces visible at both upper and lower handle attachment points on the mug body.",
+            "Detached handle piece shows corresponding ceramic fracture points.",
+            "Mug shape, rim, and color match the product reference image."
           ],
           "limitations": [
-            "Original packaging and shipping box are not pictured",
-            "Internal surface and underside of the mug are not fully visible",
-            "Cannot determine when or under what circumstances the detachment occurred"
+            "Original packaging and shipping box are not depicted.",
+            "Internal surface and opposite side of the mug are not fully visible.",
+            "Cannot determine when or how the handle broke."
           ]
         },
         {
@@ -259,8 +258,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6201,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5738,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -269,14 +268,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches the general form and color of the product reference.",
-            "The mug handle is completely detached from the mug body.",
-            "Detached handle rests flat on the surface next to the mug.",
-            "Exposed fracture points showing unglazed ceramic are visible on both the mug body and handle ends."
+            "White ceramic mug matches the general form, color, and handle shape of the reference item.",
+            "Handle is completely severed from the mug body and rests alongside it.",
+            "Exposed, unglazed ceramic fracture surfaces are visible at both upper and lower attachment points on the mug body and handle.",
+            "Mug cylinder appears intact without visible fractures across the body."
           ],
           "limitations": [
-            "Original packaging and shipping box are not visible.",
-            "Cannot determine when or how the detachment occurred from the photo."
+            "Original packaging and box are not shown.",
+            "Base of the mug is not visible to verify branding or capacity markings."
           ]
         },
         {
@@ -286,24 +285,25 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8134,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6429,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
-            "severity": "moderate",
+            "severity": "severe",
             "evidence_quality": "sufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matching the general shape and color of the reference image",
-            "Handle is completely detached at both upper and lower connection points",
-            "Detached handle piece rests beside the mug on the counter",
-            "Exposed unglazed ceramic material visible at the fracture points on both the mug body and the handle"
+            "White ceramic mug matches general shape and color of reference product.",
+            "Handle is completely separated from the mug body.",
+            "Rough fracture surfaces with exposed ceramic are visible at both upper and lower attachment points on the mug body.",
+            "Detached handle piece lies adjacent to the mug on the countertop."
           ],
           "limitations": [
-            "Original packaging and shipping box are not shown",
-            "Opposite side and base of the mug are not visible in the frame"
+            "Original packaging mentioned by the buyer is not visible.",
+            "Interior bottom and opposite side of the mug are not fully visible.",
+            "Photo cannot confirm when or how the handle detached."
           ]
         }
       ]
@@ -327,8 +327,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7031,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7965,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -337,14 +337,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Headband is completely snapped into two pieces at the top center",
-            "Fractured edges are visible across both severed ends of the headband",
-            "Ear cup design, hinge structure, and wire adjustment loops match the reference image",
-            "Headphones are resting on a wooden surface in a non-stock environment"
+            "Headband is completely snapped across the center into two separate ends.",
+            "Jagged break edges visible on both fractured ends of the headband.",
+            "Earcup design, yoke mount, and slider loops match the reference product.",
+            "Ear cushions and outer earcups appear intact without evident cracks."
           ],
           "limitations": [
-            "Internal wiring continuity cannot be fully inspected",
-            "Electronic and acoustic functionality cannot be verified from a still photo"
+            "Internal wiring condition at the break point cannot be fully verified.",
+            "Electronic functionality cannot be assessed from a still photo.",
+            "Circumstances or cause of the break cannot be determined."
           ]
         },
         {
@@ -354,8 +355,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7303,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6077,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -364,14 +365,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Headband is snapped completely through at the top center into two pieces.",
-            "Internal structure/edges are exposed at the break points.",
-            "Earcups, ear cushions, and hinge mountings match the reference product.",
-            "Photo shows headphones resting on a wooden surface."
+            "Headphones match reference design in earcup shape, yoke structure, and headband slider clips.",
+            "Headband is completely fractured through at the top center into two separate ends.",
+            "Fracture shows rough/broken edges on both sides of the headband assembly.",
+            "Item rests on a wooden surface in a clear, well-lit photograph."
           ],
           "limitations": [
-            "Electronic functionality cannot be verified from the photo.",
-            "Cause and timing of the fracture cannot be determined."
+            "Serial numbers or identifying markings are not visible.",
+            "Internal electronic functionality and wiring continuity cannot be tested from the image."
           ]
         },
         {
@@ -381,8 +382,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6120,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5343,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -391,13 +392,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Headband is snapped completely into two pieces at the top arch",
-            "Headband design, ear cups, and metal wire slider details match the reference product",
-            "Ear cushions and cups remain attached to each severed section of the headband"
+            "Headband is completely snapped into two pieces near the apex.",
+            "Jagged fracture edges are visible at the break site.",
+            "Earcup design, hinges, padding, and metal adjustment loops match reference image."
           ],
           "limitations": [
-            "Internal wiring condition and audio functionality cannot be tested from the image",
-            "Circumstances or timing of the break cannot be determined"
+            "Internal wiring integrity cannot be fully verified.",
+            "Functional audio performance cannot be evaluated from the photo."
           ]
         }
       ]
@@ -422,61 +423,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7770,
-          "ai": {
-            "product_match": "likely",
-            "damage_type": "cosmetic",
-            "severity": "minor",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "White ceramic mug rests on a wooden table, matching reference design.",
-            "A thin, dark horizontal mark or scratch is visible on the exterior body.",
-            "No structural cracks, fractures, or missing ceramic chips are visible."
-          ],
-          "limitations": [
-            "Cannot determine if the mark is a surface scuff (e.g., metal transfer) or a scratch penetrating the glaze.",
-            "Opposite side and base of the mug are not visible."
-          ]
-        },
-        {
-          "outcome": "PARTIAL_REFUND",
-          "cents": 570,
-          "rule": "R2-cosmetic",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7869,
-          "ai": {
-            "product_match": "likely",
-            "damage_type": "cosmetic",
-            "severity": "minor",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "White ceramic mug positioned on a wooden surface",
-            "Overall design, handle shape, and color match the reference mug",
-            "Thin, dark linear mark visible on the exterior side wall of the mug",
-            "No cracks through the body, missing fragments, or broken pieces visible"
-          ],
-          "limitations": [
-            "Cannot determine if the mark is a surface scratch, metal transfer mark, or crack through the glaze",
-            "Opposite side and underside of the mug are not shown"
-          ]
-        },
-        {
-          "outcome": "PARTIAL_REFUND",
-          "cents": 570,
-          "rule": "R2-cosmetic",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6139,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5005,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "cosmetic",
@@ -485,13 +433,65 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches reference product shape, color, and handle design.",
-            "A thin, dark horizontal line or scratch is visible on the exterior side wall.",
-            "The mug rim, handle, and body appear structurally intact without chips or large fractures."
+            "White ceramic mug matches the reference item design and handle profile.",
+            "A thin, dark linear scratch or mark is visible on the exterior wall of the mug.",
+            "No structural cracks, breaks, or chips are visible on the displayed surfaces."
           ],
           "limitations": [
-            "Cannot determine if the line is a surface scuff/metal mark or a scratch penetrating the glaze.",
-            "The opposite side, interior bottom, and underside base are not visible in the photo."
+            "Cannot determine if the mark is a permanent scratch into the glaze or a surface scuff.",
+            "Reverse side, rim details, and bottom of the mug are not visible."
+          ]
+        },
+        {
+          "outcome": "PARTIAL_REFUND",
+          "cents": 570,
+          "rule": "R2-cosmetic",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5827,
+          "ai": {
+            "product_match": "likely",
+            "damage_type": "cosmetic",
+            "severity": "minor",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "White ceramic mug placed on a wooden surface.",
+            "A thin, dark horizontal/curved line mark is visible on the exterior side wall.",
+            "No visible chips, cracks, or fractures on the rim, handle, or base."
+          ],
+          "limitations": [
+            "Cannot determine if the mark is a permanent scratch into the glaze or a removable surface scuff.",
+            "The opposite side, interior bottom, and base underside are not visible."
+          ]
+        },
+        {
+          "outcome": "PARTIAL_REFUND",
+          "cents": 570,
+          "rule": "R2-cosmetic",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5900,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "cosmetic",
+            "severity": "minor",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "White ceramic mug matches the design, shape, and handle of the reference image.",
+            "A thin, dark horizontal scratch or mark is visible on the exterior side wall of the mug.",
+            "No structural cracks, chips, or broken pieces are observed."
+          ],
+          "limitations": [
+            "Depth of the scratch or whether it is surface transfer cannot be verified from a single photo.",
+            "Opposite side, base, and full interior cannot be viewed."
           ]
         }
       ]
@@ -516,8 +516,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6513,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5462,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -526,13 +526,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White circular lamp base matching the joint design of the reference lamp",
-            "Dark grey scuff mark visible along the curved side rim and edge of the base",
-            "No visible cracks or structural fractures on the photographed section of the base"
+            "White circular lamp base and lower joint match the reference lamp design",
+            "Dark grey scuff or transfer mark located on the side edge and top rim of the base",
+            "No visible cracks or fractures on the base"
           ],
           "limitations": [
-            "Upper lamp arm, LED head, and USB port are cropped out of view",
-            "Functional operation and electronic charging capability cannot be tested from the image"
+            "Upper arm, lamp head, and USB port are cropped out of the photo",
+            "Cannot determine if the scuff is surface residue or damage to the underlying material",
+            "Electrical functionality cannot be verified from the image"
           ]
         },
         {
@@ -542,8 +543,35 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7251,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6451,
+          "ai": {
+            "product_match": "likely",
+            "damage_type": "cosmetic",
+            "severity": "minor",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "White circular lamp base and lower hinge joint match the reference model design",
+            "A dark grey scuff or surface abrasion mark is visible along the front curved edge of the base",
+            "No structural cracks or fractures visible on the base or hinge assembly"
+          ],
+          "limitations": [
+            "Full lamp arm and LED head are not visible in the frame",
+            "Cannot determine if the mark is superficial residue or permanent paint damage",
+            "Electrical functionality cannot be determined from a still photo"
+          ]
+        },
+        {
+          "outcome": "PARTIAL_REFUND",
+          "cents": 1470,
+          "rule": "R2-cosmetic",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5157,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -553,36 +581,11 @@
           },
           "observations": [
             "White circular lamp base and lower hinge assembly match the reference design.",
-            "A dark grey scuff or transfer mark is visible on the curved edge and side of the base."
-          ],
-          "limitations": [
-            "Upper arm and lamp head are cropped out of view.",
-            "Electrical operation and USB port function cannot be verified from the image."
-          ]
-        },
-        {
-          "outcome": "PARTIAL_REFUND",
-          "cents": 1470,
-          "rule": "R2-cosmetic",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6045,
-          "ai": {
-            "product_match": "likely",
-            "damage_type": "cosmetic",
-            "severity": "minor",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "White circular lamp base and lower hinge joint match the reference lamp design.",
-            "Dark grey scuff mark visible on the outer rounded edge of the base.",
+            "Dark grey scuff or abrasion mark is visible along the upper rim and side wall of the base.",
             "No structural cracks or fractures visible on the base."
           ],
           "limitations": [
-            "Upper arm, lamp head, and USB charging port are outside the frame.",
+            "Upper lamp arm, lamp head, and USB port are cropped out of view.",
             "Electrical functionality cannot be determined from the photo."
           ]
         }
@@ -609,8 +612,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9200,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7656,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -619,14 +622,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches the reference item design and handle shape.",
-            "Prominent chip missing along the top rim edge.",
-            "Horizontal dark scratch or scuff mark across the exterior body."
+            "White ceramic mug matches the overall shape, color, and handle profile of the reference product",
+            "Visible chip with missing ceramic material on the upper rim near the handle",
+            "Dark horizontal scratch or scuff mark across the outer side wall of the mug"
           ],
           "limitations": [
-            "Opposite side of the mug is not visible.",
-            "Interior bottom and underside of the mug are not visible.",
-            "Depth of the exterior scratch cannot be definitively verified from the single angle."
+            "Opposite side, interior bottom, and base of the mug are not visible in the photo",
+            "Depth of the surface scratch cannot be fully measured"
           ]
         },
         {
@@ -636,23 +638,23 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6185,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7164,
           "ai": {
-            "product_match": "confirmed",
+            "product_match": "likely",
             "damage_type": "broken",
             "severity": "moderate",
             "evidence_quality": "sufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches the reference item in color, shape, and handle design.",
-            "A chip is visible on the upper outer rim near the handle.",
-            "A horizontal dark scuff or scratch mark is visible across the middle of the mug body."
+            "White ceramic mug matching the shape and style of the reference item.",
+            "Prominent chip missing from the upper outer rim near the handle.",
+            "Dark horizontal scratch or scuff mark across the middle exterior wall."
           ],
           "limitations": [
-            "Opposite side and interior bottom of the mug are not visible.",
-            "Cannot determine whether the dark mark is surface transfer or a gouge in the ceramic glaze."
+            "Only one side of the mug is visible.",
+            "Mug base, underside, and interior floor are not visible in the photo."
           ]
         },
         {
@@ -662,8 +664,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6869,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6197,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -672,12 +674,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug matches the design and handle profile of the reference image",
-            "Visible chip missing along the top rim edge near the handle",
-            "Horizontal dark scratch or mark across the exterior body of the mug"
+            "White ceramic mug visually matches the reference product in shape and color",
+            "Visible chip missing from the upper rim near the handle",
+            "Dark horizontal scuff or scratch mark across the side of the mug"
           ],
           "limitations": [
-            "The opposite side and underside of the mug are not visible"
+            "Only one angle of the mug is shown",
+            "Opposite side and base of the mug are not visible"
           ]
         }
       ]
@@ -693,34 +696,34 @@
       ],
       "max_cents": 0,
       "status": "pass",
-      "consistent": true,
+      "consistent": false,
       "runs": [
         {
-          "outcome": "REVIEW",
+          "outcome": "REQUEST_EVIDENCE",
           "cents": 0,
-          "rule": "R7-nodamage",
+          "rule": "R5-weak",
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9882,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8291,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
             "severity": "none",
-            "evidence_quality": "sufficient",
+            "evidence_quality": "insufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White articulated desk lamp matches reference image design and proportions.",
-            "Lamp is standing upright fully assembled on a desk.",
-            "Arm joints, lamp head, and base show no cracks, fractures, or physical breakage.",
-            "Power cable is visible behind the base, but the lamp is not illuminated."
+            "White adjustable desk lamp positioned upright on a wooden desk.",
+            "Lamp matches the design, hinges, and base of the reference product.",
+            "No visible cracks, fractures, or physical breakage on the joints, head, or base.",
+            "The lamp is not illuminated in the photo."
           ],
           "limitations": [
-            "Electrical operation and LED functionality cannot be tested or confirmed via still photo.",
-            "Functionality of the USB charging port cannot be assessed.",
-            "Reverse side and underside of the base are not visible in the provided angle."
+            "Electrical and functional operation cannot be verified from a still photograph.",
+            "Power cable connection to a working outlet is not fully visible.",
+            "Functionality of the USB charging port cannot be assessed."
           ]
         },
         {
@@ -730,8 +733,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9852,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6334,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -740,41 +743,43 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White adjustable desk lamp matches the reference image in structure, joints, and base design.",
-            "Lamp is standing upright and fully assembled on a wooden desk.",
-            "No visible cracks, fractures, or physical breakage on the arm, joints, or lamp head.",
-            "The lamp is not illuminated in the image."
+            "White desk lamp standing upright on a wooden desk",
+            "Arm joints, hinge connections, and head appear intact",
+            "No visible cracks, fractures, or missing parts on the lamp body",
+            "Lamp is not illuminated in the photograph"
           ],
           "limitations": [
-            "Electrical functionality and illumination cannot be determined from a still photo.",
-            "USB charging port condition and operation cannot be confirmed from the viewing angle."
+            "Electrical operation and power state cannot be verified from a still image",
+            "USB charging port functionality cannot be determined",
+            "Only one viewing angle of the item is provided"
           ]
         },
         {
-          "outcome": "REVIEW",
+          "outcome": "REQUEST_EVIDENCE",
           "cents": 0,
-          "rule": "R7-nodamage",
+          "rule": "R5-weak",
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11156,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 9608,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
             "severity": "none",
-            "evidence_quality": "sufficient",
+            "evidence_quality": "unclear",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp stands upright on a wooden desk.",
-            "Hinges, arm segments, and head appear structurally intact with no visible cracks.",
-            "The lamp is not illuminated in the photograph."
+            "White desk lamp matches the reference image in form, joints, base, and head design",
+            "Lamp is standing upright on a wooden desk without visible cracks or structural breaks",
+            "Lamp head and arm appear fully intact and articulated",
+            "Lamp is not illuminated in the photograph"
           ],
           "limitations": [
-            "Electrical functionality and power delivery cannot be verified from a still image.",
-            "USB port and cable connection are not clearly visible.",
-            "Underside and reverse side of the lamp are not shown."
+            "Cannot determine if the lamp is connected to a working power source",
+            "Electrical and functional operation cannot be verified from a still photo",
+            "USB port condition is not clearly visible from this angle"
           ]
         }
       ]
@@ -799,59 +804,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7043,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "A white ceramic mug is shown upright and intact on a wooden table.",
-            "The mug matches the shape, color, and handle design of the reference image.",
-            "No cracks, chips, or shattered pieces are visible on the displayed mug."
-          ],
-          "limitations": [
-            "The interior of the mug is only partially visible from the side angle.",
-            "The reverse side and underside of the mug are not visible."
-          ]
-        },
-        {
-          "outcome": "REVIEW",
-          "cents": 0,
-          "rule": "R7-nodamage",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6955,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "A white ceramic mug is shown standing intact on a wooden table",
-            "No visible cracks, chips, or shattering on the displayed sides of the mug",
-            "The mug design, color, and handle shape visually match the reference image"
-          ],
-          "limitations": [
-            "The interior, base, and opposite side of the mug are not visible in the single photo provided"
-          ]
-        },
-        {
-          "outcome": "REVIEW",
-          "cents": 0,
-          "rule": "R7-nodamage",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6751,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4821,
           "ai": {
             "product_match": "likely",
             "damage_type": "none_visible",
@@ -860,13 +814,65 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "A white ceramic mug stands upright on a wooden table.",
-            "No visible cracks, fractures, chips, or shattering on the body or handle.",
-            "Handle and rim appear intact and undamaged."
+            "A white ceramic mug sits upright on a wooden table.",
+            "The visible exterior body, rim, and handle appear fully intact.",
+            "No cracks, chips, fractures, or shattered pieces are visible."
           ],
           "limitations": [
-            "Opposite side and base of the mug are not visible.",
-            "Interior of the mug is largely obscured from view."
+            "The interior of the mug is only partially visible.",
+            "The reverse side and the bottom base of the mug are not shown."
+          ]
+        },
+        {
+          "outcome": "REVIEW",
+          "cents": 0,
+          "rule": "R7-nodamage",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5047,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "White ceramic mug rests intact on a wooden table.",
+            "Handle is intact and securely joined to the body.",
+            "No cracks, chips, breaks, or shattered fragments are visible."
+          ],
+          "limitations": [
+            "The interior and rear face of the mug are not visible.",
+            "The underside of the mug cannot be seen."
+          ]
+        },
+        {
+          "outcome": "REVIEW",
+          "cents": 0,
+          "rule": "R7-nodamage",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4643,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Buyer photo shows a white ceramic mug standing intact on a wooden table",
+            "No visible cracks, chips, fractures, or shattered fragments on the mug exterior or handle",
+            "Item matches the cylindrical shape, white color, and handle design of the reference product"
+          ],
+          "limitations": [
+            "Opposite side of the mug is not visible",
+            "Interior and bottom base of the mug cannot be fully seen"
           ]
         }
       ]
@@ -891,8 +897,62 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 12005,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7420,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Headphones shown match the reference model design, earcup mounts, and headband style.",
+            "Item is resting intact on a grey fabric couch.",
+            "No visible cracks, fractures, or structural damage appear on the headband surface in the provided photo."
+          ],
+          "limitations": [
+            "Photo is taken from a distance without a close-up of the reported crack.",
+            "Portions of the headband are obscured by angle, shadow, and contact with the sofa surface.",
+            "Electronic functionality cannot be verified from a still image."
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R5-weak",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7244,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Headphones shown match the reference model design, earcups, and headband structure.",
+            "Headphones are resting on a fabric sofa in a wide-angle shot.",
+            "No visible cracks, fractures, or structural deformities are apparent on the visible exterior of the headband."
+          ],
+          "limitations": [
+            "Distance and angle prevent inspection of the underside, inner band, or opposite side of the headband.",
+            "Resolution is insufficient to detect fine hairline fractures or internal structural failure.",
+            "Functional and electrical condition cannot be evaluated from a still image."
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R5-weak",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7833,
           "ai": {
             "product_match": "likely",
             "damage_type": "none_visible",
@@ -901,70 +961,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Headphones rest on a gray fabric sofa.",
-            "Design and components match the reference product.",
-            "Headband arch appears structurally intact without visible breaks.",
-            "No visible cracks, fractures, or cosmetic defects on visible surfaces."
+            "Headphones appear consistent in design and color with the reference product",
+            "Headphones are shown resting on a fabric couch",
+            "No visible cracks, fractures, or structural splits are apparent on the visible portions of the headband"
           ],
           "limitations": [
-            "Photo is taken from a medium distance lacking close-up detail.",
-            "Opposite side and inner sections of headband are partially obscured.",
-            "Hairline cracks or interior structural damage cannot be ruled out."
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R5-weak",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10361,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Headphones shown resting on a grey sofa.",
-            "Form factor and hardware match the reference image design.",
-            "No visible cracks, fractures, or deformation on the visible outer or inner headband.",
-            "Earcups and padding appear fully intact."
-          ],
-          "limitations": [
-            "Wide-angle shot taken from a distance without close-up detail.",
-            "Portions of the headband underside and inner joints are obscured or out of focus.",
-            "Fine cracks or internal structural breaks cannot be verified from the provided angle."
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R5-weak",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10623,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Headphones shown match the design, earcups, and headband style of the reference item.",
-            "Item is resting on a grey fabric sofa.",
-            "Visible sections of the headband, slider loop, and earcups show no visible cracks or fractures."
-          ],
-          "limitations": [
-            "Photo is taken at a distance without close-up inspection of the headband surface.",
-            "Portions of the outer curve and underside of the headband are partially obscured.",
-            "Hairline fractures or underside cracks cannot be evaluated from this single wide shot."
+            "Photo is taken from a distance without a close-up of the reported damage",
+            "The underside, interior structure, and opposite side of the headband cannot be fully inspected",
+            "Internal or hairline cracking cannot be confirmed from the single angle provided"
           ]
         }
       ]
@@ -989,8 +993,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9338,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6945,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -999,14 +1003,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Item photographed is a white articulated desk lamp, not a ceramic mug",
-            "Visible fracture lines and breaks across the upper arm segment of the lamp",
-            "Opened cardboard shipping box, bubble wrap, and molded foam packaging visible on desk",
-            "No ceramic mug appears in the photo"
+            "Buyer photo displays a white adjustable desk lamp, not a ceramic coffee mug.",
+            "Structural fractures and breaks are visible along the upper arm of the lamp.",
+            "A cardboard box, molded foam, and bubble wrap packaging are visible behind the lamp.",
+            "No ceramic coffee mug is present in the photo."
           ],
           "limitations": [
-            "Shipping label and package identification details are not visible",
-            "Cannot determine if the pictured lamp was shipped for this specific order"
+            "Cannot determine if the lamp was shipped in error or if the photo is from a different order.",
+            "Shipping labels on the packaging box are not visible to verify order details."
           ]
         },
         {
@@ -1016,8 +1020,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8377,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6757,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1026,13 +1030,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Photo displays a white articulated desk lamp instead of a ceramic coffee mug",
-            "Multiple fractures and breaks are visible along the upper arm section of the desk lamp",
-            "Open shipping box with foam inserts and bubble wrap is visible on the desk behind the lamp"
+            "Buyer photo shows a white articulated desk lamp, not a ceramic coffee mug",
+            "Visible fracture and cracking on the upper arm segment of the lamp",
+            "Cardboard shipping box, bubble wrap, and molded foam inserts are visible on the desk"
           ],
           "limitations": [
-            "Cannot verify shipping label or packaging identifiers",
-            "Cannot determine whether the wrong item was received or an incorrect photo was submitted"
+            "Shipping label and package barcodes are not visible",
+            "No ceramic coffee mug or related packaging is visible in the frame"
           ]
         },
         {
@@ -1042,8 +1046,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10152,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6741,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1052,13 +1056,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Image displays a white adjustable desk lamp, not a ceramic coffee mug.",
-            "The lamp arm shows multiple distinct structural fractures along the segmented stem.",
-            "An opened cardboard box with molded foam inserts tailored to a lamp is in the background."
+            "Buyer photo shows a white articulated desk lamp instead of a ceramic coffee mug",
+            "Multiple structural fractures are visible along the upper arm of the desk lamp",
+            "Open packaging box with molded foam inserts sized for the lamp is visible in the background"
           ],
           "limitations": [
-            "No shipping box label, tracking details, or order packing slip are visible.",
-            "Cannot determine whether this lamp was received in the order for the mug or comes from an unrelated purchase."
+            "No ceramic coffee mug or related packaging is visible",
+            "Shipping label and tracking information are not visible to verify order identity"
           ]
         }
       ]
@@ -1083,8 +1087,36 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10420,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 24632,
+          "ai": {
+            "product_match": "mismatch",
+            "damage_type": "broken",
+            "severity": "severe",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Buyer photo shows a white ceramic mug rather than the ordered LED desk lamp",
+            "The mug handle is completely broken off and resting beside the mug",
+            "A vertical crack runs along the side of the mug body from the rim downward",
+            "Ceramic chips and dust are visible on the wooden table surface",
+            "An opened cardboard shipping box and brown paper packaging are in the background"
+          ],
+          "limitations": [
+            "Shipping label and package tracking details are not visible on the box",
+            "Cannot determine whether the mug was sent in error or is an unrelated item"
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R4-mismatch",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 10851,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1093,71 +1125,44 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo shows a white ceramic mug, not the ordered LED desk lamp",
-            "Mug handle is completely detached from the body with exposed fracture surfaces",
-            "Vertical crack extends along the side of the mug body",
+            "Buyer photo shows a white ceramic mug, not an LED desk lamp",
+            "Ceramic mug handle is completely detached with rough fracture surfaces",
+            "Vertical fracture line extends down the wall of the mug from the upper handle mount",
+            "Small ceramic fragments and debris scattered on the table",
+            "Cardboard shipping box and kraft paper packaging visible behind the mug"
+          ],
+          "limitations": [
+            "The ordered LED desk lamp is not present in the photo",
+            "Shipping label on the cardboard box is not visible to verify order details",
+            "Cannot determine if the wrong item was delivered or the incorrect photo was submitted"
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R4-mismatch",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8219,
+          "ai": {
+            "product_match": "mismatch",
+            "damage_type": "wrong_item",
+            "severity": "severe",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Photo displays a white ceramic mug rather than the ordered LED desk lamp",
+            "The mug handle is completely broken off from the cup body",
+            "A vertical crack extends down the wall of the mug from the upper handle fracture point",
             "Ceramic chips and dust are scattered on the wooden surface",
-            "Open corrugated shipping box and brown packing paper are visible in the background"
+            "An opened cardboard box and packing paper are present in the background"
           ],
           "limitations": [
-            "No shipping label or packaging text is visible to verify order or tracking information",
-            "Cannot determine if the mug was received in the package or belongs to an unrelated purchase"
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R4-mismatch",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10873,
-          "ai": {
-            "product_match": "mismatch",
-            "damage_type": "wrong_item",
-            "severity": "severe",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Item shown is a white ceramic mug, not an LED desk lamp",
-            "Mug handle is completely detached at both attachment points",
-            "Vertical fracture line extends down the body of the mug from the upper handle break",
-            "Chipped material and small fragments are scattered on the surface near the mug",
-            "Open cardboard shipping carton with paper packing material is visible behind the mug"
-          ],
-          "limitations": [
-            "No shipping label or tracking information is visible on the carton",
-            "Cannot determine if the ordered desk lamp was packaged separately"
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R4-mismatch",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8627,
-          "ai": {
-            "product_match": "mismatch",
-            "damage_type": "wrong_item",
-            "severity": "severe",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Image shows a white ceramic mug, not the ordered white LED desk lamp",
-            "Mug handle is fully detached with exposed rough ceramic surfaces",
-            "Vertical fracture line extends down the wall of the ceramic mug",
-            "Ceramic fragments and powder are visible on the table surface",
-            "Open cardboard box and brown packing paper are present behind the mug"
-          ],
-          "limitations": [
-            "No LED desk lamp is visible anywhere in the photograph",
-            "Shipping label on the box is not visible to verify order details"
+            "No LED desk lamp or lamp components are shown in the photo",
+            "Shipping label and package identifiers are not visible to verify order details"
           ]
         }
       ]
@@ -1182,8 +1187,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8800,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6651,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1192,14 +1197,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo shows black over-ear headphones, not a white LED desk lamp",
-            "Headband of the headphones is completely fractured into two separate sections at the top",
-            "Internal wiring or band structure is visible at the break points",
-            "No desk lamp or related packaging is visible in the submission"
+            "Buyer photo displays a pair of black over-ear headphones.",
+            "Headband of the headphones is snapped completely into two parts.",
+            "Product ordered and shown in reference is a white adjustable LED desk lamp.",
+            "The submitted item does not match the product ordered."
           ],
           "limitations": [
-            "Cannot determine whether the buyer received an incorrect item or submitted photos for an unrelated order",
-            "No shipping label or invoice visible to verify package contents or identity"
+            "No photo of the ordered LED desk lamp or packaging was provided.",
+            "Cannot determine if the wrong item was delivered or the wrong photo was submitted."
           ]
         },
         {
@@ -1209,8 +1214,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9925,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7835,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1219,14 +1224,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo displays black over-ear headphones on a wooden surface",
-            "Headband of the headphones is completely fractured across the top arch",
-            "The ordered item is a white articulated LED desk lamp",
-            "No desk lamp is present in the provided evidence"
+            "Buyer photo shows black over-ear headphones on a wooden surface",
+            "Headband of the headphones is completely snapped in half at the apex",
+            "The item pictured is not the ordered white LED desk lamp"
           ],
           "limitations": [
-            "Cannot verify condition of the ordered LED desk lamp",
-            "Cannot verify whether the buyer received the wrong item or submitted an unrelated photo"
+            "No photo of the ordered LED desk lamp or its packaging is provided",
+            "Cannot determine whether the wrong item was delivered or an unrelated item was photographed"
           ]
         },
         {
@@ -1236,8 +1240,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8388,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8102,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -1246,14 +1250,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo shows black over-ear headphones, not a white LED desk lamp.",
-            "The headband of the headphones is completely snapped into two pieces.",
-            "Internal wiring or core within the headband appears severed or separated.",
-            "No desk lamp is present in the buyer photo."
+            "Buyer photo shows black over-ear headphones on a wooden surface.",
+            "Reference image displays a white articulated LED desk lamp.",
+            "The headband of the headphones is completely snapped in half at the top center.",
+            "No LED desk lamp or lamp packaging is visible in the submitted photo."
           ],
           "limitations": [
-            "Cannot determine why headphones were submitted for an LED desk lamp order.",
-            "No brand or serial number is identifiable on the photographed headphones."
+            "Cannot evaluate the condition or presence of the ordered LED desk lamp.",
+            "Cannot determine whether headphones were received instead of the lamp or photographed in error."
           ]
         }
       ]
@@ -1278,8 +1282,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11116,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6693,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1288,14 +1292,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "An object resembling a desk lamp with a round base is visible on a surface.",
-            "A cardboard shipping box and packaging materials appear in the background.",
-            "The entire photo is severely blurred and out of focus."
+            "The image is severely out of focus and blurred.",
+            "A white round base and an angled arm-like object are visible on a desk.",
+            "An open cardboard box and packaging materials are visible in the background."
           ],
           "limitations": [
-            "Image is completely out of focus, preventing examination of details.",
-            "Structural integrity of the arm or joints cannot be seen.",
-            "Cannot confirm whether the item matches the reference model."
+            "Extreme blurriness prevents identification of the specific product model.",
+            "Cannot determine if the lamp arm is broken, unhinged, or simply positioned downward.",
+            "Surface condition, joints, and any potential fractures are not visible."
           ]
         },
         {
@@ -1305,8 +1309,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8365,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5951,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1315,14 +1319,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Image is severely blurred and out of focus across the entire frame.",
-            "A blurry shape resembling a circular lamp base and angled arm is visible on a table.",
-            "Packaging materials and an open box are indistinctly visible in the background."
+            "Image shows an object resembling a white desk lamp on a wooden table near packaging",
+            "Entire photograph is severely out of focus and blurred"
           ],
           "limitations": [
-            "Severe lack of focus prevents verifying the item make or model.",
-            "Cannot inspect the arm or joints for breakage, fractures, or defects.",
-            "Functional and physical condition of the item cannot be evaluated."
+            "Extreme blurriness prevents assessment of item details, joints, and surfaces",
+            "Cannot determine whether the lamp arm is broken or intact",
+            "Cannot verify exact product match against reference image"
           ]
         },
         {
@@ -1332,8 +1335,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6856,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5686,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1342,14 +1345,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White object resembling a lamp base and articulated arm on a wooden surface",
-            "Cardboard packaging box visible in the background"
+            "Buyer photo shows an object resembling a white lamp base and arm on a table next to packaging",
+            "Image is extremely out of focus and blurred across the entire frame"
           ],
           "limitations": [
-            "Image is extremely blurred and completely out of focus",
-            "Surface details, joints, and potential fractures cannot be seen",
-            "Cannot confirm if the item matches the reference model",
-            "Cannot evaluate the claimed arm damage"
+            "Photo is severely blurred, preventing identification of product details",
+            "Cannot determine if the lamp arm is broken or intact",
+            "Cannot confirm whether the item matches the reference model"
           ]
         }
       ]
@@ -1374,8 +1376,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8386,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5137,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -1384,15 +1386,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White cylindrical object consistent with mug body.",
-            "Curved white piece detached and lying flat on the surface beside the mug.",
-            "Two discolored or exposed areas visible on the cylinder where a handle would mount.",
-            "Cardboard shipping box and packing material visible in background."
+            "Buyer photo is heavily out of focus and blurred.",
+            "A white cylindrical mug-shaped object is visible on a surface.",
+            "A curved white piece resembling a detached handle rests beside the mug body.",
+            "Cardboard packaging and brown paper packing material appear in the background."
           ],
           "limitations": [
-            "Photo is severely out of focus, obscuring fine details.",
-            "Cannot inspect fracture points or surface condition due to heavy blur.",
-            "Product markings, branding, or specific dimensions cannot be verified."
+            "Image is severely blurred, preventing clear verification of break surfaces, edges, or fine details.",
+            "Specific product branding, markings, or dimensions cannot be verified due to lack of focus."
           ]
         },
         {
@@ -1402,23 +1403,25 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9001,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6953,
           "ai": {
-            "product_match": "cannot_tell",
+            "product_match": "likely",
             "damage_type": "broken",
             "severity": "moderate",
-            "evidence_quality": "insufficient",
+            "evidence_quality": "unclear",
             "stock_photo_suspected": false
           },
           "observations": [
-            "A white cylindrical object resembling a mug sits on a surface.",
-            "A detached curved white piece resembling a handle lies adjacent to the mug.",
-            "Cardboard packaging and packing paper are present in the blurred background."
+            "White cylindrical object consistent with mug shape",
+            "Detached curved white piece resembling a mug handle lying on the surface",
+            "Two contact points visible on the side of the mug body where a handle was attached",
+            "Open cardboard box and packaging paper visible in the background"
           ],
           "limitations": [
-            "The buyer photo is heavily out of focus and blurred across the entire frame.",
-            "Specific fracture points, item markings, and exact product identity cannot be confirmed due to blur."
+            "Image is severely blurred and out of focus",
+            "Fracture lines, surface texture, and exact break edges cannot be clearly inspected",
+            "Product markings or specific model details cannot be verified due to blur"
           ]
         },
         {
@@ -1428,24 +1431,25 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7204,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7044,
           "ai": {
-            "product_match": "cannot_tell",
+            "product_match": "likely",
             "damage_type": "broken",
             "severity": "moderate",
             "evidence_quality": "insufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "Image shows a white cylindrical shape consistent with a mug.",
-            "A curved white piece resembling a handle lies detached beside the cylinder.",
-            "Cardboard packaging is visible in the background."
+            "White cylindrical mug body shown on a wooden surface",
+            "Curved white ceramic piece resembling a detached handle rests beside the mug",
+            "Two contact points on the mug cylinder appear to show where the handle separated",
+            "Cardboard packaging box visible in the background"
           ],
           "limitations": [
-            "Image is completely out of focus and heavily blurred.",
-            "Exact details, surface condition, and fracture points cannot be clearly distinguished.",
-            "Cannot conclusively confirm item identity or specific product match due to severe blur."
+            "The buyer photo is completely out of focus and heavily blurred",
+            "Fine fracture surfaces and exact break lines cannot be inspected",
+            "Surface condition and presence of smaller chips or cracks cannot be determined"
           ]
         }
       ]
@@ -1470,24 +1474,24 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10187,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8130,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
-            "severity": "severe",
+            "severity": "moderate",
             "evidence_quality": "insufficient",
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp visible on a desk alongside open shipping box and packaging foam",
-            "Overall silhouette, round base, and hinge match the product reference",
-            "Upper segment of the lamp arm appears bent or snapped downward at an abnormal angle"
+            "White desk lamp corresponding to the reference model silhouette is visible on a surface next to shipping packaging",
+            "An irregular downward bend or break is visible along the upper arm section",
+            "The overall image is severely underexposed with very low contrast"
           ],
           "limitations": [
-            "The photo is extremely underexposed and dark",
-            "Specific fracture lines or breakage details cannot be clearly inspected due to poor lighting",
-            "Electrical functionality cannot be determined from the image"
+            "Severe darkness obscures fine details, surface texture, and the exact fracture line",
+            "Cannot confirm whether internal wiring or structural material is fully severed",
+            "Electrical functionality cannot be determined from a still photo"
           ]
         },
         {
@@ -1497,8 +1501,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9037,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6872,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -1507,14 +1511,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp with circular base and articulated arm matching reference design",
-            "Open cardboard box and packaging materials visible in the background",
-            "Upper arm segment appears fractured or bent abnormally midway toward the lamp head"
+            "Desk lamp appears visually consistent in shape with the reference item",
+            "Open shipping box and packaging materials visible on the desk behind the lamp",
+            "Upper segment of the lamp arm appears sharply bent or sagging downward at an abnormal angle"
           ],
           "limitations": [
-            "Photo is extremely dark and underexposed, obscuring fine surface details",
-            "Exact nature and point of fracture cannot be clearly inspected due to low lighting",
-            "Functional status of the LED light and USB port cannot be verified"
+            "The photograph is severely underexposed and too dark to clearly inspect surface details",
+            "Cannot definitively confirm whether the arm is snapped, detached at a hinge, or merely rotated",
+            "Fine structural details, fracture lines, and serial markings cannot be seen due to poor lighting"
           ]
         },
         {
@@ -1524,8 +1528,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9113,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7964,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -1534,15 +1538,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Desk lamp shape and base resemble the reference product.",
-            "The upper section of the lamp arm appears bent or detached at an irregular angle.",
-            "Open packaging and cushioning material are visible in the background.",
-            "The image is severely underexposed and dark."
+            "White desk lamp with circular base and articulated arm matching general design of reference",
+            "Open packaging box and packing materials visible in background",
+            "Upper segment of the lamp arm appears bent at an unnatural angle or detached near the head joint"
           ],
           "limitations": [
-            "Extreme underexposure makes it difficult to clearly verify fracture points or physical breakage.",
-            "Electrical functionality cannot be determined from a still photo.",
-            "No close-up photograph of the suspected fracture area is provided."
+            "Image is severely underexposed and too dark to clearly inspect structural details",
+            "Fracture surfaces or specific point of mechanical failure cannot be clearly distinguished",
+            "Electrical function and USB port condition cannot be tested"
           ]
         }
       ]
@@ -1567,8 +1570,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 5988,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7080,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1577,69 +1580,69 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Open cardboard box with inner white styrofoam packaging visible",
-            "The desk lamp itself is not shown in the image",
-            "No visible product or product damage shown"
-          ],
-          "limitations": [
-            "The lamp is not visible in the provided photo",
-            "Unable to determine physical or functional condition of the item",
-            "Unable to confirm product identity or match to the reference image"
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R5-weak",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6188,
-          "ai": {
-            "product_match": "cannot_tell",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Open cardboard box with cardboard flaps visible",
-            "White protective foam insert visible inside the box opening",
-            "The desk lamp itself is not visible in the photo"
-          ],
-          "limitations": [
-            "Item cannot be viewed or verified as it is not shown",
-            "Cannot verify condition or presence of damage",
-            "Cannot confirm whether the correct product was delivered"
-          ]
-        },
-        {
-          "outcome": "REQUEST_EVIDENCE",
-          "cents": 0,
-          "rule": "R5-weak",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11529,
-          "ai": {
-            "product_match": "cannot_tell",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Image shows an opened cardboard box with folded flaps.",
-            "White styrofoam packaging insert is visible inside the box.",
+            "Image shows an open cardboard box flap.",
+            "White protective foam insert is partially visible inside the box.",
             "The desk lamp is not visible in the photo.",
-            "No visible damage on the packaging flaps shown."
+            "No damage is visible on the shown portion of the box or packaging."
           ],
           "limitations": [
-            "The product itself is not shown, preventing assessment of condition or identity.",
-            "Cannot determine if the item is broken as claimed.",
-            "Only a single cropped view of the packaging is provided."
+            "The lamp itself is not pictured, preventing verification of its condition or identity.",
+            "No visible evidence of damage provided.",
+            "Claimed breakage cannot be evaluated."
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R5-weak",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5339,
+          "ai": {
+            "product_match": "cannot_tell",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Image displays an open cardboard shipping or product box",
+            "White styrofoam or foam packaging material is visible inside the box",
+            "The lamp itself is not visible in the photo"
+          ],
+          "limitations": [
+            "The product is not shown, preventing verification of its identity",
+            "Physical condition of the lamp cannot be assessed",
+            "Reported breakage cannot be confirmed from the packaging photo"
+          ]
+        },
+        {
+          "outcome": "REQUEST_EVIDENCE",
+          "cents": 0,
+          "rule": "R5-weak",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5299,
+          "ai": {
+            "product_match": "cannot_tell",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "Open corrugated cardboard shipping/product box.",
+            "White protective foam packaging visible inside the box.",
+            "The desk lamp itself is not visible in the photo."
+          ],
+          "limitations": [
+            "The item ordered is not shown in the image.",
+            "Reported damage cannot be assessed or verified.",
+            "Only partial packaging is visible."
           ]
         }
       ]
@@ -1664,8 +1667,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7427,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6798,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1674,14 +1677,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Vague outline of a circular base and an articulated arm structure on a flat surface",
-            "Extreme pixelation obscures all fine details, textures, and markings"
+            "Image is extremely pixelated into large mosaic blocks",
+            "Faint silhouette of a circular base and angled arm visible on a wooden surface",
+            "No fine details, surfaces, or components can be distinguished"
           ],
           "limitations": [
-            "Image is severely pixelated and resolution is too degraded to evaluate condition",
-            "Cannot confirm product identity or match to reference image",
-            "Cannot confirm whether the arm is broken or intact",
-            "Cannot determine operational or physical state"
+            "Severe pixelation prevents verification of the product model",
+            "Cannot determine if any damage, fracture, or defect is present on the arm",
+            "Overall condition and completeness cannot be assessed"
           ]
         },
         {
@@ -1691,8 +1694,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8983,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4001,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1701,13 +1704,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Image is severely pixelated with heavy mosaic distortion.",
-            "A circular white base and arm-like shape are vaguely discernible on a wooden surface."
+            "Buyer photo is extremely pixelated and degraded.",
+            "A circular object resembling a lamp base and an angled shape are vaguely visible on a wooden surface."
           ],
           "limitations": [
-            "Severe pixelation makes it impossible to verify the item model.",
-            "Structural details and joints cannot be clearly seen.",
-            "Cannot verify if the arm is broken or damaged."
+            "Severe pixelation prevents verification of product model.",
+            "Details of structural condition or damage cannot be discerned.",
+            "Cannot confirm whether the arm is broken as claimed."
           ]
         },
         {
@@ -1717,8 +1720,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6635,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8088,
           "ai": {
             "product_match": "cannot_tell",
             "damage_type": "none_visible",
@@ -1727,14 +1730,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo is heavily pixelated into large mosaic blocks",
-            "A general shape resembling a lamp base and arm is vaguely visible",
-            "No fine structural details or surfaces are discernable"
+            "Buyer photo is heavily pixelated with a mosaic filter obscuring all fine details",
+            "A circular base and an articulated arm structure are vaguely perceptible on a wooden surface",
+            "Cardboard packaging is visible in the background"
           ],
           "limitations": [
-            "Image resolution is too low and degraded by pixelation to evaluate",
-            "Cannot confirm product identity or match to reference image",
-            "Cannot evaluate reported arm breakage or any damage"
+            "Extreme pixelation prevents confirmation of the exact product model",
+            "Structural integrity and any alleged fracture or breakage cannot be verified",
+            "Surface condition and physical defects are entirely obscured by low image resolution"
           ]
         }
       ]
@@ -1759,8 +1762,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6548,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4709,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -1770,12 +1773,13 @@
           },
           "observations": [
             "Buyer photo is identical to the product reference image",
-            "Mug is fully intact with no visible cracks, chips, or damage",
-            "Image is a studio product listing photo on a plain white backdrop"
+            "Mug is depicted completely intact on a white studio background",
+            "No cracks, chips, or shattering visible"
           ],
           "limitations": [
-            "No photo of the physical item received by the buyer is provided",
-            "No evidence provided to verify reported shattered condition"
+            "No photo of the physical delivered item was provided",
+            "No packaging or shipping container visible",
+            "Condition of actual delivered product cannot be determined"
           ]
         },
         {
@@ -1785,8 +1789,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 5234,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4940,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -1795,13 +1799,13 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the product reference image.",
-            "White ceramic mug appears completely intact on a clean white background.",
-            "No cracks, chips, or shattering are visible."
+            "Buyer photo is identical to the product reference stock image.",
+            "A plain white ceramic mug is shown intact on a white background.",
+            "No cracks, chips, fractures, or shattering are visible."
           ],
           "limitations": [
-            "Image appears to be a stock/listing photo rather than a photo of the received item.",
-            "Actual physical condition of delivered product cannot be determined."
+            "No photograph of the physical item received by the buyer is provided.",
+            "Actual condition upon arrival cannot be verified from a stock image."
           ]
         },
         {
@@ -1811,8 +1815,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 4613,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4916,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -1821,13 +1825,14 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the provided product reference image",
-            "Image displays an intact white ceramic coffee mug on a white studio background",
-            "No cracks, chips, or shattering are visible anywhere on the mug"
+            "Buyer photo is identical to the product reference image",
+            "Mug is entirely intact with no visible cracks, chips, or shattering",
+            "Image appears to be a commercial product listing or stock photo with a plain white background"
           ],
           "limitations": [
-            "No actual photo of the delivered physical item or packaging was provided",
-            "Reported shattered damage cannot be verified from the submitted image"
+            "No photo of the actual delivered item provided",
+            "No packaging or shipping label shown",
+            "Physical condition upon delivery cannot be verified"
           ]
         }
       ]
@@ -1852,60 +1857,7 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6632,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": true
-          },
-          "observations": [
-            "Buyer photo appears to be a mirrored product listing or studio stock image on an isolated neutral background",
-            "Desk lamp appears fully assembled with intact hinges, arm, head, and base",
-            "No cracks, breaks, or detached components are visible anywhere on the lamp"
-          ],
-          "limitations": [
-            "Image does not depict a real-world physical item in the buyer's possession",
-            "Actual condition of the delivered item cannot be verified from a stock image"
-          ]
-        },
-        {
-          "outcome": "REVIEW",
-          "cents": 0,
-          "rule": "R6-stock",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6835,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "none_visible",
-            "severity": "none",
-            "evidence_quality": "insufficient",
-            "stock_photo_suspected": true
-          },
-          "observations": [
-            "Buyer image shows a white LED desk lamp isolated on a clean white background.",
-            "Lamp arm, joints, and base are fully intact and connected.",
-            "No fractures, cracks, or detached components are visible.",
-            "Image appears to be a commercial product render or stock listing photo."
-          ],
-          "limitations": [
-            "No photo of the actual delivered physical item in buyer possession provided.",
-            "Functional state and reported arm breakage cannot be evaluated."
-          ]
-        },
-        {
-          "outcome": "REVIEW",
-          "cents": 0,
-          "rule": "R6-stock",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
+          "model": "gemini-3.8-flash",
           "latency_ms": 8977,
           "ai": {
             "product_match": "confirmed",
@@ -1915,14 +1867,69 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer submitted a single studio-style stock render of the lamp on an isolated plain background.",
-            "The lamp is completely intact with no visible damage.",
-            "The arm and joints appear fully assembled and unbroken.",
-            "Image mirrors or matches the marketing asset format of the reference image."
+            "Desk lamp is shown fully intact and assembled on an isolated studio background",
+            "Buyer photo appears to be a mirrored commercial stock photo or render of the reference product",
+            "Arm joints and hinges appear fully intact with no breaks, fractures, or detachment",
+            "No visible damage or defect is present anywhere on the product"
           ],
           "limitations": [
-            "No photo of the buyer's actual physical unit was provided.",
-            "The reported damage cannot be evaluated from a stock/catalog image."
+            "The submitted photo appears to be a stock product render rather than the buyer's physical item",
+            "Actual physical condition of the delivered item cannot be verified from the provided image"
+          ]
+        },
+        {
+          "outcome": "REVIEW",
+          "cents": 0,
+          "rule": "R6-stock",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6127,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": true
+          },
+          "observations": [
+            "Buyer photo shows a fully intact white LED desk lamp on a plain background",
+            "All joints and hinges on the lamp arm are intact and connected",
+            "No fracture, separation, or cosmetic flaw is visible",
+            "Image appears to be a studio render or stock product photo"
+          ],
+          "limitations": [
+            "No photo showing the buyer's physical item in an everyday setting was provided",
+            "The claimed broken arm is not shown in the submitted image",
+            "Functional condition cannot be determined"
+          ]
+        },
+        {
+          "outcome": "REVIEW",
+          "cents": 0,
+          "rule": "R6-stock",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5450,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "none_visible",
+            "severity": "none",
+            "evidence_quality": "insufficient",
+            "stock_photo_suspected": true
+          },
+          "observations": [
+            "Buyer photo appears to be a studio catalog render or stock image on a plain white background",
+            "Desk lamp appears fully intact with arm, joints, head, and base attached",
+            "No fractures, breaks, or visible damage on the arm or joints"
+          ],
+          "limitations": [
+            "Image does not show the physical item in a real-world setting",
+            "Cannot verify buyer's claim of a broken arm from the provided stock-style image",
+            "Internal or functional defects cannot be checked visually"
           ]
         }
       ]
@@ -1947,35 +1954,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11373,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "broken",
-            "severity": "severe",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": true
-          },
-          "observations": [
-            "White desk lamp matches the reference lamp in base design, arm structure, and head shape",
-            "Visible fracture and structural break along the upper arm segment",
-            "Open packaging box and protective foam inserts visible behind the lamp",
-            "Image includes mobile or web app skeleton placeholder bars beneath the photo"
-          ],
-          "limitations": [
-            "Electrical operation and USB port functionality cannot be tested from the image",
-            "App UI placeholder bars indicate the image is a screenshot, which requires origin verification"
-          ]
-        },
-        {
-          "outcome": "REVIEW",
-          "cents": 0,
-          "rule": "R6-stock",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10622,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7032,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -1985,14 +1965,15 @@
           },
           "observations": [
             "White desk lamp matches the reference design and form factor.",
-            "Structural fracture visible along the upper horizontal arm segment.",
-            "Lamp head and upper arm droop downward at the break point.",
-            "Packaging box, styrofoam inserts, and bubble wrap visible behind the lamp.",
-            "Placeholder skeleton UI bars visible beneath the image."
+            "Upper arm shows a visible fracture/snap between the elbow joint and lamp head.",
+            "Lamp head droops downward at an unnatural angle due to the structural break.",
+            "Shipping box and foam packaging materials are visible in the background.",
+            "Image format includes grey skeleton/placeholder UI bars at the bottom, indicating a screenshot."
           ],
           "limitations": [
-            "Electrical functionality cannot be determined from a still photo.",
-            "Image appears to be captured from an app or web interface with UI elements visible."
+            "Only one viewing angle is provided.",
+            "Close-up detail of the exact fracture surface is not visible.",
+            "Electrical functionality cannot be determined from a still photo."
           ]
         },
         {
@@ -2002,8 +1983,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10612,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 10634,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2012,15 +1993,43 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "White desk lamp matches the form, base, and joints of the reference image",
-            "Visible fracture line and irregular break across the upper arm section",
-            "Secondary crack or stress mark visible near the elbow hinge joint",
-            "Opened product packaging and foam inserts present in background",
-            "Image appears within a screenshot featuring grey skeleton loader UI elements at the bottom"
+            "White articulated desk lamp matches reference shape, color, and base design.",
+            "Upper arm segment is fractured and snapped.",
+            "Lamp head hangs downwards at an unnatural angle due to arm fracture.",
+            "Packaging box, bubble wrap, and molded foam are visible in the background.",
+            "Image shows mobile application UI loading skeleton bars below the photo."
           ],
           "limitations": [
-            "Electrical operation and LED functionality cannot be tested",
-            "Only one viewing angle of the break is provided"
+            "Electrical operation and USB port function cannot be verified.",
+            "Screenshot format obscures original image metadata and true resolution."
+          ]
+        },
+        {
+          "outcome": "REVIEW",
+          "cents": 0,
+          "rule": "R6-stock",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 16789,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "broken",
+            "severity": "severe",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": true
+          },
+          "observations": [
+            "Desk lamp matches the reference model in color, base shape, arm structure, and lamp head design.",
+            "Packaging box, bubble wrap, and foam inserts are visible behind the lamp on a wooden desk.",
+            "A structural break and severe downward bend are visible along the upper arm near the lamp head joint.",
+            "The submitted image contains screenshot or user interface placeholder elements below the photo."
+          ],
+          "limitations": [
+            "Close-up detail of the specific fracture point is limited by camera distance.",
+            "Electrical operation and USB port functionality cannot be evaluated from a still photograph.",
+            "Full context of the screenshot cannot be verified."
           ]
         }
       ]
@@ -2044,8 +2053,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7649,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5908,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2054,13 +2063,16 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Desk lamp matches the color, joints, and profile of the reference item.",
-            "Upper extension arm shows severe structural fractures and breaks in two places.",
-            "Item is placed next to an open cardboard shipping box with protective foam inserts."
+            "White articulated desk lamp matching reference design placed on a wooden desk",
+            "Open shipping box with protective foam and bubble wrap visible in background",
+            "Severe fracture across the upper arm near the elbow hinge joint",
+            "Second severe fracture along the arm segment closer to the lamp head",
+            "Lamp head hangs downward due to structural breaks in the arm"
           ],
           "limitations": [
-            "Internal wiring integrity and electrical operation cannot be verified from the photo.",
-            "USB charging port is angled away from the camera and cannot be seen."
+            "Internal wiring integrity cannot be determined from the photo",
+            "Electrical functionality and USB charging cannot be tested",
+            "Cause and timing of breakage cannot be determined"
           ]
         },
         {
@@ -2070,8 +2082,35 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9488,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6730,
+          "ai": {
+            "product_match": "confirmed",
+            "damage_type": "broken",
+            "severity": "severe",
+            "evidence_quality": "sufficient",
+            "stock_photo_suspected": false
+          },
+          "observations": [
+            "White articulated desk lamp matches the reference image design",
+            "Severe structural break and fracture across the upper lamp arm",
+            "Visible fracture line near the upper pivot joint",
+            "Original packaging box and protective foam visible on desk"
+          ],
+          "limitations": [
+            "Electrical functionality cannot be determined from static photo",
+            "Condition of internal wiring is not fully visible"
+          ]
+        },
+        {
+          "outcome": "FULL_REFUND",
+          "cents": 4900,
+          "rule": "R1-broken",
+          "ok": true,
+          "overpay": false,
+          "provider": "gemini",
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8773,
           "ai": {
             "product_match": "likely",
             "damage_type": "broken",
@@ -2080,43 +2119,16 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the general structure, color, and joint design of the reference item.",
-            "Multiple jagged fracture breaks are visible along the upper horizontal arm segment.",
-            "The lamp head is sagging downward due to structural breakage of the upper arm.",
-            "Opened product packaging box, bubble wrap, and molded foam inserts are visible behind the lamp."
+            "White articulated desk lamp matches the general form and color of the reference product",
+            "Multiple severe fractures and breaks are visible along the upper arm segment",
+            "The lamp head hangs downwards due to the broken arm section",
+            "Open packaging materials including carton, bubble wrap, and molded foam are visible nearby",
+            "Lower arm and base appear intact from this viewing angle"
           ],
           "limitations": [
-            "Electrical functionality cannot be determined from the still image.",
-            "USB port on the base is turned away from the camera angle.",
-            "Underlying cause or time of breakage cannot be determined from the photograph."
-          ]
-        },
-        {
-          "outcome": "FULL_REFUND",
-          "cents": 4900,
-          "rule": "R1-broken",
-          "ok": true,
-          "overpay": false,
-          "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9158,
-          "ai": {
-            "product_match": "confirmed",
-            "damage_type": "broken",
-            "severity": "severe",
-            "evidence_quality": "sufficient",
-            "stock_photo_suspected": false
-          },
-          "observations": [
-            "Desk lamp matches the design, color, and joint configuration of the reference product",
-            "Visible fracture and cracking on the upper arm near the elbow joint",
-            "Second severe structural fracture through the upper arm closer to the lamp head",
-            "Original packaging box, bubble wrap, and molded foam inserts visible on the desk"
-          ],
-          "limitations": [
-            "Electrical functionality and LED illumination cannot be verified from a still photo",
-            "USB charging port status cannot be seen from the photo angle",
-            "Serial numbers or manufacturer markings are not visible"
+            "USB charging port is not visible from the captured angle",
+            "Internal wiring and electrical functionality cannot be determined",
+            "Cannot determine when or how the physical damage occurred"
           ]
         }
       ]
@@ -2141,8 +2153,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7282,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7228,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -2152,12 +2164,14 @@
           },
           "observations": [
             "White articulated desk lamp matches the reference item design and color",
-            "Lamp is standing upright on a wooden desk next to a notebook and plant",
-            "Lamp base, joints, arm, and head show no visible cracks, breaks, or structural damage"
+            "Lamp is positioned fully assembled and upright on a wooden desk",
+            "No visible cracks, fractures, shattered components, or physical damage",
+            "Lamp head, arm joints, and base appear intact"
           ],
           "limitations": [
-            "Electrical functionality and illumination cannot be verified from a static photo",
-            "Functionality of the USB charging port cannot be tested from the image"
+            "Electrical functionality and light output cannot be confirmed from the photo",
+            "USB charging port functionality cannot be verified",
+            "Rear and underside of the lamp base are not visible"
           ]
         },
         {
@@ -2167,8 +2181,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7250,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6537,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -2177,13 +2191,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference item design, base, and joint structure",
-            "Lamp is standing upright fully assembled on a desk",
-            "No visible cracks, fractures, shattered parts, or surface damage"
+            "White articulated desk lamp positioned on a wooden desk.",
+            "Form factor, base, arm joints, and lamp head match the reference image.",
+            "No visible cracks, breaks, or physical defects on the visible surfaces.",
+            "Lamp is powered off in the photograph."
           ],
           "limitations": [
-            "Electrical function and USB port operation cannot be determined from a photo",
-            "Opposite side of the base is not visible"
+            "Electrical and illumination functionality cannot be verified from a still photo.",
+            "USB charging port operation cannot be determined."
           ]
         },
         {
@@ -2193,8 +2208,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8189,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6442,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -2203,14 +2218,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White articulated desk lamp standing upright on a wooden desk.",
-            "Lamp structure, joints, head, and base match the reference product.",
-            "No visible cracks, fractures, shattered parts, or physical defects on the exterior.",
-            "The lamp is not powered on in the photo."
+            "White articulated desk lamp stands upright on a wooden desk.",
+            "Form, color, arm hinges, and head match the product reference image.",
+            "No visible cracks, breaks, or structural damage on the lamp.",
+            "Lamp head and arm appear intact and fully attached."
           ],
           "limitations": [
-            "Electrical functionality and illumination cannot be verified from a still photo.",
-            "USB charging port functionality cannot be evaluated."
+            "Electrical function and USB port operation cannot be verified from a still photo.",
+            "Reverse side and underside of the lamp base are not shown."
           ]
         }
       ]
@@ -2235,8 +2250,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8073,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 9190,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -2245,15 +2260,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Item depicted is a white ceramic mug, not an LED desk lamp",
-            "Ceramic mug handle is completely detached at both attachment points",
-            "Vertical crack running down the body of the mug near the handle mount",
-            "Detached handle and small ceramic fragments rest on the wooden surface",
-            "Open corrugated cardboard shipping box with packing paper visible in background"
+            "Buyer photo shows a white ceramic mug, not an LED desk lamp.",
+            "The mug handle is broken off completely and rests on the table.",
+            "A vertical crack extends down the wall of the ceramic mug.",
+            "Small ceramic chips and dust are visible on the wooden surface.",
+            "An opened cardboard shipping box and packing paper sit in the background."
           ],
           "limitations": [
-            "Cannot determine the full contents of the background shipping box",
-            "Cannot verify whether the ordered desk lamp was packaged separately or omitted"
+            "Contents remaining inside the shipping box cannot be seen.",
+            "Cannot determine if the wrong item was delivered or the wrong item was photographed."
           ]
         },
         {
@@ -2263,8 +2278,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 10265,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7647,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -2273,15 +2288,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Photo shows a white ceramic mug, not an LED desk lamp",
-            "Handle is completely detached from the mug body",
-            "Cracks extend along the exterior wall of the mug",
-            "Ceramic dust and small chips visible on the wooden table surface",
-            "Opened cardboard shipping box and brown packing paper visible in background"
+            "Item pictured is a white ceramic mug, not an LED desk lamp",
+            "Mug handle is fully fractured and detached, lying beside the cup",
+            "Visible vertical hairline crack extending down the wall of the mug",
+            "Ceramic fragments and dust scattered on the wooden surface",
+            "Opened cardboard shipping box and packing paper in the background"
           ],
           "limitations": [
-            "Cannot verify whether the mug arrived inside the depicted shipping box",
-            "No LED desk lamp or lamp parts visible in the frame"
+            "No LED desk lamp is depicted in the submission",
+            "Cannot verify what was originally shipped inside the box"
           ]
         },
         {
@@ -2291,8 +2306,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 11085,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7350,
           "ai": {
             "product_match": "mismatch",
             "damage_type": "wrong_item",
@@ -2301,15 +2316,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Buyer photo shows a white ceramic mug, not an LED desk lamp",
-            "Ceramic mug handle is completely broken off at both attachment points",
-            "Long vertical fracture line extends down the side of the mug cylinder",
-            "Small ceramic fragments and dust are visible on the tabletop",
-            "Cardboard shipping box with crumpled paper packing is visible in background"
+            "Buyer photo shows a white ceramic mug rather than an LED desk lamp",
+            "Mug handle is broken off entirely and resting on the table",
+            "Visible fracture line runs vertically down the side of the ceramic mug",
+            "Multiple small fragments and ceramic dust are scattered on the surface",
+            "Cardboard shipping box and brown packing paper are visible behind the mug"
           ],
           "limitations": [
-            "Cannot verify full contents of the cardboard shipping box",
-            "Cannot verify if an LED desk lamp was delivered in the package"
+            "Shipping label details and box markings are not legible or visible",
+            "The ordered LED desk lamp is entirely absent from the photo"
           ]
         }
       ]
@@ -2334,8 +2349,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6788,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6242,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -2344,14 +2359,13 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo appears visually identical to the product reference image",
-            "Mug is completely intact with no visible cracks, chips, or shattering",
-            "Studio lighting and seamless white background present",
-            "No packaging, shipping materials, or actual delivered item environment shown"
+            "Buyer photo is identical to the provided product reference image",
+            "Professional studio lighting and seamless white background",
+            "Mug is completely intact with no visible cracks, chips, or damage"
           ],
           "limitations": [
-            "No authentic photo of the delivered item provided",
-            "Physical condition of the delivered item cannot be verified from the stock photo"
+            "Image appears to be a stock product photo rather than a photo of the received item",
+            "Physical condition of the delivered item cannot be verified"
           ]
         },
         {
@@ -2361,8 +2375,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 5627,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5169,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
@@ -2371,13 +2385,13 @@
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the provided product reference listing image",
-            "Mug is entirely intact with no visible cracks, chips, or breakage",
-            "Image features a studio-lit plain white background"
+            "Buyer photo is identical to the stock product reference image.",
+            "White ceramic coffee mug is shown completely intact on a plain white studio background.",
+            "No cracks, chips, or shattering visible anywhere on the mug."
           ],
           "limitations": [
-            "Image appears to be a stock product photo rather than an authentic photo of the received item",
-            "Actual physical condition of the delivered item cannot be verified"
+            "Photo is an identical stock product listing image rather than an original photo of the received item.",
+            "Actual condition of the delivered item cannot be determined."
           ]
         },
         {
@@ -2387,24 +2401,23 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6552,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5414,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "none_visible",
             "severity": "none",
-            "evidence_quality": "sufficient",
+            "evidence_quality": "insufficient",
             "stock_photo_suspected": true
           },
           "observations": [
-            "Buyer photo is identical to the reference product listing image",
-            "White ceramic mug appears completely intact with no visible damage",
-            "No cracks, chips, or shattering visible anywhere on the mug body or handle",
-            "Image features professional studio lighting on an isolated white background"
+            "Buyer photo is identical to the product reference image",
+            "Ceramic mug is completely intact with no visible cracks, chips, or shattering",
+            "Image is a studio product photograph on an isolated white background"
           ],
           "limitations": [
-            "Image appears to be a stock/catalog photo rather than an authentic user photo",
-            "Interior and opposite side of the mug cannot be inspected"
+            "No photo of the actual received item was provided",
+            "Actual physical condition of the delivered product cannot be determined"
           ]
         }
       ]
@@ -2430,8 +2443,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 9657,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 4602,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -2440,14 +2453,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug appears intact and standing upright on a wooden table.",
-            "A single thin, dark horizontal line or scratch is visible across the side body.",
-            "No shattered fragments, large cracks, or detached parts are visible.",
-            "Item design closely resembles the reference product."
+            "White ceramic mug appears structurally intact and upright",
+            "A single thin dark line or scratch is visible across the center of the outer wall",
+            "Handle and rim appear intact with no fragmentation visible"
           ],
           "limitations": [
-            "Cannot determine whether the dark line is a surface mark/scuff or a hairline crack.",
-            "Opposite side and base of the mug are not visible in the provided photo."
+            "Cannot determine if the thin line is surface marking, a scratch, or a hairline crack",
+            "Opposite side and base of the mug are not visible"
           ]
         },
         {
@@ -2457,8 +2469,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6720,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8228,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -2467,13 +2479,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug appears structurally intact and upright on a wooden surface.",
-            "A thin, dark horizontal line or scratch is visible on the outer side of the mug body.",
-            "Handle, rim, and visible walls show no shattering, chipping, or missing fragments."
+            "Mug is structurally intact and standing upright.",
+            "A thin dark horizontal mark or scratch is visible on the outer side wall.",
+            "Handle, rim, and body show no missing fragments or breaks.",
+            "No shattered pieces or structural fractures are present."
           ],
           "limitations": [
-            "Cannot determine if the dark line is a surface mark or a crack through the ceramic.",
-            "Opposite side, interior base, and underside of the mug are not visible in the photo."
+            "Only one side and partial interior of the mug are shown.",
+            "Cannot determine whether the dark line is a surface scuff or a hairline crack under the glaze."
           ]
         },
         {
@@ -2483,8 +2496,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6285,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5040,
           "ai": {
             "product_match": "likely",
             "damage_type": "cosmetic",
@@ -2493,13 +2506,13 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White ceramic mug appears fully intact and upright on a wooden surface.",
-            "A thin, dark horizontal line or scratch is visible on the exterior side wall.",
-            "No shattered fragments, large fractures, or missing pieces are present in the photo."
+            "White ceramic mug appears structurally intact and upright",
+            "A thin dark horizontal line or surface scratch is visible on the exterior body",
+            "Mug is not shattered or in pieces contrary to statement"
           ],
           "limitations": [
-            "Opposite side and base underside of the mug are not visible.",
-            "Cannot determine if the dark line is an in-depth crack or a superficial surface scuff."
+            "Cannot determine if the thin line is a surface mark, scratch, or hairline crack",
+            "Opposite side and base of the mug are not visible"
           ]
         }
       ]
@@ -2523,8 +2536,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8750,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7958,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2533,15 +2546,14 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the design and joints of the reference image.",
-            "Packaging box, bubble wrap, and foam inserts visible on the desk.",
-            "Visible fracture/break on the upper arm segment adjacent to the elbow hinge.",
-            "Second visible fracture across the upper arm closer to the lamp head.",
-            "Lamp head is sagging downwards due to the arm fractures."
+            "Desk lamp matches the design, color, and joint configuration of reference product",
+            "Upper arm segment is fractured in two places with visible jagged breaks",
+            "Lamp head droops downward due to broken structural arm",
+            "Opened product packaging and foam inserts are visible in the background"
           ],
           "limitations": [
-            "Electrical functionality and USB port cannot be verified from a still image.",
-            "USB port on the base is rotated away from direct view."
+            "Electrical functionality cannot be determined from a still photo",
+            "USB charging port is not visible from this viewing angle"
           ]
         },
         {
@@ -2551,8 +2563,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 8872,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 8136,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2561,15 +2573,16 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White adjustable desk lamp matches the reference product in design and color.",
-            "Structural fracture visible on the upper arm segment near the elbow hinge.",
-            "Second fracture visible along the upper arm segment closer to the lamp head.",
-            "The lamp head is tilted downward due to structural breaks in the arm.",
-            "Open cardboard shipping box, bubble wrap, and molded foam inserts are visible behind the lamp."
+            "White desk lamp matches the reference design, joints, and base shape.",
+            "Multiple severe fracture breaks visible along the upper arm section.",
+            "Cracking visible near the upper hinge joint.",
+            "Fracture break visible near the lamp head joint causing the head to droop.",
+            "Opened packaging and protective foam visible behind the lamp on the desk."
           ],
           "limitations": [
-            "Electrical function and light operation cannot be determined from the photo.",
-            "Internal wiring continuity through the broken arm sections cannot be verified."
+            "Electrical functionality cannot be determined from the still photo.",
+            "USB port is rotated away from view and cannot be inspected.",
+            "Cause and timing of the fractures cannot be determined."
           ]
         },
         {
@@ -2579,8 +2592,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7341,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7862,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2589,15 +2602,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference item design, base, and articulated arm structure.",
-            "The upper arm section exhibits two distinct fracture breaks.",
-            "One break is directly adjacent to the upper pivot hinge.",
-            "A second break is located along the extension arm near the lamp head joint.",
-            "Open product box, foam insert, and bubble wrap are visible behind the lamp on a desk."
+            "White articulated desk lamp matches reference design and base form.",
+            "Open packaging box and protective foam inserts are visible behind the lamp.",
+            "Upper arm section shows complete fracture near the upper hinge joint.",
+            "A second fracture is visible further along the upper arm toward the lamp head.",
+            "Lamp head hangs downward due to structural breakage of the arm."
           ],
           "limitations": [
-            "Electrical functionality cannot be verified from a still photograph.",
-            "Timing and cause of the fracture cannot be determined from the image."
+            "Electrical operation and LED functionality cannot be tested from the image.",
+            "Exact cause and timing of the fractures cannot be determined."
           ]
         }
       ]
@@ -2621,8 +2634,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7574,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6401,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2631,16 +2644,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches reference image design, joints, and base.",
-            "Multiple complete fractures along the upper arm segment.",
-            "Structural break visible adjacent to the upper elbow joint.",
-            "Second break visible near the lamp head attachment point.",
-            "Lamp head hangs loosely due to the broken arm sections.",
-            "Opened product shipping box and foam packaging present on the desk."
+            "White desk lamp matches the reference item design and color.",
+            "Complete fracture visible on the upper arm section near the top hinge.",
+            "Second severe fracture visible further down the arm toward the lamp head.",
+            "Lamp head arm is deformed and bent downwards at the fracture point.",
+            "Original packaging box, bubble wrap, and foam insert are visible in the background."
           ],
           "limitations": [
-            "Electrical operation and LED functionality cannot be tested.",
-            "USB charging port functionality cannot be verified."
+            "Electrical functionality cannot be determined from the still photo.",
+            "USB charging port is not visible from the captured angle."
           ]
         },
         {
@@ -2650,8 +2662,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7541,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 7011,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2660,14 +2672,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the design, joint structure, and head shape of the reference product",
-            "Upper arm shows multiple severe fracture breaks along its length",
-            "Broken casing exposes internal separation, causing the lamp head to sag downward",
-            "Product is shown unpacked next to its shipping box and packing material"
+            "White LED desk lamp matches the reference model in design, color, and joint structures.",
+            "Severe structural fracture visible on the upper arm immediately adjacent to the elbow hinge.",
+            "Second fracture visible along the upper arm segment closer to the lamp head.",
+            "The lamp head is drooping downward due to the breaks in the arm structure.",
+            "Packaging box and protective foam inserts are visible in the background."
           ],
           "limitations": [
-            "Electrical functionality of the lamp and USB charging port cannot be verified from a still image",
-            "Model or serial number labels are not visible in the frame"
+            "Electrical functionality and LED operation cannot be tested from the photo.",
+            "The USB port on the base is obscured from the camera angle."
           ]
         },
         {
@@ -2677,8 +2690,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 6638,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 5812,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2687,15 +2700,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the model shown in the reference image.",
-            "Visible fracture and plastic breakage on the upper arm near the elbow joint.",
-            "Visible second fracture along the upper arm segment closer to the lamp head.",
-            "Lamp head section is sagging downward at the fracture point.",
-            "Original packaging box and foam inserts are visible in the background."
+            "White desk lamp matches the reference model design and base structure.",
+            "Severe fracture across the upper arm section near the light head fixture.",
+            "Visible crack and structural break near the upper hinge joint.",
+            "Lamp head droops downward due to the arm fracture.",
+            "Opened shipping box, foam inserts, and bubble wrap visible in the background."
           ],
           "limitations": [
-            "Internal wiring integrity and electrical functionality cannot be verified from the photo.",
-            "USB port and reverse side of the lamp base are not visible in this angle."
+            "Internal wiring integrity and electrical operation cannot be verified.",
+            "Opposite side and USB port on the base are not visible in this angle."
           ]
         }
       ]
@@ -2719,8 +2732,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7408,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6827,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2729,16 +2742,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference item design and color.",
-            "Upper arm shows multiple jagged fractures and breaks along its length.",
-            "A complete fracture is visible adjacent to the upper hinge joint.",
-            "A second fracture is visible further down the upper arm segment.",
-            "The lamp head droops downward due to the compromised structural integrity.",
-            "Cardboard shipping box, molded foam, and bubble wrap are present on the table."
+            "White articulated desk lamp matches the design and components of the reference item.",
+            "Structural fracture visible on the upper arm section near the central elbow hinge.",
+            "Second structural break visible further down the upper arm near the lamp head.",
+            "Lamp head is displaced and tilted downward due to the fractured arm.",
+            "Shipping box, bubble wrap, and molded foam packaging are visible on the desk behind the lamp."
           ],
           "limitations": [
-            "Electrical operation and LED functionality cannot be verified from the photo.",
-            "USB charging port is angled away and not visible."
+            "Electrical functionality and condition of internal wiring cannot be determined from the photo.",
+            "USB port functionality cannot be evaluated."
           ]
         },
         {
@@ -2748,8 +2760,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7003,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6828,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2758,15 +2770,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "White desk lamp matches the reference design and form factor",
-            "Complete fracture visible near the upper hinge joint of the upper arm",
-            "Second severe fracture visible along the lower portion of the upper arm",
-            "Lamp head hangs downward at an abnormal angle due to structural breaks in the arm",
-            "Shipping box, bubble wrap, and molded foam packaging are visible in the background"
+            "White desk lamp matches the reference item design and base shape.",
+            "The upper lamp arm shows a complete fracture near the elbow joint.",
+            "A second fracture is visible further along the upper arm toward the head.",
+            "The lamp head hangs down at an irregular angle due to the breaks.",
+            "Open shipping box, foam inserts, and packing materials are visible behind the lamp."
           ],
           "limitations": [
-            "Electrical functionality cannot be determined from the photo",
-            "USB port position is not visible from this viewing angle"
+            "Electrical functionality cannot be determined from the photo.",
+            "The USB port side of the base is turned away from view."
           ]
         },
         {
@@ -2776,8 +2788,8 @@
           "ok": true,
           "overpay": false,
           "provider": "gemini",
-          "model": "gemini-flash-latest",
-          "latency_ms": 7783,
+          "model": "gemini-3.8-flash",
+          "latency_ms": 6818,
           "ai": {
             "product_match": "confirmed",
             "damage_type": "broken",
@@ -2786,15 +2798,15 @@
             "stock_photo_suspected": false
           },
           "observations": [
-            "Item matches the reference white LED desk lamp in color, joint structure, and form factor.",
-            "The upper arm segment has a complete fracture near the main elbow hinge.",
-            "A second fracture is visible along the upper arm closer to the lamp head joint.",
-            "The lamp head droops downward due to the structural break in the arm.",
-            "Product packaging, foam inserts, and bubble wrap are visible behind the lamp on the desk."
+            "White desk lamp matches the design, joint structure, and head shape of the reference image.",
+            "Multiple severe breaks and fractures are visible along the upper arm section.",
+            "A fracture is present directly adjacent to the elbow joint.",
+            "A second break is visible further down the arm near the light head.",
+            "Product is shown unpacked next to its shipping box, foam insert, and bubble wrap."
           ],
           "limitations": [
             "Electrical functionality cannot be determined from the still photo.",
-            "The underside of the base and any model or serial labels are not visible."
+            "USB charging port is not clearly visible from this angle."
           ]
         }
       ]
