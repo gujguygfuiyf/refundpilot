@@ -7,11 +7,11 @@ rule engine turns that into a refund amount under the merchant's own policy, the
 and the refund is executed through the PayPal Payments API. Every step lands in an audit trail.
 
 ```
-Buyer photo 鈹€鈻?AI describes the evidence 鈹€鈻?Policy computes the amount 鈹€鈻?Merchant approves 鈹€鈻?PayPal refunds
+Buyer photo ─► AI describes the evidence ─► Policy computes the amount ─► Merchant approves ─► PayPal refunds
                 (never sets an amount)        (deterministic, versioned)     (one click)          (idempotent)
 ```
 
-Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct鈥揘ov 2026).
+Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct–Nov 2026).
 
 - **Live demo:** https://refundpilot-web.onrender.com (the merchant token is prefilled there; it can only move PayPal **sandbox** money).
   It runs on free hosting: after 15 idle minutes the first page load can take about a minute while the server wakes up.
@@ -57,12 +57,12 @@ suggestion above its predefined cap. Results, failures and limits: [docs/EVALUAT
 flowchart LR
     subgraph Web["Next.js"]
         B[Buyer pages]
-        M[Merchant queue 路 AG Grid]
+        M[Merchant queue · AG Grid]
         S[Policy simulator]
     end
     subgraph API["FastAPI"]
-        CS[Claim service<br/>state machine 路 idempotent approve]
-        AI[Assessor<br/>Gemini 鈫?OpenAI backup 鈫?human]
+        CS[Claim service<br/>state machine · idempotent approve]
+        AI[Assessor<br/>Gemini → OpenAI backup → human]
         PE[Policy engine<br/>versioned JSON]
         PP[PayPal client]
         WH[Webhook + reconciler]
@@ -112,11 +112,11 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 
 ## Try the demo
 
-1. **1-click sample scenarios** (`/`): the top of the home page offers three 1-click presets (**Clearly broken item**, **Blurry photo**, and **Suspected reused screenshot**) that automatically select a claimable order and pre-fill the test photo and buyer description鈥攏o file download needed. Click **Submit claim** to run the live Gemini assessment and policy engine.
+1. **1-click sample scenarios** (`/`): the top of the home page offers three 1-click presets (**Clearly broken item**, **Blurry photo**, and **Suspected reused screenshot**) that automatically select a claimable order and pre-fill the test photo and buyer description—no file download needed. Click **Submit claim** to run the live Gemini assessment and policy engine.
 2. Watch the claim page: the evidence card fills in, then the decision card shows the rule, amount and policy version.
 3. **Merchant** (`/merchant`): open the claim from the queue, approve. The PayPal refund id appears and the status
    turns `COMPLETED`. (Click **All claims** on the merchant page to inspect already-completed and hard-case claims; the default **Open** filter shows only pending claims.)
-4. **Policy simulator & batch replay** (`/merchant/policy`): test how the same evidence鈥攐r a batch of 6 representative cases / recorded claims鈥攑lays out across Standard, Strict, and Goodwill policies (total suggested payout, review/evidence rate, and per-case rule diffs) before adopting a policy.
+4. **Policy simulator & batch replay** (`/merchant/policy`): test how the same evidence—or a batch of 6 representative cases / recorded claims—plays out across Standard, Strict, and Goodwill policies (total suggested payout, review/evidence rate, and per-case rule diffs) before adopting a policy.
 
 ### Notes for judges
 
