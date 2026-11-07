@@ -97,6 +97,34 @@ export default function ClaimPage() {
       <p className="rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-gray-200">{BUYER_MESSAGE[claim.status] ?? claim.status}</p>
       <ErrorNote error={error} />
 
+      {!moving && claim.assessment && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/90 to-indigo-50/60 px-4 py-3 text-xs text-blue-950 shadow-2xs">
+          <div className="space-y-0.5">
+            <span className="font-semibold text-brand-dark">Judge / Merchant shortcut:</span>{" "}
+            <span>
+              AI evidence review and policy evaluation (<code>{claim.policy_version}</code>
+              {claim.decision ? ` · ${claim.decision.rule_id}` : ""}) are complete. Jump directly to the merchant view:
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={`/merchant?claim=${claim.id}`}
+              className="inline-flex items-center gap-1 rounded-lg bg-brand px-3 py-1.5 font-medium text-white shadow-2xs hover:bg-brand-dark"
+            >
+              {["REVIEW_REQUIRED", "AUTO_ELIGIBLE"].includes(claim.status)
+                ? "Approve & refund in Merchant Queue →"
+                : "Inspect in Merchant Queue →"}
+            </Link>
+            <Link
+              href={`/merchant/policy?claim=${claim.id}`}
+              className="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-1.5 font-medium text-gray-800 ring-1 ring-blue-200 hover:bg-blue-50"
+            >
+              Compare across 3 policies →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {claim.status === "EVIDENCE_REQUESTED" && (
         <Card title="Add more evidence">
           <div className="space-y-3">

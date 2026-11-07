@@ -30,6 +30,15 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 | **Merchant** | Approve (optionally override within the refundable balance), request more evidence, reject, or accept / contest an open PayPal dispute | Yes, the only path to a refund or dispute response |
 | **PayPal** | Execute the refund on the original capture or resolve/update the dispute | Yes, with a fixed `PayPal-Request-Id` per attempt |
 
+### How RefundPilot differs from existing return tools and LLM agents
+
+| Capability | Pure LLM refund agent | Enterprise return portals (e.g. Loop / ReturnGO) | **RefundPilot** |
+|---|---|---|---|
+| **Can the AI model set a payout amount?** | Yes (vulnerable to prompt injection & drift) | N/A or opaque scoring | **No** (`EvidenceAssessment` schema has no amount field) |
+| **Side-by-side & batch policy replay** | Not reproducible | Single active store rule set | **Live 3-policy diff + batch queue replay** with claim-time input snapshots |
+| **Native PayPal trace** | Usually mocked or fire-and-forget | Requires enterprise ERP/warehouse stack | **Direct PayPal Payments v2 + Disputes v1** (`PayPal-Request-Id` + signed webhooks) |
+| **Pre-registered adversarial evaluation** | Rarely tested against injection/screenshots | Proprietary | **87/87 main + 36/36 held-out runs passed**, 0 suggestions above cap |
+
 ## What uses PayPal
 
 - **Orders v2:** `scripts/mint_orders.py` creates and captures the sandbox orders the buyer can claim against.

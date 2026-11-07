@@ -39,8 +39,8 @@ function Queue() {
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
-  const [openDisputeId, setOpenDisputeId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(() => params.get("claim"));
+  const [openDisputeId, setOpenDisputeId] = useState<string | null>(() => params.get("dispute"));
   const initialTab = params.get("tab");
   const [filter, setFilter] = useState<TabFilter>(
     initialTab === "all" ? "all" : initialTab === "disputes" ? "disputes" : "open",
@@ -74,6 +74,10 @@ function Queue() {
   useEffect(() => {
     const tab = params.get("tab");
     if (tab === "all" || tab === "disputes" || tab === "open") setFilter(tab);
+    const cid = params.get("claim");
+    if (cid) setOpenId(cid);
+    const did = params.get("dispute");
+    if (did) setOpenDisputeId(did);
   }, [params]);
 
   const openRows = useMemo(

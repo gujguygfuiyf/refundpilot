@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type { ClaimRow, EvidenceAssessment, Policy, SimulationResult } from "@/lib/types";
 import { label, money } from "@/lib/format";
@@ -120,8 +121,10 @@ const ENUMS: Record<string, string[]> = {
 const BOOLS = ["visible_damage", "stock_photo_suspected", "needs_human_review"] as const;
 
 function Simulator() {
+  const params = useSearchParams();
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [claims, setClaims] = useState<ClaimRow[]>([]);
+  const [selectedClaimId, setSelectedClaimId] = useState<string>("");
   const [a, setA] = useState<EvidenceAssessment>(BASE);
   const [orderCents, setOrderCents] = useState(4900);
   const [days, setDays] = useState(3);
@@ -138,10 +141,40 @@ function Simulator() {
   const [batchError, setBatchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  const loadClaim = useCallback(async (id: string) => {
+    try {
+      setSelectedClaimId(id);
+      const c = await api.merchantClaim(id);
+      if (c.assessment) setA(c.assessment.output);
+      const snap = c.decision?.decision_inputs;
+      setOrderCents(typeof snap?.order_cents === "number" ? snap.order_cents : c.order.amount_cents);
+      setDays(
+        typeof snap?.days_since_delivery === "number"
+          ? snap.days_since_delivery
+          : daysBetweenIso(c.order.delivered_at, c.created_at),
+      );
+      if (typeof snap?.prior_claims === "number") setPrior(snap.prior_claims);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }, []);
+
   useEffect(() => {
     api.policies().then(setPolicies).catch((e) => setError(e.message));
-    api.merchantClaims().then((r) => setClaims(r.filter((c) => c.damage_type && c.status !== "CANCELLED"))).catch(() => {});
+    api
+      .merchantClaims()
+      .then((r) => {
+        const assessed = r.filter((c) => Boolean(c.damage_type || c.outcome));
+        const nonCancelled = assessed.filter((c) => c.status !== "CANCELLED");
+        setClaims(nonCancelled.length > 0 ? nonCancelled : assessed);
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const cid = params.get("claim");
+    if (cid) loadClaim(cid);
+  }, [params, loadClaim]);
 
   useEffect(() => {
     if (!policies.length) return;
@@ -171,9 +204,12 @@ function Simulator() {
 
       if (batchSource === "recorded") {
         const allRows = await api.merchantClaims();
-        const assessedRows = allRows.filter((c) => c.damage_type && c.status !== "CANCELLED");
+        const assessedAll = allRows.filter((c) => Boolean(c.damage_type || c.outcome));
+        const nonCancelled = assessedAll.filter((c) => c.status !== "CANCELLED");
+        const assessedRows = nonCancelled.length > 0 ? nonCancelled : assessedAll;
+        setClaims(assessedRows);
         if (assessedRows.length === 0) {
-          throw new Error("No recorded non-cancelled claims with completed AI assessments were found.");
+          throw new Error("No recorded claims with completed AI assessments were found.");
         }
         // Chronological order per order_id to reconstruct prior_claims when legacy claims lack decision_inputs
         const sortedChron = [...allRows].sort(
@@ -187,6 +223,7 @@ function Simulator() {
 
         casesToRun = withAssessment.map((fc) => {
           const snap = fc.decision?.decision_inputs;
+          const isCancelled = fc.status === "CANCELLED";
           const d =
             typeof snap?.days_since_delivery === "number"
               ? snap.days_since_delivery
@@ -217,7 +254,9 @@ function Simulator() {
             title: `${fc.order.product.name} · Order #${fc.order.id} (${money(orderCentsAtDecision)})`,
             sourceLabel: hasExactSnapshot
               ? `Recorded claim ${fc.id.slice(-6)} (exact snapshot)`
-              : `Recorded claim ${fc.id.slice(-6)} (reconstructed)`,
+              : isCancelled
+                ? `Recorded claim ${fc.id.slice(-6)} (withdrawn · reconstructed)`
+                : `Recorded claim ${fc.id.slice(-6)} (reconstructed)`,
             order_cents: orderCentsAtDecision,
             remaining_cents: remainingAtDecision,
             days_since_delivery: d,
@@ -296,23 +335,6 @@ function Simulator() {
     });
   }, [batchComplete, policies, batchCases, batchMatrix]);
 
-  async function loadClaim(id: string) {
-    try {
-      const c = await api.merchantClaim(id);
-      if (c.assessment) setA(c.assessment.output);
-      const snap = c.decision?.decision_inputs;
-      setOrderCents(typeof snap?.order_cents === "number" ? snap.order_cents : c.order.amount_cents);
-      setDays(
-        typeof snap?.days_since_delivery === "number"
-          ? snap.days_since_delivery
-          : daysBetweenIso(c.order.delivered_at, c.created_at),
-      );
-      if (typeof snap?.prior_claims === "number") setPrior(snap.prior_claims);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-
   const set = <K extends keyof EvidenceAssessment>(k: K, v: EvidenceAssessment[K]) => setA((x) => ({ ...x, [k]: v }));
 
   return (
@@ -336,7 +358,7 @@ function Simulator() {
             ))}
           </div>
           {claims.length > 0 && (
-            <select onChange={(e) => e.target.value && loadClaim(e.target.value)} defaultValue=""
+            <select value={selectedClaimId} onChange={(e) => e.target.value && loadClaim(e.target.value)}
               className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
               <option value="">Load the AI assessment of a real claim…</option>
               {claims.map((c) => (
@@ -582,7 +604,9 @@ function Simulator() {
 export default function PolicyPage() {
   return (
     <TokenGate>
-      <Simulator />
+      <Suspense fallback={<p className="text-sm text-gray-500">Loading simulator…</p>}>
+        <Simulator />
+      </Suspense>
     </TokenGate>
   );
 }

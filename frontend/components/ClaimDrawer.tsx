@@ -84,6 +84,7 @@ export default function ClaimDrawer({ id, onClose, onChanged }: { id: string; on
           </div>
           <div className="flex items-center gap-2">
             {claim && <StatusBadge status={claim.status} />}
+            <Link href={`/merchant/policy?claim=${id}`} className="text-xs text-brand hover:underline">Simulate 3 policies ↗</Link>
             <Link href={`/claims/${id}`} target="_blank" className="text-xs text-gray-500 hover:text-gray-800">Buyer view ↗</Link>
             <Button variant="ghost" onClick={onClose} aria-label="Close">✕</Button>
           </div>

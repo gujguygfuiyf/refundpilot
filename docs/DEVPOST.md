@@ -40,6 +40,13 @@ Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. Re
 - In **batch policy replay** (`/merchant/policy`), how does switching policies change the total suggested payout, the manual-review rate, and individual case outcomes across a merchant's queue?
 - Once a human approves, how does the decision trace directly to an idempotent **PayPal Payments v2** capture refund or **PayPal Disputes v1** resolution (`PayPal-Request-Id`) and signature-verified `PAYMENT.CAPTURE.REFUNDED` / `CUSTOMER.DISPUTE.*` webhooks?
 
+| Capability | Pure LLM refund agent | Enterprise return portals (Loop / ReturnGO) | **RefundPilot** |
+|---|---|---|---|
+| **Can the AI model set a payout amount?** | Yes (vulnerable to prompt injection & drift) | N/A or opaque scoring | **No** (`EvidenceAssessment` schema has no amount field) |
+| **Side-by-side & batch policy replay** | Not reproducible | Single active store rule set | **Live 3-policy diff + batch queue replay** with claim-time input snapshots |
+| **Native PayPal trace** | Usually mocked or fire-and-forget | Requires enterprise ERP/warehouse stack | **Direct PayPal Payments v2 + Disputes v1** (`PayPal-Request-Id` + signed webhooks) |
+| **Pre-registered adversarial evaluation** | Rarely tested against injection/screenshots | Proprietary | **87/87 main + 36/36 held-out runs passed**, 0 suggestions above cap |
+
 ### How we built it
 - **PayPal**: Orders v2 to create and capture the sandbox orders buyers claim against; Payments v2 to read the capture's refundable balance before every refund, refund it, and reconcile pending refunds; Customer Disputes v1 (`GET /v1/customer/disputes`, `GET /v1/customer/disputes/{id}`, `POST .../accept-claim`, `POST .../provide-evidence`) to sync open disputes, accept claims within the remaining balance, or submit deterministic multipart evidence packages; Webhooks with signature verification (`/v1/notifications/verify-webhook-signature`) for `PAYMENT.CAPTURE.REFUNDED` and `CUSTOMER.DISPUTE.CREATED` / `UPDATED` / `RESOLVED`.
 - **Idempotent money movement & single-ledger deduplication**: each refund and dispute action has a deterministic `PayPal-Request-Id`. A double click produces one refund; for direct capture refunds, a timeout marks the refund `UNKNOWN` and a reconciler replays the *same* request id so PayPal returns the original refund instead of paying twice, while timed-out dispute `accept-claim` requests are reconciled via `GET /v1/customer/disputes/{id}` and `CUSTOMER.DISPUTE.RESOLVED`. Dispute `accept-claim` refunds and `PAYMENT.CAPTURE.REFUNDED` webhooks share the same refund ledger and verify `capture_id`, currency, and amount before linking so the same refund is not credited twice.
