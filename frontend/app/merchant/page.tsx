@@ -38,6 +38,7 @@ function Queue() {
   const [rows, setRows] = useState<ClaimRow[]>([]);
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [health, setHealth] = useState<{ ok: boolean; paypal: string; assessor: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(() => params.get("claim"));
   const [openDisputeId, setOpenDisputeId] = useState<string | null>(() => params.get("dispute"));
@@ -47,6 +48,7 @@ function Queue() {
   );
 
   const load = useCallback(async () => {
+    api.health().then(setHealth).catch(() => {});
     try {
       const [r, s, d] = await Promise.all([
         api.merchantClaims(),
@@ -89,6 +91,41 @@ function Queue() {
     () => (filter === "all" ? rows : openRows),
     [rows, openRows, filter],
   );
+
+  const showcaseCases = useMemo(() => {
+    if (!rows.length) return [];
+    const list: Array<{ id: string; label: string }> = [];
+
+    const completed = rows.find((r) => r.status === "COMPLETED");
+    if (completed) {
+      list.push({
+        id: completed.id,
+        label: `Completed refund (${completed.product_name})`,
+      });
+    }
+
+    const evidence = rows.find(
+      (r) => (r.outcome === "REQUEST_EVIDENCE" || r.status === "EVIDENCE_REQUESTED") && r.id !== completed?.id,
+    );
+    if (evidence) {
+      list.push({
+        id: evidence.id,
+        label: `Held: Request evidence (${evidence.rule_id || "R5-weak"})`,
+      });
+    }
+
+    const review = rows.find(
+      (r) => r.outcome === "REVIEW" && r.id !== completed?.id && r.id !== evidence?.id,
+    );
+    if (review) {
+      list.push({
+        id: review.id,
+        label: `Held: Manual review (${review.rule_id || "Review"})`,
+      });
+    }
+
+    return list;
+  }, [rows]);
 
   const columns = useMemo<ColDef<ClaimRow>[]>(
     () => [
@@ -175,7 +212,20 @@ function Queue() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Claims &amp; Disputes queue</h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-2xl font-semibold">Claims &amp; Disputes queue</h1>
+            {health && (
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 font-medium text-emerald-800 ring-1 ring-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  PayPal: {health.paypal === "PayPalClient" ? "Sandbox Live" : health.paypal}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 font-medium text-blue-800 ring-1 ring-blue-200">
+                  AI Assessor: {health.assessor}
+                </span>
+              </div>
+            )}
+          </div>
           <p className="mt-1 text-sm text-gray-600">
             AI returns structured observations and uncertainty, your versioned policy calculates the suggestion, and you approve. PayPal executes.
           </p>
@@ -222,6 +272,25 @@ function Queue() {
           </div>
         )}
       </div>
+
+      {showcaseCases.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs text-gray-700">
+          <span className="font-semibold text-gray-900">Quick-inspect recorded cases:</span>
+          {showcaseCases.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setOpenId(c.id)}
+              className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-gray-800 shadow-2xs ring-1 ring-gray-300 transition hover:bg-gray-50 hover:text-brand"
+            >
+              <span>{c.label}</span>
+              <span className="text-gray-400">→</span>
+            </button>
+          ))}
+          <span className="ml-auto text-[11px] text-gray-500">Click to open drawer with full PayPal audit trail</span>
+        </div>
+      )}
+
       <div style={{ height: 520 }}>
         {filter === "disputes" ? (
           <AgGridReact<DisputeRow>

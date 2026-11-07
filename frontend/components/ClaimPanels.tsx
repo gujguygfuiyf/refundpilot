@@ -82,6 +82,10 @@ export function EvidenceCard({ claim }: { claim: Claim }) {
 export function DecisionCard({ claim }: { claim: Claim }) {
   const d = claim.decision;
   const currency = claim.order.currency;
+  const rem = d?.decision_inputs?.remaining_cents ?? claim.order.remaining_cents;
+  const days = d?.decision_inputs?.days_since_delivery;
+  const prior = d?.decision_inputs?.prior_claims ?? 0;
+
   return (
     <Card title="Decision" aside={d && <Badge>policy {d.policy_version}</Badge>}>
       {!d ? (
@@ -98,6 +102,69 @@ export function DecisionCard({ claim }: { claim: Claim }) {
             Rule <code className="rounded bg-gray-100 px-1">{d.rule_id}</code> ·{" "}
             {d.requires_approval ? "needs merchant approval" : "eligible for auto-approval"}
           </p>
+
+          <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50/70 p-3 text-xs">
+            <div className="mb-2 font-medium text-gray-700">Rule evaluation trace</div>
+            <ul className="space-y-1.5 font-mono">
+              <li className="flex items-start gap-1.5">
+                {d.rule_id === "PRE-nothing-left" ? (
+                  <>
+                    <span className="font-bold text-amber-600">✕</span>
+                    <span className="text-amber-800">
+                      Balance guard tripped: order already fully refunded ({money(rem, currency)} available)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-emerald-600">✓</span>
+                    <span className="text-gray-700">
+                      Refundable balance check passed ({money(rem, currency)} available)
+                    </span>
+                  </>
+                )}
+              </li>
+              <li className="flex items-start gap-1.5">
+                {d.rule_id === "PRE-window" ? (
+                  <>
+                    <span className="font-bold text-amber-600">✕</span>
+                    <span className="text-amber-800">
+                      Report window guard tripped: reported outside allowable window{typeof days === "number" ? ` (${days}d since delivery)` : ""}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-emerald-600">✓</span>
+                    <span className="text-gray-700">
+                      Delivery window check passed{typeof days === "number" ? ` (${days}d since delivery)` : ""}
+                    </span>
+                  </>
+                )}
+              </li>
+              <li className="flex items-start gap-1.5">
+                {d.rule_id === "PRE-repeat" ? (
+                  <>
+                    <span className="font-bold text-amber-600">✕</span>
+                    <span className="text-amber-800">
+                      Repeat-claim guard tripped: prior claims detected ({prior})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-emerald-600">✓</span>
+                    <span className="text-gray-700">
+                      Single-claim guard passed (prior claims: {prior})
+                    </span>
+                  </>
+                )}
+              </li>
+              <li className="flex items-start gap-1.5 rounded bg-blue-50/90 px-1.5 py-1 text-blue-950 font-medium ring-1 ring-blue-200/80">
+                <span className="font-bold text-blue-600">●</span>
+                <span>
+                  Matched {d.rule_id} under {d.policy_version} &rarr; {d.outcome} ({money(d.suggested_cents, currency)})
+                </span>
+              </li>
+            </ul>
+          </div>
         </div>
       )}
       {claim.merchant_message && (

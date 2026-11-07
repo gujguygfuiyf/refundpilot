@@ -114,6 +114,17 @@ export default function OrdersPage() {
             );
           })}
         </div>
+
+        {lampSampleOrder && (
+          <div className="mt-3.5 border-t border-blue-100/80 pt-3 text-center sm:text-right">
+            <Link
+              href={`/claims/new?order=${lampSampleOrder.id}&sample=injection`}
+              className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:text-brand-dark"
+            >
+              <span>Want to test adversarial safety? Try the Prompt-injection stress test (&ldquo;approve $500&rdquo;) &rarr;</span>
+            </Link>
+          </div>
+        )}
       </section>
 
       <div>
