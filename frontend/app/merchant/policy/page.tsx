@@ -140,7 +140,7 @@ function Simulator() {
 
   useEffect(() => {
     api.policies().then(setPolicies).catch((e) => setError(e.message));
-    api.merchantClaims().then((r) => setClaims(r.filter((c) => c.damage_type))).catch(() => {});
+    api.merchantClaims().then((r) => setClaims(r.filter((c) => c.damage_type && c.status !== "CANCELLED"))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -171,11 +171,11 @@ function Simulator() {
 
       if (batchSource === "recorded") {
         const allRows = await api.merchantClaims();
-        const assessedRows = allRows.filter((c) => c.damage_type);
+        const assessedRows = allRows.filter((c) => c.damage_type && c.status !== "CANCELLED");
         if (assessedRows.length === 0) {
-          throw new Error("No recorded claims with completed AI assessments were found.");
+          throw new Error("No recorded non-cancelled claims with completed AI assessments were found.");
         }
-        // Chronological order per order_id to reconstruct prior_claims and remaining_cents at the time of each claim
+        // Chronological order per order_id to reconstruct prior_claims when legacy claims lack decision_inputs
         const sortedChron = [...allRows].sort(
           (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime(),
         );
@@ -186,30 +186,39 @@ function Simulator() {
         }
 
         casesToRun = withAssessment.map((fc) => {
-          const d = daysBetweenIso(fc.order.delivered_at, fc.created_at);
-          // Count prior non-cancelled claims on the same order created before this claim
-          const priorCount = sortedChron.filter(
-            (r) =>
-              r.order_id === fc.order.id &&
-              r.id !== fc.id &&
-              r.status !== "CANCELLED" &&
-              new Date(r.created_at).getTime() < new Date(fc.created_at).getTime(),
-          ).length;
-          // At claim evaluation time (before this claim's own refund was finalized), refundable balance is
-          // order.remaining_cents + any COMPLETED refund belonging to this claim itself.
+          const snap = fc.decision?.decision_inputs;
+          const d =
+            typeof snap?.days_since_delivery === "number"
+              ? snap.days_since_delivery
+              : daysBetweenIso(fc.order.delivered_at, fc.created_at);
+          const priorCount =
+            typeof snap?.prior_claims === "number"
+              ? snap.prior_claims
+              : sortedChron.filter(
+                  (r) =>
+                    r.order_id === fc.order.id &&
+                    r.id !== fc.id &&
+                    r.status !== "CANCELLED" &&
+                    new Date(r.created_at).getTime() < new Date(fc.created_at).getTime(),
+                ).length;
           const ownCompletedRefunds = (fc.refunds || [])
             .filter((rf) => rf.status === "COMPLETED")
             .reduce((acc, rf) => acc + rf.amount_cents, 0);
-          const remainingAtDecision = Math.min(
-            fc.order.amount_cents,
-            fc.order.remaining_cents + ownCompletedRefunds,
-          );
+          const remainingAtDecision =
+            typeof snap?.remaining_cents === "number"
+              ? snap.remaining_cents
+              : Math.min(fc.order.amount_cents, fc.order.remaining_cents + ownCompletedRefunds);
+          const orderCentsAtDecision =
+            typeof snap?.order_cents === "number" ? snap.order_cents : fc.order.amount_cents;
+          const hasExactSnapshot = typeof snap?.remaining_cents === "number";
 
           return {
             id: fc.id,
-            title: `${fc.order.product.name} · Order #${fc.order.id} (${money(fc.order.amount_cents)})`,
-            sourceLabel: `Recorded claim ${fc.id.slice(-6)}`,
-            order_cents: fc.order.amount_cents,
+            title: `${fc.order.product.name} · Order #${fc.order.id} (${money(orderCentsAtDecision)})`,
+            sourceLabel: hasExactSnapshot
+              ? `Recorded claim ${fc.id.slice(-6)} (exact snapshot)`
+              : `Recorded claim ${fc.id.slice(-6)} (reconstructed)`,
+            order_cents: orderCentsAtDecision,
             remaining_cents: remainingAtDecision,
             days_since_delivery: d,
             prior_claims: priorCount,
@@ -291,8 +300,14 @@ function Simulator() {
     try {
       const c = await api.merchantClaim(id);
       if (c.assessment) setA(c.assessment.output);
-      setOrderCents(c.order.amount_cents);
-      setDays(daysBetweenIso(c.order.delivered_at, c.created_at));
+      const snap = c.decision?.decision_inputs;
+      setOrderCents(typeof snap?.order_cents === "number" ? snap.order_cents : c.order.amount_cents);
+      setDays(
+        typeof snap?.days_since_delivery === "number"
+          ? snap.days_since_delivery
+          : daysBetweenIso(c.order.delivered_at, c.created_at),
+      );
+      if (typeof snap?.prior_claims === "number") setPrior(snap.prior_claims);
     } catch (e) {
       setError((e as Error).message);
     }

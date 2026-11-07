@@ -83,6 +83,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ notes }),
     }, true),
+  resetDisputeAccept: (id: string, reason?: string) =>
+    request<Dispute>(`/merchant/disputes/${id}/reset`, {
+      method: "POST",
+      body: JSON.stringify({ ...(reason ? { reason } : {}) }),
+    }, true),
   stats: () => request<Stats>("/merchant/stats", {}, true),
   approve: (id: string, overrideCents?: number) =>
     request<Refund>(`/merchant/claims/${id}/approve`, {

@@ -186,10 +186,10 @@ Refund（与 PayPal 对齐）：`CREATED → (UNKNOWN | PENDING | COMPLETED | FA
 
 原则：**界面上"退款已完成"只在 refund.status=COMPLETED 时显示**，API 请求成功不等于完成。
 
-Dispute（与 PayPal Disputes API v1 对齐）：
-- 同步：`CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` Webhook 或后台定期 `GET /v1/customer/disputes` 兜底轮询 → `WAITING_FOR_SELLER_RESPONSE | OPEN`。
-- 商家接受并退款（`Accept claim & refund via PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → PROCESSING → RESOLVED`。默认金额取关联 Claim 的政策建议金额（上限不超过 `min(order.remaining_cents, dispute_amount_cents)`），带确定性 `PayPal-Request-Id: rp-dispute-accept-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/accept-claim`，并与 `PAYMENT.CAPTURE.REFUNDED` Webhook 共用同一张 `refunds` 账本，通过 `finalized_at` 保证同一笔钱绝不记账两次。
-- 商家提交证据包（`Send evidence to PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → UNDER_REVIEW`。由确定性模板组装订单事实、AI 观察、命中规则与版本、历史退款 `refund_ids`（自动选用 `PROOF_OF_REFUND` 或 `OTHER`）、审计时间线与买家照片，商家预览确认后带确定性 `PayPal-Request-Id: rp-dispute-evid-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/provide-evidence`（`multipart/form-data`）。
+Dispute（与 PayPal Disputes API v1 对齐，实验性扩展：读取已在线上 Sandbox 验证，写流程由 FakePayPal 自动化测试覆盖）：
+- 同步：`CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` Webhook 或后台定期 `GET /v1/customer/disputes` 兜底轮询 → `WAITING_FOR_SELLER_RESPONSE | OPEN`，并解析 HATEOAS `links`（`accept-claim` / `provide-evidence`）与 `allowed_response_options.accept_claim.accept_claim_types`。
+- 商家接受并退款（`Accept claim & refund via PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → PROCESSING → RESOLVED`。仅当关联 Claim 存在政策结论时才取政策建议值（含 `$0.00` 建议，绝不用全额上限覆盖 `$0` 建议），上限不超过 `min(order.remaining_cents, dispute_amount_cents)`，带确定性 `PayPal-Request-Id: rp-dispute-accept-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/accept-claim`。若请求超时记为 `UNKNOWN`，由 Reconciler 轮询 `GET /v1/customer/disputes/{id}`（绝不盲目重发也不提前判失败），待 `CUSTOMER.DISPUTE.RESOLVED` 或匹配 `capture_id + currency + amount_cents` 的 `PAYMENT.CAPTURE.REFUNDED` Webhook 到达后幂等结算；若商家在 PayPal 后台确认超时请求未到达，可通过 `POST /merchant/disputes/{id}/reset` 显式重置并留存审计。
+- 商家提交证据包（`Send evidence to PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → UNDER_REVIEW`。检查 HATEOAS `provide-evidence` 链接后，由确定性模板组装订单事实、AI 观察、命中规则与版本、历史退款 `refund_ids`（自动选用 `PROOF_OF_REFUND` 或 `OTHER`）、审计时间线与买家照片，商家预览确认后带确定性 `PayPal-Request-Id: rp-dispute-evid-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/provide-evidence`（`multipart/form-data`）。
 - 开关：`DISPUTES_ENABLED`（默认 `true`），设为 `false` 时争议同步、Webhook 消费与接口均关闭，不影响原有流程。
 
 ---
@@ -479,6 +479,7 @@ def approve(db, paypal, claim_id: str, merchant: str, override_cents: int | None
 | GET /merchant/disputes/{id} | 争议详情、关联 Claim 与确定性证据包预览 | 商家 |
 | POST /merchant/disputes/{id}/accept | body: `{override_cents?, note?}` → 幂等调 PayPal `accept-claim` 退款 | 商家 |
 | POST /merchant/disputes/{id}/evidence | body: `{notes?}` → 调 PayPal `provide-evidence` 提交证据包 | 商家 |
+| POST /merchant/disputes/{id}/reset | body: `{reason?}` → 校验 PayPal 状态后显式重置已确认未送达的 `UNKNOWN` 接受请求 | 商家 |
 | GET /health | 存活检查，显示当前 PayPal 网关和 AI 提供方 | 无 |
 | POST /webhooks/paypal | PayPal 回调 | 验签 |
 | POST /dev/seed | 导入 products.json / orders.json 并同步 capture 状态 | `DEV_TOKEN`，生产关闭 |

@@ -87,8 +87,22 @@ export default function DisputeDrawer({
       : remaining;
   const cents = Math.round(parseFloat(amount || "0") * 100);
   const suggested = dispute?.suggested_cents ?? 0;
-  const amountValid = cents > 0 && cents <= maxCents;
+  const hasPolicyDecision = dispute?.has_policy_decision ?? false;
+  const allowedAcceptTypes = dispute?.allowed_accept_claim_types ?? ["REFUND", "PARTIAL_REFUND"];
+  const disputeTotal = (dispute?.dispute_amount_cents || dispute?.order?.amount_cents) ?? 0;
+  const acceptClaimType = cents < disputeTotal ? "PARTIAL_REFUND" : "REFUND";
+  const claimTypePermitted =
+    allowedAcceptTypes.length === 0 || allowedAcceptTypes.includes(acceptClaimType);
+  const amountValid = cents > 0 && cents <= maxCents && claimTypePermitted;
   const actionable = dispute ? ACTIONABLE_STATUSES.includes(dispute.status) : false;
+  const canAcceptClaim = Boolean(dispute?.can_accept_claim);
+  const canProvideEvidence = Boolean(dispute?.can_provide_evidence);
+  const hasUnknownAccept = Boolean(
+    dispute?.claim?.refunds?.some(
+      (r) => r.status === "UNKNOWN" && r.paypal_request_id.startsWith("rp-dispute-accept-"),
+    ),
+  );
+  const isOverride = !hasPolicyDecision || cents !== suggested;
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
@@ -163,6 +177,32 @@ export default function DisputeDrawer({
                 </dl>
               </Card>
 
+              {dispute.status === "PROCESSING" && (
+                <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                  <p>
+                    Claim acceptance is in flight. Waiting for PayPal to confirm the refund: RefundPilot marks it
+                    refunded only when PayPal resolves the dispute in the buyer&apos;s favour or sends the refund
+                    webhook. Nothing is credited before that.
+                  </p>
+                  {hasUnknownAccept && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-amber-200/80 pt-2 text-xs">
+                      <span>
+                        The <code>accept-claim</code> call timed out and remains <code>UNKNOWN</code> so a late PayPal
+                        settlement is never missed. If you verified in PayPal that it was not received, you can reset
+                        this attempt:
+                      </span>
+                      <Button
+                        variant="secondary"
+                        disabled={!!busy}
+                        onClick={() => act("reset", () => api.resetDisputeAccept(dispute.id))}
+                      >
+                        {busy === "reset" && <Spinner />} Check PayPal &amp; reset timed-out attempt
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {actionable && (
                 <Card title="Merchant Action (Human Approval Required)" className="ring-2 ring-blue-100">
                   <p className="mb-4 text-xs text-gray-600">
@@ -176,43 +216,72 @@ export default function DisputeDrawer({
                         Option 1 · Accept claim &amp; refund via PayPal
                       </h3>
                       <span className="text-xs text-gray-500">
-                        Policy suggestion: <strong>{money(suggested, currency)}</strong> · Max allowed:{" "}
-                        <strong>{money(maxCents, currency)}</strong>
+                        {hasPolicyDecision ? (
+                          <>
+                            Policy suggestion: <strong>{money(suggested, currency)}</strong>
+                          </>
+                        ) : (
+                          <strong>Pending human decision (no policy assessment)</strong>
+                        )}{" "}
+                        · Max allowed: <strong>{money(maxCents, currency)}</strong>
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-end gap-3">
-                      <label className="text-sm">
-                        <span className="block text-xs text-gray-500">
-                          Refund amount ({currency}), max {money(maxCents, currency)}
-                        </span>
-                        <input
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                          inputMode="decimal"
-                          className="mt-1 w-36 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-                        />
-                      </label>
-                      <label className="min-w-0 flex-1 text-sm">
-                        <span className="block text-xs text-gray-500">Note to PayPal / buyer (optional)</span>
-                        <input
-                          value={acceptNote}
-                          onChange={(e) => setAcceptNote(e.target.value)}
-                          placeholder="Accepted under merchant refund policy"
-                          className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-                        />
-                      </label>
-                      <Button
-                        onClick={() => setConfirmMode("accept")}
-                        disabled={!amountValid || !dispute.order || !!busy}
-                      >
-                        {busy === "accept" && <Spinner />} Accept claim &amp; refund via PayPal
-                      </Button>
-                    </div>
-                    {cents !== suggested && amountValid && (
-                      <p className="text-xs text-amber-700">
-                        Overrides the default suggestion of {money(suggested, currency)}. The override is recorded in the
-                        audit trail.
+                    {!canAcceptClaim ? (
+                      <p className="text-xs text-amber-800">
+                        PayPal does not currently expose an <code>accept-claim</code> action link for this dispute.
                       </p>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-end gap-3">
+                          <label className="text-sm">
+                            <span className="block text-xs text-gray-500">
+                              Refund amount ({currency}), max {money(maxCents, currency)}
+                            </span>
+                            <input
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                              placeholder={suggested > 0 ? (suggested / 100).toFixed(2) : "Enter override amount"}
+                              inputMode="decimal"
+                              className="mt-1 w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                            />
+                          </label>
+                          <label className="min-w-0 flex-1 text-sm">
+                            <span className="block text-xs text-gray-500">Note to PayPal / buyer (optional)</span>
+                            <input
+                              value={acceptNote}
+                              onChange={(e) => setAcceptNote(e.target.value)}
+                              placeholder="Accepted under merchant refund policy"
+                              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                            />
+                          </label>
+                          <Button
+                            onClick={() => setConfirmMode("accept")}
+                            disabled={!amountValid || !dispute.order || !!busy}
+                          >
+                            {busy === "accept" && <Spinner />} Accept claim &amp; refund via PayPal
+                          </Button>
+                        </div>
+                        {!claimTypePermitted && cents > 0 && (
+                          <p className="text-xs text-red-700">
+                            PayPal only permits <code>{allowedAcceptTypes.join(", ")}</code> on this dispute (
+                            <code>{acceptClaimType}</code> is not allowed).
+                          </p>
+                        )}
+                        {hasPolicyDecision && suggested === 0 && cents === 0 && (
+                          <p className="text-xs text-gray-600">
+                            Policy suggests <strong>$0.00</strong> ({dispute.claim?.decision?.outcome ?? "no refund"}).
+                            Enter an explicit override amount if you still want to accept and refund this dispute.
+                          </p>
+                        )}
+                        {isOverride && amountValid && (
+                          <p className="text-xs text-amber-700">
+                            {hasPolicyDecision
+                              ? `Overrides the policy suggestion of ${money(suggested, currency)}.`
+                              : "Manual refund amount (no prior policy decision)."}{" "}
+                            Recorded as a merchant override in the audit trail.
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -231,26 +300,34 @@ export default function DisputeDrawer({
                         <span>{dispute.evidence_preview.photo_urls.length} photo(s) attached</span>
                       </div>
                     </div>
-                    <label className="block text-sm">
-                      <span className="block text-xs text-gray-500">
-                        Deterministic evidence summary (preview &amp; edit before sending to PayPal)
-                      </span>
-                      <textarea
-                        rows={7}
-                        value={evidenceNotes}
-                        onChange={(e) => setEvidenceNotes(e.target.value)}
-                        className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-3 font-mono text-xs text-gray-800"
-                      />
-                    </label>
-                    <div className="flex justify-end">
-                      <Button
-                        variant="secondary"
-                        onClick={() => setConfirmMode("evidence")}
-                        disabled={!evidenceNotes.trim() || !!busy}
-                      >
-                        {busy === "evidence" && <Spinner />} Send evidence to PayPal
-                      </Button>
-                    </div>
+                    {!canProvideEvidence ? (
+                      <p className="text-xs text-amber-800">
+                        PayPal does not currently expose a <code>provide-evidence</code> action link for this dispute.
+                      </p>
+                    ) : (
+                      <>
+                        <label className="block text-sm">
+                          <span className="block text-xs text-gray-500">
+                            Deterministic evidence summary (preview &amp; edit before sending to PayPal)
+                          </span>
+                          <textarea
+                            rows={7}
+                            value={evidenceNotes}
+                            onChange={(e) => setEvidenceNotes(e.target.value)}
+                            className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-3 font-mono text-xs text-gray-800"
+                          />
+                        </label>
+                        <div className="flex justify-end">
+                          <Button
+                            variant="secondary"
+                            onClick={() => setConfirmMode("evidence")}
+                            disabled={!evidenceNotes.trim() || !!busy}
+                          >
+                            {busy === "evidence" && <Spinner />} Send evidence to PayPal
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </Card>
               )}
@@ -351,7 +428,7 @@ export default function DisputeDrawer({
                         act("accept", () =>
                           api.acceptDispute(
                             dispute.id,
-                            cents !== suggested ? cents : undefined,
+                            isOverride ? cents : undefined,
                             acceptNote.trim() || undefined,
                           ),
                         )

@@ -54,6 +54,13 @@ export interface Assessment {
   created_at: string;
 }
 
+export interface DecisionInputs {
+  order_cents?: number;
+  remaining_cents?: number;
+  days_since_delivery?: number;
+  prior_claims?: number;
+}
+
 export interface Decision {
   id: number;
   policy_version: string;
@@ -62,6 +69,7 @@ export interface Decision {
   suggested_cents: number;
   requires_approval: boolean;
   reason: string;
+  decision_inputs?: DecisionInputs | null;
   created_at: string;
 }
 
@@ -138,6 +146,10 @@ export interface DisputeRow {
   outcome: string | null;
   rule_id: string | null;
   suggested_cents: number;
+  has_policy_decision: boolean;
+  can_accept_claim: boolean;
+  can_provide_evidence: boolean;
+  allowed_accept_claim_types: string[];
   created_at: string;
   updated_at: string;
 }
@@ -158,6 +170,10 @@ export interface Dispute {
   dispute_amount_cents: number;
   currency: string;
   suggested_cents: number;
+  has_policy_decision: boolean;
+  can_accept_claim: boolean;
+  can_provide_evidence: boolean;
+  allowed_accept_claim_types: string[];
   order: Order | null;
   claim: Claim | null;
   evidence_preview: DisputeEvidencePreview;

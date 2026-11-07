@@ -33,17 +33,16 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 ## What uses PayPal
 
 - **Orders v2:** `scripts/mint_orders.py` creates and captures the sandbox orders the buyer can claim against.
-- **Payments v2:** `GET /v2/payments/captures/{id}` checks the refundable balance before every refund;
+- **Payments v2 (primary, live-verified in PayPal Sandbox):** `GET /v2/payments/captures/{id}` checks the refundable balance before every refund;
   `POST /v2/payments/captures/{id}/refund` executes it; `GET /v2/payments/refunds/{id}` reconciles pending ones.
-- **Disputes v1:** `GET /v1/customer/disputes` and `GET /v1/customer/disputes/{id}` sync open buyer disputes and match them to local orders by `disputed_transactions[].seller_transaction_id` (`capture_id`);
+- **Disputes v1 (experimental extension):** `GET /v1/customer/disputes` and `GET /v1/customer/disputes/{id}` sync open buyer disputes and match them to local orders by `disputed_transactions[].seller_transaction_id` (`capture_id`), inspecting PayPal HATEOAS `links` (`accept-claim`, `provide-evidence`) and `allowed_response_options`;
   `POST /v1/customer/disputes/{id}/accept-claim` accepts a dispute and refunds the policy-suggested (or merchant-overridden) amount within the remaining balance;
-  `POST /v1/customer/disputes/{id}/provide-evidence` (`multipart/form-data`) submits a deterministic evidence package built from stored order facts, AI observations, policy rule/version, prior PayPal refund IDs (`PROOF_OF_REFUND`), timeline, and buyer photos.
+  `POST /v1/customer/disputes/{id}/provide-evidence` (`multipart/form-data`) submits a deterministic evidence package built from stored order facts, AI observations, policy rule/version, prior PayPal refund IDs (`PROOF_OF_REFUND`), timeline, and buyer photos. Read sync (`GET /v1/customer/disputes`) is verified against the live PayPal Sandbox; write flows (`accept-claim`, `provide-evidence`) are covered by `FakePayPal` automated tests.
 - **Idempotency & single-ledger deduplication:** each refund and dispute action carries a deterministic `PayPal-Request-Id`. A double click produces one refund.
-  A timeout puts the refund in `UNKNOWN`, and the reconciler replays the same request id, so PayPal returns the
-  original refund instead of paying twice. Dispute `accept-claim` refunds and `PAYMENT.CAPTURE.REFUNDED` webhooks share the same refund ledger so the same money is never credited twice.
+  For direct capture refunds (`Payments v2`), a timeout puts the refund in `UNKNOWN` and the reconciler replays the same request id so PayPal returns the original refund instead of paying twice. For dispute `accept-claim` calls (`Disputes v1`), a timeout leaves the refund in `UNKNOWN` and the reconciler polls `GET /v1/customer/disputes/{id}` (never blindly replaying `accept-claim`) until `CUSTOMER.DISPUTE.RESOLVED` confirms the outcome or the merchant explicitly resets a verified unreceived attempt. Dispute `accept-claim` refunds and `PAYMENT.CAPTURE.REFUNDED` webhooks share the same refund ledger and require matching `capture_id`, currency, and amount before linking an unlinked dispute refund.
 - **Webhooks:** `PAYMENT.CAPTURE.REFUNDED` and `CUSTOMER.DISPUTE.CREATED` / `UPDATED` / `RESOLVED` are signature-verified via `/v1/notifications/verify-webhook-signature`,
-  deduplicated by event id, and finalize refunds or update dispute state exactly once.
-- The UI shows "Refunded" only when PayPal reports the refund as `COMPLETED`.
+  deduplicated by event id, and finalize refunds or update dispute state once.
+- The UI shows "Refunded" only when PayPal reports the refund as `COMPLETED` (or the dispute as `RESOLVED` in the buyer's favour).
 
 ## How we tested it
 

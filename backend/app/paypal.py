@@ -161,6 +161,8 @@ class FakePayPal:
         self._run = secrets.token_hex(3).upper() + "-"   # see refund_capture
         self.by_request: dict[str, str] = {}          # request_id -> refund_id
         self.dispute_by_request: dict[str, dict] = {} # request_id -> response
+        self.dispute_resolves_immediately = True      # False: accept-claim leaves the dispute UNDER_REVIEW
+        self.deferred_accepts: dict[str, tuple] = {}  # dispute_id -> (refund, cents, currency)
         self.calls: list[tuple] = []
         self.fail_next: Exception | None = None
 
@@ -237,6 +239,11 @@ class FakePayPal:
             "dispute_state": "REQUIRED_ACTION" if status == "WAITING_FOR_SELLER_RESPONSE" else status,
             "dispute_life_cycle_stage": stage,
             "dispute_amount": {"currency_code": self.currency, "value": fmt_amount(amt)},
+            "allowed_response_options": {
+                "accept_claim": {
+                    "accept_claim_types": ["REFUND", "PARTIAL_REFUND"],
+                }
+            },
             "messages": [{"posted_by": "BUYER", "time_posted": now, "content": buyer_note}] if buyer_note else [],
             "links": [
                 {"rel": "self", "href": f"/v1/customer/disputes/{did}", "method": "GET"},
@@ -269,6 +276,13 @@ class FakePayPal:
         d = self.get_dispute(dispute_id)
         if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
+        links = d.get("links") or []
+        if not any((lk.get("rel") or "") == "accept-claim" for lk in links):
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACTION_NOT_ALLOWED"}]}')
+        claim_type = "PARTIAL_REFUND" if cents < dispute_amount_cents else "REFUND"
+        allowed_types = ((d.get("allowed_response_options") or {}).get("accept_claim") or {}).get("accept_claim_types")
+        if allowed_types is not None and claim_type not in allowed_types:
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACCEPT_CLAIM_TYPE_NOT_ALLOWED"}]}')
         txs = d.get("disputed_transactions") or []
         cap_id = txs[0].get("seller_transaction_id") if txs else ""
         c = self._capture(cap_id)
@@ -277,26 +291,37 @@ class FakePayPal:
         rid = f"R{self._run}{len(self.refunds) + 1:05d}"
         r = {"id": rid, "status": self.refund_status, "amount": {"value": fmt_amount(cents), "currency_code": currency},
              "invoice_id": f"dispute-{dispute_id}", "capture_id": cap_id}
-        self.refunds[rid] = r
-        self.by_request[request_id] = rid
-        if self.refund_status == "COMPLETED":
-            c["refunded"] += cents
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        d["status"] = "RESOLVED"
-        d["dispute_state"] = "RESOLVED"
         d["update_time"] = now
-        d["refund_id"] = rid
-        d["dispute_outcome"] = {
-            "outcome_code": "RESOLVED_BUYER_FAVOUR",
-            "amount_refunded": {"currency_code": currency, "value": fmt_amount(cents)},
-        }
-        resp = {
-            "refund_id": rid,
-            "status": "RESOLVED",
-            "links": [{"rel": "self", "href": f"/v1/customer/disputes/{dispute_id}", "method": "GET"}],
-        }
+        if self.dispute_resolves_immediately:
+            self.refunds[rid] = r
+            if self.refund_status == "COMPLETED":
+                c["refunded"] += cents
+            d["status"] = "RESOLVED"
+            d["dispute_state"] = "RESOLVED"
+            d["dispute_outcome"] = {
+                "outcome_code": "ACCEPTED",
+                "amount_refunded": {"currency_code": currency, "value": fmt_amount(cents)},
+            }
+        else:                                   # PayPal settles later (e.g. the buyer must answer a partial offer)
+            d["status"] = "UNDER_REVIEW"
+            d["dispute_state"] = "UNDER_PAYPAL_REVIEW"
+            self.deferred_accepts[dispute_id] = (r, cents, currency)
+        # Like the real API: accept-claim returns HATEOAS links only, no refund id and no refund status.
+        resp = {"links": [{"rel": "self", "href": f"/v1/customer/disputes/{dispute_id}", "method": "GET"}]}
         self.dispute_by_request[request_id] = resp
         return resp
+
+    def resolve_deferred_accept(self, dispute_id: str) -> dict:
+        """Test helper: PayPal finishes a deferred accept-claim. Returns the refund it created."""
+        r, cents, currency = self.deferred_accepts.pop(dispute_id)
+        self.refunds[r["id"]] = r
+        self.captures[r["capture_id"]]["refunded"] += cents
+        d = self.disputes[dispute_id]
+        d.update(status="RESOLVED", dispute_state="RESOLVED",
+                 dispute_outcome={"outcome_code": "ACCEPTED",
+                                  "amount_refunded": {"currency_code": currency, "value": fmt_amount(cents)}})
+        return r
 
     def provide_evidence(self, dispute_id: str, *, notes: str, request_id: str,
                          evidence_type: str = "OTHER", refund_ids: list[str] | None = None,
@@ -310,6 +335,9 @@ class FakePayPal:
         d = self.get_dispute(dispute_id)
         if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
+        links = d.get("links") or []
+        if not any((lk.get("rel") or "") == "provide-evidence" for lk in links):
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACTION_NOT_ALLOWED"}]}')
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         d["status"] = "UNDER_REVIEW"
         d["dispute_state"] = "UNDER_REVIEW"

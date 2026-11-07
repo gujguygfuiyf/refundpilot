@@ -66,13 +66,14 @@ class DecisionOut(BaseModel):
     suggested_cents: int
     requires_approval: bool
     reason: str
+    decision_inputs: dict | None = None
     created_at: str
 
     @classmethod
-    def from_model(cls, d: Decision) -> "DecisionOut":
+    def from_model(cls, d: Decision, decision_inputs: dict | None = None) -> "DecisionOut":
         return cls(id=d.id, policy_version=d.policy_version, rule_id=d.rule_id, outcome=d.outcome,
                    suggested_cents=d.suggested_cents, requires_approval=bool(d.requires_approval), reason=d.reason,
-                   created_at=d.created_at)
+                   decision_inputs=decision_inputs, created_at=d.created_at)
 
 
 class RefundOut(BaseModel):
@@ -122,11 +123,16 @@ class ClaimOut(BaseModel):
 
     @classmethod
     def from_model(cls, c: Claim, timeline: list[AuditLog]) -> "ClaimOut":
+        dec_inputs: dict | None = None
+        for a in reversed(timeline):
+            if a.event == "decided" and isinstance(a.detail, dict) and isinstance(a.detail.get("inputs"), dict):
+                dec_inputs = a.detail["inputs"]
+                break
         return cls(id=c.id, status=c.status, order=OrderOut.from_model(c.order), buyer_text=c.buyer_text,
                    policy_version=c.policy_version, merchant_message=c.merchant_message,
                    photo_urls=[f"/claims/{c.id}/photos/{i}" for i in range(len(c.photos))],
                    assessment=AssessmentOut.from_model(c.latest_assessment) if c.latest_assessment else None,
-                   decision=DecisionOut.from_model(c.latest_decision) if c.latest_decision else None,
+                   decision=DecisionOut.from_model(c.latest_decision, decision_inputs=dec_inputs) if c.latest_decision else None,
                    refunds=[RefundOut.from_model(r) for r in c.refunds],
                    timeline=[AuditOut.from_model(a) for a in timeline],
                    created_at=c.created_at, updated_at=c.updated_at, resolved_at=c.resolved_at)
@@ -171,6 +177,10 @@ class DisputeRow(BaseModel):
     outcome: str | None
     rule_id: str | None
     suggested_cents: int
+    has_policy_decision: bool = False
+    can_accept_claim: bool = False
+    can_provide_evidence: bool = False
+    allowed_accept_claim_types: list[str] = Field(default_factory=list)
     created_at: str
     updated_at: str
 
@@ -191,6 +201,10 @@ class DisputeOut(BaseModel):
     dispute_amount_cents: int
     currency: str
     suggested_cents: int
+    has_policy_decision: bool = False
+    can_accept_claim: bool = False
+    can_provide_evidence: bool = False
+    allowed_accept_claim_types: list[str] = Field(default_factory=list)
     order: OrderOut | None
     claim: ClaimOut | None
     evidence_preview: DisputeEvidencePreviewOut
@@ -209,6 +223,10 @@ class DisputeAcceptIn(BaseModel):
 
 class DisputeEvidenceIn(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
+
+
+class DisputeResetIn(BaseModel):
+    reason: str | None = Field(default="verified not received in PayPal", max_length=300)
 
 
 class ApproveIn(BaseModel):

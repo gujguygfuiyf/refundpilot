@@ -11,8 +11,8 @@ from ..db import get_db
 from ..deps import get_service, require_merchant
 from ..models import AuditLog, Claim, Decision, Dispute, Refund
 from ..schemas import (ApproveIn, AuditOut, ClaimOut, ClaimRow, DisputeAcceptIn, DisputeEvidenceIn,
-                       DisputeEvidencePreviewOut, DisputeOut, DisputeRow, MessageIn, OrderOut, ReassessIn, RefundOut,
-                       StatsOut)
+                       DisputeEvidencePreviewOut, DisputeOut, DisputeResetIn, DisputeRow, MessageIn, OrderOut,
+                       ReassessIn, RefundOut, StatsOut)
 from .claims import _run_assessment_job, claim_out
 
 router = APIRouter(prefix="/merchant", tags=["merchant"], dependencies=[Depends(require_merchant)])
@@ -32,6 +32,7 @@ def _dispute_timeline(db: Session, d: Dispute) -> list[AuditOut]:
 def dispute_out(db: Session, svc: ClaimService, d: Dispute) -> DisputeOut:
     claim = d.claim or (svc.latest_claim_for_order(d.order_id) if d.order_id else None)
     pkg = svc.build_dispute_evidence(d)
+    can_accept, can_evidence, allowed_types = svc.dispute_capabilities(d.raw, status_override=d.status)
     return DisputeOut(
         id=d.id,
         paypal_dispute_id=d.paypal_dispute_id,
@@ -41,6 +42,10 @@ def dispute_out(db: Session, svc: ClaimService, d: Dispute) -> DisputeOut:
         dispute_amount_cents=d.dispute_amount_cents,
         currency=d.currency,
         suggested_cents=svc.suggested_dispute_cents(d),
+        has_policy_decision=svc.has_dispute_policy_decision(d),
+        can_accept_claim=can_accept,
+        can_provide_evidence=can_evidence,
+        allowed_accept_claim_types=allowed_types,
         order=OrderOut.from_model(d.order) if d.order else None,
         claim=claim_out(db, claim) if claim else None,
         evidence_preview=DisputeEvidencePreviewOut(**pkg),
@@ -152,6 +157,7 @@ def list_disputes(status: str | None = Query(default=None), svc: ClaimService = 
         o = d.order
         c = d.claim or (svc.latest_claim_for_order(o.id) if o else None)
         dec = c.latest_decision if c else None
+        can_accept, can_evidence, allowed_types = svc.dispute_capabilities(d.raw, status_override=d.status)
         rows.append(DisputeRow(
             id=d.id,
             paypal_dispute_id=d.paypal_dispute_id,
@@ -170,6 +176,10 @@ def list_disputes(status: str | None = Query(default=None), svc: ClaimService = 
             outcome=dec.outcome if dec else None,
             rule_id=dec.rule_id if dec else None,
             suggested_cents=svc.suggested_dispute_cents(d),
+            has_policy_decision=svc.has_dispute_policy_decision(d),
+            can_accept_claim=can_accept,
+            can_provide_evidence=can_evidence,
+            allowed_accept_claim_types=allowed_types,
             created_at=d.created_at,
             updated_at=d.updated_at,
         ))
@@ -221,6 +231,25 @@ def provide_dispute_evidence(dispute_id: str, body: DisputeEvidenceIn | None = N
         raise HTTPException(409, "PayPal Disputes integration is disabled (DISPUTES_ENABLED=false)")
     try:
         d = svc.submit_dispute_evidence(dispute_id, notes=body.notes if body else None, by=who)
+    except NotFound:
+        raise HTTPException(404, "dispute not found")
+    except Conflict as e:
+        raise HTTPException(409, str(e))
+    return dispute_out(db, svc, d)
+
+
+@router.post("/disputes/{dispute_id}/reset", response_model=DisputeOut)
+def reset_dispute_accept(dispute_id: str, body: DisputeResetIn | None = None,
+                         svc: ClaimService = Depends(get_service), db: Session = Depends(get_db),
+                         who: str = Depends(require_merchant)) -> DisputeOut:
+    if not settings.disputes_enabled:
+        raise HTTPException(409, "PayPal Disputes integration is disabled (DISPUTES_ENABLED=false)")
+    try:
+        d = svc.reset_dispute_accept(
+            dispute_id,
+            reason=(body.reason if body and body.reason else "verified not received in PayPal"),
+            by=who,
+        )
     except NotFound:
         raise HTTPException(404, "dispute not found")
     except Conflict as e:

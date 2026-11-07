@@ -105,7 +105,7 @@ def test_accept_claim_idempotent_double_click_refunds_once(svc, paypal, db):
     assert svc.get_claim(claim.id).order.refunded_cents == 1900
 
 
-def test_accept_claim_timeout_then_reconcile_replays_same_request_id(svc, paypal):
+def test_accept_claim_timeout_is_never_replayed_and_explicit_reset_frees_the_dispute(svc, paypal):
     submit(svc, order_id=1)
     paypal.open_dispute("CAP1", dispute_id="PP-D-3002")
     svc.sync_disputes()
@@ -115,49 +115,105 @@ def test_accept_claim_timeout_then_reconcile_replays_same_request_id(svc, paypal
     assert r.status == "UNKNOWN"
     assert svc.get_dispute("PP-D-3002").status == "PROCESSING"
 
-    assert svc.reconcile() == 1
+    # reconcile asks PayPal about the dispute instead of re-sending accept-claim,
+    # and does NOT prematurely fail the refund while PayPal may still be processing it.
+    assert svc.reconcile() == 0
     disp = svc.get_dispute("PP-D-3002")
+    assert r.status == "UNKNOWN"
+    assert disp.status == "PROCESSING"
+    assert disp.order.refunded_cents == 0
+    assert len([c for c in paypal.calls if c[0] == "accept_claim"]) == 1
+
+    # Once the merchant confirms in PayPal that the request never landed, explicit reset frees the dispute.
+    svc.reset_dispute_accept("PP-D-3002", reason="confirmed not received in PayPal")
+    assert r.status == "FAILED"
+    assert disp.status == "WAITING_FOR_SELLER_RESPONSE"
+
+    # the merchant can decide again; the retry carries a new attempt id
+    r2 = svc.accept_dispute("PP-D-3002")
+    assert r2.paypal_request_id == "rp-dispute-accept-PP-D-3002-2"
+    assert r2.status == "COMPLETED"
+    assert disp.order.refunded_cents == 1900
+
+
+def test_accept_claim_timeout_that_landed_is_settled_from_the_paypal_dispute(svc, paypal):
+    submit(svc, order_id=1)
+    paypal.open_dispute("CAP1", dispute_id="PP-D-3003")
+    svc.sync_disputes()
+
+    real_accept = paypal.accept_claim
+
+    def landed_then_timed_out(*args, **kwargs):
+        real_accept(*args, **kwargs)
+        raise httpx.ReadTimeout("response lost")
+
+    paypal.accept_claim = landed_then_timed_out
+    r = svc.accept_dispute("PP-D-3003")
+    assert r.status == "UNKNOWN"
+    assert svc.get_dispute("PP-D-3003").order.refunded_cents == 0     # nothing credited on a guess
+
+    assert svc.reconcile() == 1
+    disp = svc.get_dispute("PP-D-3003")
+    assert r.status == "COMPLETED"
     assert disp.status == "RESOLVED"
     assert disp.order.refunded_cents == 1900
-    accept_calls = [c for c in paypal.calls if c[0] == "accept_claim"]
-    assert len(accept_calls) == 2 and accept_calls[0][3] == accept_calls[1][3]
-    assert len(paypal.refunds) == 1
+
+
+def test_accept_claim_is_not_credited_until_paypal_confirms(svc, paypal, db):
+    claim = submit(svc, order_id=2)     # $49.00 order (CAP2)
+    paypal.open_dispute("CAP2", dispute_id="PP-D-4002")
+    svc.sync_disputes()
+    paypal.dispute_resolves_immediately = False
+
+    r = svc.accept_dispute("PP-D-4002")
+    disp = svc.get_dispute("PP-D-4002")
+    assert r.status == "PENDING" and r.paypal_refund_id is None
+    assert disp.status == "PROCESSING"
+    assert disp.order.refunded_cents == 0
+    assert svc.get_claim(claim.id).status == "PROCESSING"
+
+    assert svc.reconcile() == 0         # PayPal still reviewing: nothing changes
+    assert r.status == "PENDING"
+
+    pp_refund = paypal.resolve_deferred_accept("PP-D-4002")
+    assert svc.apply_webhook_dispute(paypal.get_dispute("PP-D-4002"), "CUSTOMER.DISPUTE.RESOLVED") is True
+    assert r.status == "COMPLETED"
+    assert disp.status == "RESOLVED"
+    assert disp.order.refunded_cents == 4900
+
+    # PAYMENT.CAPTURE.REFUNDED for the same money only attaches the refund id
+    assert svc.apply_webhook_refund(dict(pp_refund)) is True
+    db.refresh(r)
+    assert r.paypal_refund_id == pp_refund["id"]
+    assert disp.order.refunded_cents == 4900
 
 
 def test_dispute_refund_and_capture_refunded_webhook_never_double_credit(svc, paypal, db):
-    """Whether accept-claim returns a refund_id immediately or PayPal delivers PAYMENT.CAPTURE.REFUNDED afterwards,
-    the order ledger must be credited once."""
+    """accept-claim returns HATEOAS links only; the refund id arrives later with PAYMENT.CAPTURE.REFUNDED.
+    The order ledger must be credited once, however many times the webhook is delivered."""
     submit(svc, order_id=2)             # $49.00 order (CAP2)
     paypal.open_dispute("CAP2", dispute_id="PP-D-4001")
     svc.sync_disputes()
 
     r = svc.accept_dispute("PP-D-4001", override_cents=2000)
     assert r.status == "COMPLETED" and r.amount_cents == 2000
+    assert r.paypal_refund_id is None
     assert svc.get_dispute("PP-D-4001").order.refunded_cents == 2000
 
-    # 1) Webhook arrives with the same refund_id
+    pp_refund = next(v for v in paypal.refunds.values() if v["invoice_id"] == "dispute-PP-D-4001")
     webhook_resource = {
-        "id": r.paypal_refund_id,
+        "id": pp_refund["id"],
         "status": "COMPLETED",
         "amount": {"value": "20.00", "currency_code": "USD"},
         "links": [{"rel": "up", "href": "https://api-m.sandbox.paypal.com/v2/payments/captures/CAP2"}],
     }
     assert svc.apply_webhook_refund(webhook_resource) is True
+    db.refresh(r)
+    assert r.paypal_refund_id == pp_refund["id"]
     assert svc.get_dispute("PP-D-4001").order.refunded_cents == 2000
 
-    # 2) Simulate PayPal accept-claim returning only HATEOAS links (no refund_id in sync response),
-    # followed by PAYMENT.CAPTURE.REFUNDED webhook assigning the refund id.
-    r.paypal_refund_id = None
-    db.commit()
-    webhook_resource_2 = {
-        "id": "R-LATE-WEBHOOK-99",
-        "status": "COMPLETED",
-        "amount": {"value": "20.00", "currency_code": "USD"},
-        "links": [{"rel": "up", "href": "https://api-m.sandbox.paypal.com/v2/payments/captures/CAP2"}],
-    }
-    assert svc.apply_webhook_refund(webhook_resource_2) is True
-    db.refresh(r)
-    assert r.paypal_refund_id == "R-LATE-WEBHOOK-99"
+    # redelivery of the same webhook
+    assert svc.apply_webhook_refund(webhook_resource) is True
     assert svc.get_dispute("PP-D-4001").order.refunded_cents == 2000
 
 
@@ -240,3 +296,129 @@ def test_background_housekeeping_syncs_disputes(db, paypal):
     due = work.last_housekeeping + settings.housekeeping_interval_s
     assert work.tick(now=due) is True
     assert db.query(Dispute).filter_by(paypal_dispute_id="PP-D-8001").count() == 1
+
+
+def test_zero_policy_suggestion_is_not_replaced_by_full_refund(svc, paypal, db):
+    claim = submit(svc, order_id=1, text="wrong")
+    assert claim.latest_decision.suggested_cents == 0
+    paypal.open_dispute("CAP1", dispute_id="PP-D-ZERO")
+    svc.sync_disputes()
+    disp = svc.get_dispute("PP-D-ZERO")
+    assert svc.suggested_dispute_cents(disp) == 0
+    assert svc.has_dispute_policy_decision(disp) is True
+
+    # Calling accept_dispute without an explicit override_cents on a $0 policy suggestion is rejected
+    with pytest.raises(Conflict, match="policy suggests \\$0\\.00"):
+        svc.accept_dispute("PP-D-ZERO")
+
+    # Explicit override is allowed and recorded as override=True in audit_log
+    r = svc.accept_dispute("PP-D-ZERO", override_cents=500)
+    assert r.status == "COMPLETED" and r.amount_cents == 500 and r.override_cents == 500
+    approved_logs = [
+        a for a in db.query(AuditLog).all()
+        if a.event == "dispute_accept_approved" and (a.detail or {}).get("paypal_dispute_id") == "PP-D-ZERO"
+    ]
+    assert len(approved_logs) == 1 and approved_logs[0].detail["override"] is True
+
+
+def test_unassessed_dispute_has_zero_suggestion_and_requires_explicit_amount(svc, paypal):
+    # Open a dispute on an order with NO prior RefundPilot claim
+    paypal.open_dispute("CAP1", dispute_id="PP-D-NOCLAIM")
+    svc.sync_disputes()
+    disp = svc.get_dispute("PP-D-NOCLAIM")
+    assert svc.has_dispute_policy_decision(disp) is False
+    assert svc.suggested_dispute_cents(disp) == 0
+
+    with pytest.raises(Conflict, match="no policy suggestion"):
+        svc.accept_dispute("PP-D-NOCLAIM")
+
+    r = svc.accept_dispute("PP-D-NOCLAIM", override_cents=1000)
+    assert r.status == "COMPLETED" and r.amount_cents == 1000 and r.override_cents == 1000
+
+
+def test_unrelated_refund_without_capture_identity_cannot_settle_dispute(svc, paypal):
+    claim = submit(svc, order_id=1)
+    paypal.open_dispute("CAP1", dispute_id="PP-D-IDENTITY")
+    svc.sync_disputes()
+    paypal.dispute_resolves_immediately = False
+    refund = svc.accept_dispute("PP-D-IDENTITY")
+    assert refund.status == "PENDING"
+    handled = svc.apply_webhook_refund({
+        "id": "UNRELATED-REFUND", "status": "COMPLETED",
+        "amount": {"value": "19.00", "currency_code": "USD"},
+    })
+    assert handled is False
+    assert claim.order.refunded_cents == 0
+    assert refund.paypal_refund_id is None
+
+
+def test_webhook_refund_for_different_capture_with_same_amount_is_not_bound(svc, paypal):
+    claim = submit(svc, order_id=1)     # CAP1, $19.00
+    paypal.open_dispute("CAP1", dispute_id="PP-D-DIFFCAP")
+    svc.sync_disputes()
+    paypal.dispute_resolves_immediately = False
+    refund = svc.accept_dispute("PP-D-DIFFCAP")
+    assert refund.status == "PENDING"
+
+    # A $19.00 partial refund on CAP2 (order #2) must not attach to CAP1's dispute refund
+    handled = svc.apply_webhook_refund({
+        "id": "REF-ON-CAP2",
+        "status": "COMPLETED",
+        "capture_id": "CAP2",
+        "amount": {"value": "19.00", "currency_code": "USD"},
+    })
+    assert handled is False
+    assert claim.order.refunded_cents == 0
+    assert refund.paypal_refund_id is None
+
+
+def test_late_resolution_after_timeout_still_settles_ledger(svc, paypal):
+    claim = submit(svc, order_id=1)
+    paypal.open_dispute("CAP1", dispute_id="PP-D-LATE")
+    svc.sync_disputes()
+    original_accept = paypal.accept_claim
+    queued = []
+
+    def delayed_accept(*args, **kwargs):
+        queued.append((args, kwargs))
+        raise httpx.ReadTimeout("accepted request is still being processed upstream")
+
+    paypal.accept_claim = delayed_accept
+    refund = svc.accept_dispute("PP-D-LATE")
+    assert refund.status == "UNKNOWN"
+    svc.reconcile()  # GET still shows seller-response status before upstream commits.
+    original_accept(*queued[0][0], **queued[0][1])
+    resolved = paypal.get_dispute("PP-D-LATE")
+    assert resolved["status"] == "RESOLVED"
+    svc.apply_webhook_dispute(resolved, "CUSTOMER.DISPUTE.RESOLVED")
+    assert claim.order.refunded_cents == 1900
+    assert refund.status == "COMPLETED"
+
+
+def test_evidence_requires_paypal_action_link(svc, paypal):
+    submit(svc, order_id=1)
+    payload = paypal.open_dispute("CAP1", dispute_id="PP-D-NO-EVIDENCE", status="OPEN")
+    payload["links"] = [link for link in payload["links"] if link["rel"] != "provide-evidence"]
+    svc.sync_disputes()
+    with pytest.raises(Conflict):
+        svc.submit_dispute_evidence("PP-D-NO-EVIDENCE")
+    assert not [call for call in paypal.calls if call[0] == "provide_evidence"]
+
+
+def test_accept_claim_checks_hateoas_link_and_allowed_response_options(svc, paypal):
+    submit(svc, order_id=1)
+    payload = paypal.open_dispute("CAP1", dispute_id="PP-D-ONLY-FULL", status="WAITING_FOR_SELLER_RESPONSE")
+    payload["allowed_response_options"] = {"accept_claim": {"accept_claim_types": ["REFUND"]}}
+    svc.sync_disputes()
+
+    # Partial refund ($10.00 < $19.00) is blocked when PayPal only permits full REFUND
+    with pytest.raises(Conflict, match="PARTIAL_REFUND"):
+        svc.accept_dispute("PP-D-ONLY-FULL", override_cents=1000)
+    assert not [call for call in paypal.calls if call[0] == "accept_claim"]
+
+    # Removing accept-claim link blocks acceptance altogether
+    payload["links"] = [link for link in payload["links"] if link["rel"] != "accept-claim"]
+    svc.sync_disputes()
+    with pytest.raises(Conflict, match="accept-claim"):
+        svc.accept_dispute("PP-D-ONLY-FULL", override_cents=1900)
+    assert not [call for call in paypal.calls if call[0] == "accept_claim"]
