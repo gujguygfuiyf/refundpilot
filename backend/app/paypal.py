@@ -281,7 +281,7 @@ class FakePayPal:
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACTION_NOT_ALLOWED"}]}')
         claim_type = "PARTIAL_REFUND" if cents < dispute_amount_cents else "REFUND"
         allowed_types = ((d.get("allowed_response_options") or {}).get("accept_claim") or {}).get("accept_claim_types")
-        if allowed_types is not None and claim_type not in allowed_types:
+        if not isinstance(allowed_types, list) or claim_type not in allowed_types:
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACCEPT_CLAIM_TYPE_NOT_ALLOWED"}]}')
         txs = d.get("disputed_transactions") or []
         cap_id = txs[0].get("seller_transaction_id") if txs else ""

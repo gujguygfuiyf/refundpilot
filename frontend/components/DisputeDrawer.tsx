@@ -88,14 +88,13 @@ export default function DisputeDrawer({
   const cents = Math.round(parseFloat(amount || "0") * 100);
   const suggested = dispute?.suggested_cents ?? 0;
   const hasPolicyDecision = dispute?.has_policy_decision ?? false;
-  const allowedAcceptTypes = dispute?.allowed_accept_claim_types ?? ["REFUND", "PARTIAL_REFUND"];
+  const allowedAcceptTypes = dispute?.allowed_accept_claim_types ?? [];
   const disputeTotal = (dispute?.dispute_amount_cents || dispute?.order?.amount_cents) ?? 0;
   const acceptClaimType = cents < disputeTotal ? "PARTIAL_REFUND" : "REFUND";
-  const claimTypePermitted =
-    allowedAcceptTypes.length === 0 || allowedAcceptTypes.includes(acceptClaimType);
+  const claimTypePermitted = allowedAcceptTypes.includes(acceptClaimType);
   const amountValid = cents > 0 && cents <= maxCents && claimTypePermitted;
   const actionable = dispute ? ACTIONABLE_STATUSES.includes(dispute.status) : false;
-  const canAcceptClaim = Boolean(dispute?.can_accept_claim);
+  const canAcceptClaim = Boolean(dispute?.can_accept_claim) && allowedAcceptTypes.length > 0;
   const canProvideEvidence = Boolean(dispute?.can_provide_evidence);
   const hasUnknownAccept = Boolean(
     dispute?.claim?.refunds?.some(

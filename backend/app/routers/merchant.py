@@ -30,6 +30,7 @@ def _dispute_timeline(db: Session, d: Dispute) -> list[AuditOut]:
 
 
 def dispute_out(db: Session, svc: ClaimService, d: Dispute) -> DisputeOut:
+    svc.refresh_dispute_capabilities_if_needed(d)
     claim = d.claim or (svc.latest_claim_for_order(d.order_id) if d.order_id else None)
     pkg = svc.build_dispute_evidence(d)
     can_accept, can_evidence, allowed_types = svc.dispute_capabilities(d.raw, status_override=d.status)
@@ -154,6 +155,7 @@ def list_disputes(status: str | None = Query(default=None), svc: ClaimService = 
         q = q.where(Dispute.status.in_(status.split(",")))
     rows: list[DisputeRow] = []
     for d in db.execute(q).scalars().all():
+        svc.refresh_dispute_capabilities_if_needed(d)
         o = d.order
         c = d.claim or (svc.latest_claim_for_order(o.id) if o else None)
         dec = c.latest_decision if c else None

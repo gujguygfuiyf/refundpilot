@@ -422,3 +422,45 @@ def test_accept_claim_checks_hateoas_link_and_allowed_response_options(svc, payp
     with pytest.raises(Conflict, match="accept-claim"):
         svc.accept_dispute("PP-D-ONLY-FULL", override_cents=1900)
     assert not [call for call in paypal.calls if call[0] == "accept_claim"]
+
+
+def test_missing_links_or_allowed_response_options_fetches_detail_and_fails_closed(svc, paypal):
+    submit(svc, order_id=1)
+
+    # Case 1: summary payload lacks `links` and `allowed_response_options`, but full detail in PayPal has them ->
+    # refresh_dispute_capabilities_if_needed fetches full detail from PayPal and succeeds.
+    full = paypal.open_dispute("CAP1", dispute_id="PP-D-SUMMARY-OK", status="WAITING_FOR_SELLER_RESPONSE")
+    summary_only = {k: v for k, v in full.items() if k not in ("links", "allowed_response_options")}
+    disp = svc.upsert_dispute_from_paypal(summary_only, source="webhook")
+    # Even if stored raw is manually stripped before action, accept_dispute refreshes from get_dispute()
+    disp.raw = summary_only
+    svc.db.commit()
+    r = svc.accept_dispute("PP-D-SUMMARY-OK")
+    assert r.status == "COMPLETED" and r.amount_cents == 1900
+
+    # Case 2: PayPal detail itself completely omits `links` and `allowed_response_options` ->
+    # dispute_capabilities fails closed (False, False, []) and both accept_dispute and submit_dispute_evidence reject.
+    submit(svc, order_id=2)
+    raw_missing = paypal.open_dispute("CAP2", dispute_id="PP-D-MISSING-ALL", status="WAITING_FOR_SELLER_RESPONSE")
+    raw_missing.pop("links", None)
+    raw_missing.pop("allowed_response_options", None)
+    svc.sync_disputes()
+
+    disp_missing = svc.get_dispute("PP-D-MISSING-ALL")
+    assert svc.dispute_capabilities(disp_missing.raw, status_override=disp_missing.status) == (False, False, [])
+
+    with pytest.raises(Conflict, match="accept-claim"):
+        svc.accept_dispute("PP-D-MISSING-ALL", override_cents=1000)
+    with pytest.raises(Conflict, match="provide-evidence"):
+        svc.submit_dispute_evidence("PP-D-MISSING-ALL")
+
+    # Case 3: `links` has accept-claim, but `allowed_response_options` is completely absent ->
+    # accept_dispute fails closed, while provide-evidence (which has its link) remains allowed.
+    raw_no_opts = paypal.open_dispute("CAP2", dispute_id="PP-D-NO-OPTS", status="WAITING_FOR_SELLER_RESPONSE")
+    raw_no_opts.pop("allowed_response_options", None)
+    svc.sync_disputes()
+
+    disp_no_opts = svc.get_dispute("PP-D-NO-OPTS")
+    assert svc.dispute_capabilities(disp_no_opts.raw, status_override=disp_no_opts.status) == (False, True, [])
+    with pytest.raises(Conflict, match="accept-claim"):
+        svc.accept_dispute("PP-D-NO-OPTS", override_cents=1000)
