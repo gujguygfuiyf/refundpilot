@@ -152,6 +152,65 @@ class ClaimRow(BaseModel):
     updated_at: str
 
 
+class DisputeRow(BaseModel):
+    """Compact row for the merchant disputes grid."""
+    id: str
+    paypal_dispute_id: str
+    status: str
+    stage: str
+    reason: str
+    dispute_amount_cents: int
+    currency: str
+    order_id: int | None
+    capture_id: str | None
+    product_name: str | None
+    product_image_url: str | None
+    order_amount_cents: int | None
+    remaining_cents: int | None
+    claim_id: str | None
+    outcome: str | None
+    rule_id: str | None
+    suggested_cents: int
+    created_at: str
+    updated_at: str
+
+
+class DisputeEvidencePreviewOut(BaseModel):
+    evidence_type: str
+    refund_ids: list[str]
+    notes: str
+    photo_urls: list[str]
+
+
+class DisputeOut(BaseModel):
+    id: str
+    paypal_dispute_id: str
+    status: str
+    stage: str
+    reason: str
+    dispute_amount_cents: int
+    currency: str
+    suggested_cents: int
+    order: OrderOut | None
+    claim: ClaimOut | None
+    evidence_preview: DisputeEvidencePreviewOut
+    submitted_evidence_notes: str | None
+    timeline: list[AuditOut]
+    raw: dict
+    created_at: str
+    updated_at: str
+    resolved_at: str | None
+
+
+class DisputeAcceptIn(BaseModel):
+    override_cents: int | None = Field(default=None, ge=1)
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class DisputeEvidenceIn(BaseModel):
+    notes: str | None = Field(default=None, max_length=2000)
+
+
 class ApproveIn(BaseModel):
     override_cents: int | None = Field(default=None, ge=1)
 

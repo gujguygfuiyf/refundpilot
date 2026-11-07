@@ -26,14 +26,15 @@ class BackgroundWork:
     refund is waiting on PayPal (`reconcile_needed`) or the slow housekeeping tick is due, so the database can
     scale to zero while the API idles (and an uptime ping to /health never touches it)."""
 
-    def __init__(self, session_factory=None) -> None:
+    def __init__(self, session_factory=None, paypal=None) -> None:
         self.session_factory = session_factory or SessionLocal
+        self.paypal = paypal
         self.last_housekeeping = time.monotonic()
 
     def tick(self, now: float | None = None) -> bool:
         """One pass. Returns True if it touched the database."""
         now = time.monotonic() if now is None else now
-        housekeeping = now - self.last_housekeeping >= settings.housekeeping_interval_s
+        housekeeping = (now - self.last_housekeeping) >= (settings.housekeeping_interval_s - 1e-6)
         if not (reconcile_needed.is_set() or housekeeping):
             return False
         try:
@@ -42,7 +43,7 @@ class BackgroundWork:
             log.warning("background work: no database session: %s", e)
             return False
         try:
-            svc = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version)
+            svc = ClaimService(db, self.paypal or get_paypal(), get_assessor(), settings.default_policy_version)
             reconcile_needed.clear()          # cleared first: a refund that goes pending meanwhile sets it again
             n = svc.reconcile()
             if n:
@@ -52,6 +53,14 @@ class BackgroundWork:
             if housekeeping:
                 refresh_demo_delivery(db)
                 self.last_housekeeping = now
+                if settings.disputes_enabled:
+                    try:
+                        d_synced = svc.sync_disputes()
+                        if d_synced:
+                            log.info("synced %d dispute(s)", d_synced)
+                    except Exception as e:
+                        log.warning("dispute sync error: %s", e)
+                        db.rollback()
         except Exception as e:  # never let the loop die; try again next tick
             log.warning("background work error: %s", e)
             db.rollback()
@@ -72,8 +81,13 @@ def _refresh_captures_once() -> None:
     try:
         n = refresh_captures(db, get_paypal())
         log.info("capture status refreshed in the background (%d newly refunded elsewhere)", n)
+        if settings.disputes_enabled:
+            svc = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version)
+            d_synced = svc.sync_disputes()
+            if d_synced:
+                log.info("synced %d dispute(s) on startup", d_synced)
     except Exception as e:
-        log.warning("capture refresh failed: %s", e)
+        log.warning("capture/dispute refresh failed: %s", e)
         db.rollback()
     finally:
         db.close()
@@ -120,4 +134,4 @@ for r in (orders.router, claims.router, merchant.router, policy.router, webhooks
 @app.get("/health")
 def health() -> dict:
     return {"ok": True, "paypal": type(get_paypal()).__name__, "assessor": getattr(get_assessor(), "name", "?"),
-            "time": time.time()}
+            "disputes_enabled": settings.disputes_enabled, "time": time.time()}

@@ -6,13 +6,51 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..claims import ClaimService, Conflict, NotFound
+from ..config import settings
 from ..db import get_db
 from ..deps import get_service, require_merchant
-from ..models import Claim, Decision, Refund
-from ..schemas import ApproveIn, ClaimOut, ClaimRow, MessageIn, ReassessIn, RefundOut, StatsOut
+from ..models import AuditLog, Claim, Decision, Dispute, Refund
+from ..schemas import (ApproveIn, AuditOut, ClaimOut, ClaimRow, DisputeAcceptIn, DisputeEvidenceIn,
+                       DisputeEvidencePreviewOut, DisputeOut, DisputeRow, MessageIn, OrderOut, ReassessIn, RefundOut,
+                       StatsOut)
 from .claims import _run_assessment_job, claim_out
 
 router = APIRouter(prefix="/merchant", tags=["merchant"], dependencies=[Depends(require_merchant)])
+
+
+def _dispute_timeline(db: Session, d: Dispute) -> list[AuditOut]:
+    rows = db.execute(select(AuditLog).order_by(AuditLog.id)).scalars().all()
+    out: list[AuditOut] = []
+    for a in rows:
+        if d.claim_id and a.claim_id == d.claim_id:
+            out.append(AuditOut.from_model(a))
+        elif a.detail and a.detail.get("paypal_dispute_id") == d.paypal_dispute_id:
+            out.append(AuditOut.from_model(a))
+    return out
+
+
+def dispute_out(db: Session, svc: ClaimService, d: Dispute) -> DisputeOut:
+    claim = d.claim or (svc.latest_claim_for_order(d.order_id) if d.order_id else None)
+    pkg = svc.build_dispute_evidence(d)
+    return DisputeOut(
+        id=d.id,
+        paypal_dispute_id=d.paypal_dispute_id,
+        status=d.status,
+        stage=d.stage,
+        reason=d.reason,
+        dispute_amount_cents=d.dispute_amount_cents,
+        currency=d.currency,
+        suggested_cents=svc.suggested_dispute_cents(d),
+        order=OrderOut.from_model(d.order) if d.order else None,
+        claim=claim_out(db, claim) if claim else None,
+        evidence_preview=DisputeEvidencePreviewOut(**pkg),
+        submitted_evidence_notes=d.submitted_evidence_notes,
+        timeline=_dispute_timeline(db, d),
+        raw=d.raw or {},
+        created_at=d.created_at,
+        updated_at=d.updated_at,
+        resolved_at=d.resolved_at,
+    )
 
 
 @router.get("/claims", response_model=list[ClaimRow])
@@ -101,9 +139,100 @@ def reassess(claim_id: str, body: ReassessIn, background: BackgroundTasks,
         raise HTTPException(409, str(e))
 
 
+@router.get("/disputes", response_model=list[DisputeRow])
+def list_disputes(status: str | None = Query(default=None), svc: ClaimService = Depends(get_service),
+                  db: Session = Depends(get_db)) -> list[DisputeRow]:
+    if not settings.disputes_enabled:
+        return []
+    q = select(Dispute).order_by(Dispute.created_at.desc())
+    if status:
+        q = q.where(Dispute.status.in_(status.split(",")))
+    rows: list[DisputeRow] = []
+    for d in db.execute(q).scalars().all():
+        o = d.order
+        c = d.claim or (svc.latest_claim_for_order(o.id) if o else None)
+        dec = c.latest_decision if c else None
+        rows.append(DisputeRow(
+            id=d.id,
+            paypal_dispute_id=d.paypal_dispute_id,
+            status=d.status,
+            stage=d.stage,
+            reason=d.reason,
+            dispute_amount_cents=d.dispute_amount_cents,
+            currency=d.currency,
+            order_id=o.id if o else None,
+            capture_id=o.capture_id if o else None,
+            product_name=o.product.name if o and o.product else None,
+            product_image_url=o.product.image_url if o and o.product else None,
+            order_amount_cents=o.amount_cents if o else None,
+            remaining_cents=o.remaining_cents if o else None,
+            claim_id=c.id if c else None,
+            outcome=dec.outcome if dec else None,
+            rule_id=dec.rule_id if dec else None,
+            suggested_cents=svc.suggested_dispute_cents(d),
+            created_at=d.created_at,
+            updated_at=d.updated_at,
+        ))
+    return rows
+
+
+@router.post("/disputes/sync")
+def sync_disputes(svc: ClaimService = Depends(get_service)) -> dict:
+    if not settings.disputes_enabled:
+        raise HTTPException(409, "PayPal Disputes integration is disabled (DISPUTES_ENABLED=false)")
+    return {"synced": svc.sync_disputes()}
+
+
+@router.get("/disputes/{dispute_id}", response_model=DisputeOut)
+def get_dispute(dispute_id: str, svc: ClaimService = Depends(get_service), db: Session = Depends(get_db)) -> DisputeOut:
+    if not settings.disputes_enabled:
+        raise HTTPException(404, "disputes disabled")
+    try:
+        d = svc.get_dispute(dispute_id)
+    except NotFound:
+        raise HTTPException(404, "dispute not found")
+    return dispute_out(db, svc, d)
+
+
+@router.post("/disputes/{dispute_id}/accept", response_model=RefundOut)
+def accept_dispute(dispute_id: str, body: DisputeAcceptIn | None = None, svc: ClaimService = Depends(get_service),
+                   who: str = Depends(require_merchant)) -> RefundOut:
+    if not settings.disputes_enabled:
+        raise HTTPException(409, "PayPal Disputes integration is disabled (DISPUTES_ENABLED=false)")
+    try:
+        r = svc.accept_dispute(
+            dispute_id,
+            by=who,
+            override_cents=body.override_cents if body else None,
+            note=body.note if body else None,
+        )
+    except NotFound:
+        raise HTTPException(404, "dispute not found")
+    except Conflict as e:
+        raise HTTPException(409, str(e))
+    return RefundOut.from_model(r)
+
+
+@router.post("/disputes/{dispute_id}/evidence", response_model=DisputeOut)
+def provide_dispute_evidence(dispute_id: str, body: DisputeEvidenceIn | None = None,
+                             svc: ClaimService = Depends(get_service), db: Session = Depends(get_db),
+                             who: str = Depends(require_merchant)) -> DisputeOut:
+    if not settings.disputes_enabled:
+        raise HTTPException(409, "PayPal Disputes integration is disabled (DISPUTES_ENABLED=false)")
+    try:
+        d = svc.submit_dispute_evidence(dispute_id, notes=body.notes if body else None, by=who)
+    except NotFound:
+        raise HTTPException(404, "dispute not found")
+    except Conflict as e:
+        raise HTTPException(409, str(e))
+    return dispute_out(db, svc, d)
+
+
 @router.post("/reconcile")
 def reconcile(svc: ClaimService = Depends(get_service)) -> dict:
-    return {"touched": svc.reconcile()}
+    touched = svc.reconcile()
+    synced = svc.sync_disputes() if settings.disputes_enabled else 0
+    return {"touched": touched, "disputes_synced": synced}
 
 
 @router.get("/stats", response_model=StatsOut)

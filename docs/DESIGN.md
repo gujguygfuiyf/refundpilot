@@ -155,6 +155,7 @@ refundpilot/
 | policies | version (PK), name, body (JSON), body_sha256, created_at | 启动时从 `policies/*.json` 导入；修改即新版本 |
 | audit_log | id, claim_id, actor (buyer / ai / rules / merchant / paypal / system), event, detail (JSON), ts | 前端时间线直接读这张表 |
 | webhook_events | id (PayPal event id, PK), event_type, raw (JSON), received_at, processed_at | 去重 |
+| disputes | id, paypal_dispute_id (唯一), order_id, claim_id (可空), reason, status, stage, dispute_amount_cents, currency, accept_attempts, evidence_attempts, submitted_evidence_notes, raw (JSON), created_at, updated_at, resolved_at | 按 `disputed_transactions[].seller_transaction_id == orders.capture_id` 匹配订单并关联最新非取消 Claim |
 
 约束与不变量：
 
@@ -184,6 +185,12 @@ REVIEW_REQUIRED | EVIDENCE_REQUESTED → REJECTED
 Refund（与 PayPal 对齐）：`CREATED → (UNKNOWN | PENDING | COMPLETED | FAILED | CANCELLED)`，`UNKNOWN` 表示请求发出后没拿到响应（超时），由 Reconciler 用同一个 `PayPal-Request-Id` 重发或按 refund id 查询。
 
 原则：**界面上"退款已完成"只在 refund.status=COMPLETED 时显示**，API 请求成功不等于完成。
+
+Dispute（与 PayPal Disputes API v1 对齐）：
+- 同步：`CUSTOMER.DISPUTE.CREATED / UPDATED / RESOLVED` Webhook 或后台定期 `GET /v1/customer/disputes` 兜底轮询 → `WAITING_FOR_SELLER_RESPONSE | OPEN`。
+- 商家接受并退款（`Accept claim & refund via PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → PROCESSING → RESOLVED`。默认金额取关联 Claim 的政策建议金额（上限不超过 `min(order.remaining_cents, dispute_amount_cents)`），带确定性 `PayPal-Request-Id: rp-dispute-accept-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/accept-claim`，并与 `PAYMENT.CAPTURE.REFUNDED` Webhook 共用同一张 `refunds` 账本，通过 `finalized_at` 保证同一笔钱绝不记账两次。
+- 商家提交证据包（`Send evidence to PayPal`）：`WAITING_FOR_SELLER_RESPONSE | OPEN → UNDER_REVIEW`。由确定性模板组装订单事实、AI 观察、命中规则与版本、历史退款 `refund_ids`（自动选用 `PROOF_OF_REFUND` 或 `OTHER`）、审计时间线与买家照片，商家预览确认后带确定性 `PayPal-Request-Id: rp-dispute-evid-{paypal_dispute_id}-{attempt}` 调 `POST /v1/customer/disputes/{id}/provide-evidence`（`multipart/form-data`）。
+- 开关：`DISPUTES_ENABLED`（默认 `true`），设为 `false` 时争议同步、Webhook 消费与接口均关闭，不影响原有流程。
 
 ---
 
@@ -466,7 +473,12 @@ def approve(db, paypal, claim_id: str, merchant: str, override_cents: int | None
 | POST /policies/simulate | body: {policy_version, assessment, order_cents, remaining_cents?, days_since_delivery, prior_claims} → Decision，不动钱 | 商家 |
 | POST /claims/{id}/cancel | 买家撤回 | 无 |
 | GET /merchant/claims/{id} | 商家视角详情 | 商家 |
-| POST /merchant/reconcile | 手动触发一次核对 | 商家 |
+| POST /merchant/reconcile | 手动触发一次核对（含争议兜底同步） | 商家 |
+| GET /merchant/disputes | 争议队列数据（含匹配订单、关联 Claim 政策结论与建议金额） | 商家 |
+| POST /merchant/disputes/sync | 手动拉取 `GET /v1/customer/disputes` 同步争议 | 商家 |
+| GET /merchant/disputes/{id} | 争议详情、关联 Claim 与确定性证据包预览 | 商家 |
+| POST /merchant/disputes/{id}/accept | body: `{override_cents?, note?}` → 幂等调 PayPal `accept-claim` 退款 | 商家 |
+| POST /merchant/disputes/{id}/evidence | body: `{notes?}` → 调 PayPal `provide-evidence` 提交证据包 | 商家 |
 | GET /health | 存活检查，显示当前 PayPal 网关和 AI 提供方 | 无 |
 | POST /webhooks/paypal | PayPal 回调 | 验签 |
 | POST /dev/seed | 导入 products.json / orders.json 并同步 capture 状态 | `DEV_TOKEN`，生产关闭 |

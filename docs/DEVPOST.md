@@ -33,18 +33,19 @@ We wanted AI to make that call fast, without ever letting a model decide how muc
 3. A **versioned policy engine** (plain JSON rules the merchant can read) turns those facts plus order facts (delivery date, refundable balance) into an outcome: full refund, partial refund, request more evidence, or review.
 4. The **merchant** sees the AI facts and the policy outcome side by side in an AG Grid queue and approves with one click (or overrides within the refundable balance, requests evidence, or rejects).
 5. **PayPal** executes the refund on the original capture through the Payments v2 API. RefundPilot shows "refunded" only when PayPal reports the refund `COMPLETED`, and the signed `PAYMENT.CAPTURE.REFUNDED` webhook confirms it.
+6. **Already-opened PayPal Disputes** (`Disputes` tab in `/merchant`) run through the same pipeline via the **PayPal Disputes v1 API**: open disputes are matched to orders by `seller_transaction_id` (`capture_id`), linked to the claim's AI observations and policy recommendation, and the merchant can either **Accept claim & refund via PayPal** (`/v1/customer/disputes/{id}/accept-claim`, capped at the remaining refundable balance) or preview, edit, and **Send evidence to PayPal** (`/v1/customer/disputes/{id}/provide-evidence` multipart package with order facts, AI observations, matched rule/version, prior PayPal refund IDs, timeline, and buyer photos).
 
 Every step (buyer, AI, rules, merchant, PayPal) is written to an audit trail. RefundPilot implements an **end-to-end verifiable loop from evidence to policy to PayPal execution** that you can inspect live:
 - What recommendation does the **exact same evidence** produce under different merchant policies (Standard, Strict, Goodwill), and **which specific rule** decided it?
 - In **batch policy replay** (`/merchant/policy`), how does switching policies change the total suggested payout, the manual-review rate, and individual case outcomes across a merchant's queue?
-- Once a human approves, how does the decision trace directly to an idempotent **PayPal Payments v2** capture refund (`PayPal-Request-Id`) and a signature-verified `PAYMENT.CAPTURE.REFUNDED` webhook?
+- Once a human approves, how does the decision trace directly to an idempotent **PayPal Payments v2** capture refund or **PayPal Disputes v1** resolution (`PayPal-Request-Id`) and signature-verified `PAYMENT.CAPTURE.REFUNDED` / `CUSTOMER.DISPUTE.*` webhooks?
 
 ### How we built it
-- **PayPal**: Orders v2 to create and capture the sandbox orders buyers claim against; Payments v2 to read the capture's refundable balance before every refund, refund it, and reconcile pending refunds; Webhooks with signature verification (`/v1/notifications/verify-webhook-signature`).
-- **Idempotent money movement**: each refund attempt has a deterministic `PayPal-Request-Id`. A double click produces one refund; a timeout marks the refund `UNKNOWN` and a reconciler replays the *same* request id, so PayPal returns the original refund instead of paying twice.
-- **AI**: Gemini vision with a strict `response_schema`; the buyer's text is passed as untrusted data. An optional OpenAI model can be configured as an automatic backup. Any refusal or malformed answer falls back to "needs human review".
-- **Backend**: FastAPI, SQLAlchemy 2, Postgres (Neon) in production, SQLite locally; 54 automated tests covering every policy rule, the claim state machine and the idempotency cases.
-- **Frontend**: Next.js 15, Tailwind, AG Grid Community for the merchant queue.
+- **PayPal**: Orders v2 to create and capture the sandbox orders buyers claim against; Payments v2 to read the capture's refundable balance before every refund, refund it, and reconcile pending refunds; Customer Disputes v1 (`GET /v1/customer/disputes`, `GET /v1/customer/disputes/{id}`, `POST .../accept-claim`, `POST .../provide-evidence`) to sync open disputes, accept claims within the remaining balance, or submit deterministic multipart evidence packages; Webhooks with signature verification (`/v1/notifications/verify-webhook-signature`) for `PAYMENT.CAPTURE.REFUNDED` and `CUSTOMER.DISPUTE.CREATED` / `UPDATED` / `RESOLVED`.
+- **Idempotent money movement & single-ledger deduplication**: each refund and dispute action has a deterministic `PayPal-Request-Id`. A double click produces one refund; a timeout marks the refund `UNKNOWN` and a reconciler replays the *same* request id, so PayPal returns the original refund instead of paying twice. Dispute `accept-claim` refunds and `PAYMENT.CAPTURE.REFUNDED` webhooks share the same refund ledger so the same money is never credited twice.
+- **AI**: Gemini vision (`gemini-3.8-flash`) with a strict `response_schema`; the buyer's text is passed as untrusted data. An optional OpenAI model can be configured as an automatic backup. Any refusal or malformed answer falls back to "needs human review".
+- **Backend**: FastAPI, SQLAlchemy 2, Postgres (Neon) in production, SQLite locally; 63 automated tests covering every policy rule, the claim state machine, PayPal Disputes v1 flows, and the idempotency cases.
+- **Frontend**: Next.js 15, Tailwind, AG Grid Community for the merchant claims and disputes queues.
 - **Hosting**: a Render Blueprint (`render.yaml`) deploys the API and the web app; a scheduled GitHub Action keeps the free instances awake during judging.
 
 ### Challenges we ran into
@@ -68,7 +69,6 @@ We wrote 29 claim scenarios (genuine damage, scratches, wrong products, blurry, 
 Trustworthy AI in payments is mostly about boundaries: decide what the model is allowed to say, make everything that moves money deterministic and replayable, and keep a human on the final click.
 
 ### What's next
-- Use the PayPal Disputes API to pull in disputes that are already open and answer them with the same evidence.
 - Merchant-defined auto-approval for low amounts (the policy already has the switch; it's off in the demo).
 - Shopify / WooCommerce order import.
 
@@ -77,7 +77,7 @@ Trustworthy AI in payments is mostly about boundaries: decide what the model is 
 ## Testing instructions (for judges)
 1. Open https://refundpilot-web.onrender.com. (If nobody used it recently the first load can take up to a minute; during the judging window it is kept awake.)
 2. **Try a 1-click sample scenario at the top of the home page** (no file download needed): click **Clearly broken item**, **Blurry photo**, or **Suspected reused screenshot** to pre-fill a claimable order with the test photo and buyer note, then click **Submit claim**. (Raw test photos are also in https://github.com/gujguygfuiyf/refundpilot/tree/main/demo-photos.)
-3. Open https://refundpilot-web.onrender.com/merchant (no sign-in; the demo merchant token is prefilled and can only move PayPal **sandbox** money). Open the claim and click **Approve & refund via PayPal**. (To view the recorded demo claims and hard cases, click **All claims**; the default **Open** tab shows only pending claims.)
+3. Open https://refundpilot-web.onrender.com/merchant (no sign-in; the demo merchant token is prefilled and can only move PayPal **sandbox** money). Open the claim and click **Approve & refund via PayPal**. To view the recorded demo claims and hard cases, click **All claims**; to inspect or respond to open PayPal disputes synced via the PayPal Disputes v1 API (`Accept claim & refund via PayPal` or `Send evidence to PayPal` with confirmation preview), click **Disputes**.
 4. **Single-case & batch policy simulator** (`/merchant/policy`): compare how a single claim—or a **batch replay of 6 representative cases / recorded demo claims**—changes total suggested payout, manual-review rate, and per-case outcomes across Standard, Strict, and Goodwill policies.
 5. Each order can be claimed once; there are 30+ unused sandbox orders (15 `LAMP-02`, 15 `MUG-01`, 2 `HEAD-03`). Unclaimed demo orders automatically keep a fresh delivery date (`DEMO_ROLLING_DELIVERY=true` in the backend rolls unclaimed orders to "delivered 3 days ago" on startup and every 6 hours) so the 14-day report window stays open during the Dec 1–15 judging period, while already-claimed orders preserve their original dates so recorded decisions remain reproducible. Everything is PayPal sandbox; no real money moves.
 

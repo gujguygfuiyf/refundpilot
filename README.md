@@ -1,13 +1,13 @@
 # RefundPilot
 
-**Explainable, auditable refunds for PayPal merchants.** Resolve customer problems before they become disputes.
+**Explainable, auditable refunds for PayPal merchants.** Resolve customer problems before they become disputes—and handle open PayPal disputes through the same evidence, policy, and human-approval pipeline.
 
 A buyer reports a damaged item with a photo. A vision model describes what the photos show, a versioned
 rule engine turns that into a refund amount under the merchant's own policy, the merchant approves in one click,
-and the refund is executed through the PayPal Payments API. Every step lands in an audit trail.
+and the refund is executed through the PayPal Payments API (or the PayPal Disputes API when a buyer has already opened a dispute). Every step lands in an audit trail.
 
 ```
-Buyer photo ─► AI describes the evidence ─► Policy computes the amount ─► Merchant approves ─► PayPal refunds
+Buyer photo ─► AI describes the evidence ─► Policy computes the amount ─► Merchant approves ─► PayPal refunds / resolves dispute
                 (never sets an amount)        (deterministic, versioned)     (one click)          (idempotent)
 ```
 
@@ -27,19 +27,22 @@ reproducible, and nobody can explain the result afterwards. RefundPilot gives ea
 |---|---|---|
 | **AI (Gemini vision; optional OpenAI backup)** | Describe the photos with structured observations and uncertainty: does it match the product, what damage is visible, how good is the evidence, what can't be told | No. The model cannot directly set or execute a refund; its output schema has no amount field. Versioned policies calculate the suggestion, and a merchant approves every payment |
 | **Policy engine** | Pure function from evidence + order facts to an outcome and amount, using a versioned JSON policy | No, it only suggests |
-| **Merchant** | Approve (optionally override within the refundable balance), request more evidence, or reject | Yes, the only path to a refund |
-| **PayPal** | Execute the refund on the original capture | Yes, with a fixed `PayPal-Request-Id` per attempt |
+| **Merchant** | Approve (optionally override within the refundable balance), request more evidence, reject, or accept / contest an open PayPal dispute | Yes, the only path to a refund or dispute response |
+| **PayPal** | Execute the refund on the original capture or resolve/update the dispute | Yes, with a fixed `PayPal-Request-Id` per attempt |
 
 ## What uses PayPal
 
 - **Orders v2:** `scripts/mint_orders.py` creates and captures the sandbox orders the buyer can claim against.
 - **Payments v2:** `GET /v2/payments/captures/{id}` checks the refundable balance before every refund;
   `POST /v2/payments/captures/{id}/refund` executes it; `GET /v2/payments/refunds/{id}` reconciles pending ones.
-- **Idempotency:** each refund attempt has a deterministic `PayPal-Request-Id`. A double click produces one refund.
+- **Disputes v1:** `GET /v1/customer/disputes` and `GET /v1/customer/disputes/{id}` sync open buyer disputes and match them to local orders by `disputed_transactions[].seller_transaction_id` (`capture_id`);
+  `POST /v1/customer/disputes/{id}/accept-claim` accepts a dispute and refunds the policy-suggested (or merchant-overridden) amount within the remaining balance;
+  `POST /v1/customer/disputes/{id}/provide-evidence` (`multipart/form-data`) submits a deterministic evidence package built from stored order facts, AI observations, policy rule/version, prior PayPal refund IDs (`PROOF_OF_REFUND`), timeline, and buyer photos.
+- **Idempotency & single-ledger deduplication:** each refund and dispute action carries a deterministic `PayPal-Request-Id`. A double click produces one refund.
   A timeout puts the refund in `UNKNOWN`, and the reconciler replays the same request id, so PayPal returns the
-  original refund instead of paying twice.
-- **Webhooks:** `PAYMENT.CAPTURE.REFUNDED` is signature-verified via `/v1/notifications/verify-webhook-signature`,
-  deduplicated by event id, and finalizes the refund exactly once.
+  original refund instead of paying twice. Dispute `accept-claim` refunds and `PAYMENT.CAPTURE.REFUNDED` webhooks share the same refund ledger so the same money is never credited twice.
+- **Webhooks:** `PAYMENT.CAPTURE.REFUNDED` and `CUSTOMER.DISPUTE.CREATED` / `UPDATED` / `RESOLVED` are signature-verified via `/v1/notifications/verify-webhook-signature`,
+  deduplicated by event id, and finalize refunds or update dispute state exactly once.
 - The UI shows "Refunded" only when PayPal reports the refund as `COMPLETED`.
 
 ## How we tested it
@@ -57,14 +60,14 @@ suggestion above its predefined cap. Results, failures and limits: [docs/EVALUAT
 flowchart LR
     subgraph Web["Next.js"]
         B[Buyer pages]
-        M[Merchant queue · AG Grid]
+        M[Merchant queue & Disputes · AG Grid]
         S[Policy simulator]
     end
     subgraph API["FastAPI"]
-        CS[Claim service<br/>state machine · idempotent approve]
+        CS[Claim & Dispute service<br/>state machine · idempotent approve]
         AI[Assessor<br/>Gemini → OpenAI backup → human]
         PE[Policy engine<br/>versioned JSON]
-        PP[PayPal client]
+        PP[PayPal client<br/>Orders · Payments · Disputes]
         WH[Webhook + reconciler]
     end
     DB[(Postgres / SQLite)]
@@ -115,7 +118,7 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 1. **1-click sample scenarios** (`/`): the top of the home page offers three 1-click presets (**Clearly broken item**, **Blurry photo**, and **Suspected reused screenshot**) that automatically select a claimable order and pre-fill the test photo and buyer description—no file download needed. Click **Submit claim** to run the live Gemini assessment and policy engine.
 2. Watch the claim page: the evidence card fills in, then the decision card shows the rule, amount and policy version.
 3. **Merchant** (`/merchant`): open the claim from the queue, approve. The PayPal refund id appears and the status
-   turns `COMPLETED`. (Click **All claims** on the merchant page to inspect already-completed and hard-case claims; the default **Open** filter shows only pending claims.)
+   turns `COMPLETED`. Switch to **All claims** to inspect already-completed and hard-case claims, or **Disputes** to inspect PayPal Disputes synced from `/v1/customer/disputes`, accept a claim within the remaining balance, or preview and send a structured evidence package to PayPal.
 4. **Policy simulator & batch replay** (`/merchant/policy`): test how the same evidence—or a batch of 6 representative cases / recorded claims—plays out across Standard, Strict, and Goodwill policies (total suggested payout, review/evidence rate, and per-case rule diffs) before adopting a policy.
 
 ### Notes for judges
@@ -140,16 +143,16 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 cd backend && pytest -q
 ```
 
-Covers every policy rule, the claim state machine, and idempotent approval: double click, PayPal error then retry,
-timeout then reconcile with the same request id, and a PENDING refund finalized exactly once by a webhook. Also the
+Covers every policy rule, the claim state machine, PayPal Disputes v1 synchronization and evidence/accept flows, and idempotent approval: double click, PayPal error then retry,
+timeout then reconcile with the same request id, a PENDING refund finalized exactly once by a webhook, and single-ledger deduplication between dispute refunds and capture refund webhooks. Also the
 demo guards: rolling delivery dates, rate limits, token checks, first boot on an empty database.
 
 ## Tech and sponsor tools
 
-- **PayPal** Orders v2, Payments v2 (captures, refunds), Webhooks, sandbox
+- **PayPal** Orders v2, Payments v2 (captures, refunds), Customer Disputes v1 (list, get, accept-claim, provide-evidence), Webhooks, sandbox
 - **Gemini** (`google-genai`, `response_schema`) for the vision assessment; **OpenAI** structured outputs as an
   optional automatic backup when `OPENAI_API_KEY` is set
-- **AG Grid** Community: the merchant claims queue (custom cell renderers, Quartz theme)
+- **AG Grid** Community: the merchant claims & disputes queue (custom cell renderers, Quartz theme)
 - **Render**: `render.yaml` blueprint deploys the API and the web app in one step (free plan, Frankfurt);
   the database is a free Neon Postgres passed in as `DATABASE_URL`
 - FastAPI, SQLAlchemy 2, Next.js 15, Tailwind CSS 4

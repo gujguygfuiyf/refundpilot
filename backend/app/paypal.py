@@ -1,8 +1,10 @@
-"""PayPal REST client (Orders v2 / Payments v2 / Webhooks). Token cached, idempotent refunds via PayPal-Request-Id."""
+"""PayPal REST client (Orders v2 / Payments v2 / Disputes v1 / Webhooks). Token cached, idempotent via PayPal-Request-Id."""
 from __future__ import annotations
 
+import json as json_mod
 import secrets
 import time
+from datetime import datetime, timezone
 from typing import Protocol
 
 import httpx
@@ -21,6 +23,13 @@ class PayPalGateway(Protocol):
     def refund_capture(self, capture_id: str, cents: int, currency: str, *, request_id: str,
                        invoice_id: str, note: str = "") -> dict: ...
     def get_refund(self, refund_id: str) -> dict: ...
+    def list_disputes(self, page_size: int = 50) -> list[dict]: ...
+    def get_dispute(self, dispute_id: str) -> dict: ...
+    def accept_claim(self, dispute_id: str, *, cents: int, currency: str, dispute_amount_cents: int,
+                     note: str, request_id: str, reason: str = "COMPANY_POLICY") -> dict: ...
+    def provide_evidence(self, dispute_id: str, *, notes: str, request_id: str,
+                         evidence_type: str = "OTHER", refund_ids: list[str] | None = None,
+                         documents: list[tuple[str, bytes, str]] | None = None) -> dict: ...
     def verify_webhook(self, headers: dict, event: dict, webhook_id: str) -> bool: ...
 
 
@@ -85,6 +94,47 @@ class PayPalClient:
     def get_refund(self, refund_id: str) -> dict:
         return self._req("GET", f"/v2/payments/refunds/{refund_id}")
 
+    # ---- disputes v1 ----
+    def list_disputes(self, page_size: int = 50) -> list[dict]:
+        resp = self._req("GET", f"/v1/customer/disputes?page_size={max(1, min(page_size, 50))}")
+        return resp.get("items") or []
+
+    def get_dispute(self, dispute_id: str) -> dict:
+        return self._req("GET", f"/v1/customer/disputes/{dispute_id}")
+
+    def accept_claim(self, dispute_id: str, *, cents: int, currency: str, dispute_amount_cents: int,
+                     note: str, request_id: str, reason: str = "COMPANY_POLICY") -> dict:
+        body: dict = {
+            "note": (note or "Accepting claim under merchant refund policy.")[:2000],
+            "accept_claim_reason": reason,
+        }
+        if cents < dispute_amount_cents:
+            body["accept_claim_type"] = "PARTIAL_REFUND"
+            body["refund_amount"] = {"currency_code": currency, "value": fmt_amount(cents)}
+        else:
+            body["accept_claim_type"] = "REFUND"
+        return self._req("POST", f"/v1/customer/disputes/{dispute_id}/accept-claim", json=body, request_id=request_id)
+
+    def provide_evidence(self, dispute_id: str, *, notes: str, request_id: str,
+                         evidence_type: str = "OTHER", refund_ids: list[str] | None = None,
+                         documents: list[tuple[str, bytes, str]] | None = None) -> dict:
+        ev: dict = {"evidence_type": evidence_type, "notes": notes[:2000]}
+        if refund_ids:
+            ev["evidence_info"] = {"refund_ids": list(refund_ids)}
+        if documents:
+            ev["documents"] = [{"name": name} for name, _, _ in documents]
+        payload = {"evidences": [ev]}
+        files: list[tuple[str, tuple[str, bytes, str]]] = [
+            ("input", ("input.json", json_mod.dumps(payload).encode("utf-8"), "application/json")),
+        ]
+        for idx, (name, data, mime) in enumerate(documents or [], start=1):
+            files.append((f"file{idx}", (name, data, mime)))
+        headers = {"Authorization": f"Bearer {self._auth()}", "PayPal-Request-Id": request_id}
+        r = self._http.post(f"/v1/customer/disputes/{dispute_id}/provide-evidence", files=files, headers=headers)
+        if r.status_code >= 400:
+            raise PayPalError(r.status_code, r.text[:500])
+        return r.json() if r.content else {}
+
     # ---- webhooks ----
     def verify_webhook(self, headers: dict, event: dict, webhook_id: str) -> bool:
         h = {k.lower(): v for k, v in headers.items()}
@@ -107,8 +157,10 @@ class FakePayPal:
         self.currency = currency
         self.refund_status = refund_status
         self.refunds: dict[str, dict] = {}            # refund_id -> refund
+        self.disputes: dict[str, dict] = {}           # dispute_id -> dispute payload
         self._run = secrets.token_hex(3).upper() + "-"   # see refund_capture
         self.by_request: dict[str, str] = {}          # request_id -> refund_id
+        self.dispute_by_request: dict[str, dict] = {} # request_id -> response
         self.calls: list[tuple] = []
         self.fail_next: Exception | None = None
 
@@ -141,7 +193,7 @@ class FakePayPal:
         # hand out a refund id that is already stored (refunds.paypal_refund_id is unique).
         rid = f"R{self._run}{len(self.refunds) + 1:05d}"
         r = {"id": rid, "status": self.refund_status, "amount": {"value": fmt_amount(cents), "currency_code": currency},
-             "invoice_id": invoice_id}
+             "invoice_id": invoice_id, "capture_id": capture_id}
         self.refunds[rid] = r
         self.by_request[request_id] = rid
         if self.refund_status == "COMPLETED":
@@ -157,6 +209,123 @@ class FakePayPal:
     def get_refund(self, refund_id: str) -> dict:
         self.calls.append(("get_refund", refund_id))
         return self.refunds[refund_id]
+
+    # ---- disputes simulation & endpoints ----
+    def open_dispute(self, capture_id: str, *, dispute_id: str | None = None,
+                     reason: str = "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+                     stage: str = "INQUIRY", status: str = "WAITING_FOR_SELLER_RESPONSE",
+                     cents: int | None = None, buyer_note: str = "Item arrived damaged") -> dict:
+        """Test/demo helper: open a simulated PayPal dispute against a capture."""
+        c = self._capture(capture_id)
+        did = dispute_id or f"PP-D-{self._run}{len(self.disputes) + 1:04d}"
+        amt = cents if cents is not None else c["amount_cents"]
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        d = {
+            "dispute_id": did,
+            "create_time": now,
+            "update_time": now,
+            "disputed_transactions": [
+                {
+                    "seller_transaction_id": capture_id,
+                    "buyer_transaction_id": f"BUY-{capture_id}",
+                    "gross_amount": {"currency_code": self.currency, "value": fmt_amount(c["amount_cents"])},
+                    "transaction_status": "COMPLETED",
+                }
+            ],
+            "reason": reason,
+            "status": status,
+            "dispute_state": "REQUIRED_ACTION" if status == "WAITING_FOR_SELLER_RESPONSE" else status,
+            "dispute_life_cycle_stage": stage,
+            "dispute_amount": {"currency_code": self.currency, "value": fmt_amount(amt)},
+            "messages": [{"posted_by": "BUYER", "time_posted": now, "content": buyer_note}] if buyer_note else [],
+            "links": [
+                {"rel": "self", "href": f"/v1/customer/disputes/{did}", "method": "GET"},
+                {"rel": "accept-claim", "href": f"/v1/customer/disputes/{did}/accept-claim", "method": "POST"},
+                {"rel": "provide-evidence", "href": f"/v1/customer/disputes/{did}/provide-evidence", "method": "POST"},
+            ],
+        }
+        self.disputes[did] = d
+        return d
+
+    def list_disputes(self, page_size: int = 50) -> list[dict]:
+        self.calls.append(("list_disputes", page_size))
+        return list(self.disputes.values())[:page_size]
+
+    def get_dispute(self, dispute_id: str) -> dict:
+        self.calls.append(("get_dispute", dispute_id))
+        try:
+            return self.disputes[dispute_id]
+        except KeyError:
+            raise PayPalError(404, '{"name":"RESOURCE_NOT_FOUND","message":"dispute not found in FakePayPal"}')
+
+    def accept_claim(self, dispute_id: str, *, cents: int, currency: str, dispute_amount_cents: int,
+                     note: str, request_id: str, reason: str = "COMPANY_POLICY") -> dict:
+        self.calls.append(("accept_claim", dispute_id, cents, request_id))
+        if self.fail_next:
+            e, self.fail_next = self.fail_next, None
+            raise e
+        if request_id in self.dispute_by_request:
+            return self.dispute_by_request[request_id]
+        d = self.get_dispute(dispute_id)
+        if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
+        txs = d.get("disputed_transactions") or []
+        cap_id = txs[0].get("seller_transaction_id") if txs else ""
+        c = self._capture(cap_id)
+        if c["refunded"] + cents > c["amount_cents"]:
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"REFUND_AMOUNT_EXCEEDED"}]}')
+        rid = f"R{self._run}{len(self.refunds) + 1:05d}"
+        r = {"id": rid, "status": self.refund_status, "amount": {"value": fmt_amount(cents), "currency_code": currency},
+             "invoice_id": f"dispute-{dispute_id}", "capture_id": cap_id}
+        self.refunds[rid] = r
+        self.by_request[request_id] = rid
+        if self.refund_status == "COMPLETED":
+            c["refunded"] += cents
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        d["status"] = "RESOLVED"
+        d["dispute_state"] = "RESOLVED"
+        d["update_time"] = now
+        d["refund_id"] = rid
+        d["dispute_outcome"] = {
+            "outcome_code": "RESOLVED_BUYER_FAVOUR",
+            "amount_refunded": {"currency_code": currency, "value": fmt_amount(cents)},
+        }
+        resp = {
+            "refund_id": rid,
+            "status": "RESOLVED",
+            "links": [{"rel": "self", "href": f"/v1/customer/disputes/{dispute_id}", "method": "GET"}],
+        }
+        self.dispute_by_request[request_id] = resp
+        return resp
+
+    def provide_evidence(self, dispute_id: str, *, notes: str, request_id: str,
+                         evidence_type: str = "OTHER", refund_ids: list[str] | None = None,
+                         documents: list[tuple[str, bytes, str]] | None = None) -> dict:
+        self.calls.append(("provide_evidence", dispute_id, evidence_type, request_id))
+        if self.fail_next:
+            e, self.fail_next = self.fail_next, None
+            raise e
+        if request_id in self.dispute_by_request:
+            return self.dispute_by_request[request_id]
+        d = self.get_dispute(dispute_id)
+        if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
+            raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        d["status"] = "UNDER_REVIEW"
+        d["dispute_state"] = "UNDER_REVIEW"
+        d["update_time"] = now
+        d.setdefault("evidences", []).append({
+            "evidence_type": evidence_type,
+            "notes": notes,
+            "evidence_info": {"refund_ids": list(refund_ids or [])},
+            "documents": [{"name": name, "size": len(data), "mime": mime} for name, data, mime in (documents or [])],
+        })
+        resp = {
+            "status": "UNDER_REVIEW",
+            "links": [{"rel": "self", "href": f"/v1/customer/disputes/{dispute_id}", "method": "GET"}],
+        }
+        self.dispute_by_request[request_id] = resp
+        return resp
 
     def verify_webhook(self, headers: dict, event: dict, webhook_id: str) -> bool:
         return headers.get("x-fake-valid", "1") == "1"

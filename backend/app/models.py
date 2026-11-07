@@ -176,3 +176,27 @@ class WebhookEvent(Base):
     raw: Mapped[dict] = mapped_column(JSON)
     received_at: Mapped[str] = mapped_column(String(40), default=now_iso)
     processed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class Dispute(Base):
+    __tablename__ = "disputes"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=lambda: new_id("dsp"))
+    paypal_dispute_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    order_id: Mapped[int | None] = mapped_column(ForeignKey("orders.id"), nullable=True, index=True)
+    claim_id: Mapped[str | None] = mapped_column(ForeignKey("claims.id"), nullable=True, index=True)
+    reason: Mapped[str] = mapped_column(String(64), default="MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED")
+    status: Mapped[str] = mapped_column(String(64), default="WAITING_FOR_SELLER_RESPONSE")
+    stage: Mapped[str] = mapped_column(String(64), default="INQUIRY")
+    dispute_amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    accept_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    evidence_attempts: Mapped[int] = mapped_column(Integer, default=0)
+    submitted_evidence_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[str] = mapped_column(String(40), default=now_iso)
+    updated_at: Mapped[str] = mapped_column(String(40), default=now_iso, onupdate=now_iso)
+    resolved_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+    order: Mapped[Order | None] = relationship()
+    claim: Mapped[Claim | None] = relationship()
+

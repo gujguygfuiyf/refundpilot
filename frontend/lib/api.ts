@@ -1,4 +1,4 @@
-import type { Claim, ClaimRow, Order, Policy, Refund, SimulationResult, Stats, EvidenceAssessment } from "./types";
+import type { Claim, ClaimRow, Dispute, DisputeRow, Order, Policy, Refund, SimulationResult, Stats, EvidenceAssessment } from "./types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
@@ -47,7 +47,7 @@ async function request<T>(path: string, init: RequestInit = {}, merchant = false
 export const photoUrl = (path: string) => `${API_URL}${path}`;
 
 export const api = {
-  health: () => request<{ ok: boolean; paypal: string; assessor: string }>("/health"),
+  health: () => request<{ ok: boolean; paypal: string; assessor: string; disputes_enabled?: boolean }>("/health"),
   orders: () => request<Order[]>("/orders"),
   claim: (id: string) => request<Claim>(`/claims/${id}`),
   createClaim: (orderId: number, text: string, photos: Blob[]) => {
@@ -67,6 +67,22 @@ export const api = {
 
   merchantClaims: () => request<ClaimRow[]>("/merchant/claims", {}, true),
   merchantClaim: (id: string) => request<Claim>(`/merchant/claims/${id}`, {}, true),
+  merchantDisputes: () => request<DisputeRow[]>("/merchant/disputes", {}, true),
+  merchantDispute: (id: string) => request<Dispute>(`/merchant/disputes/${id}`, {}, true),
+  syncDisputes: () => request<{ synced: number }>("/merchant/disputes/sync", { method: "POST" }, true),
+  acceptDispute: (id: string, overrideCents?: number, note?: string) =>
+    request<Refund>(`/merchant/disputes/${id}/accept`, {
+      method: "POST",
+      body: JSON.stringify({
+        ...(overrideCents ? { override_cents: overrideCents } : {}),
+        ...(note ? { note } : {}),
+      }),
+    }, true),
+  provideDisputeEvidence: (id: string, notes: string) =>
+    request<Dispute>(`/merchant/disputes/${id}/evidence`, {
+      method: "POST",
+      body: JSON.stringify({ notes }),
+    }, true),
   stats: () => request<Stats>("/merchant/stats", {}, true),
   approve: (id: string, overrideCents?: number) =>
     request<Refund>(`/merchant/claims/${id}/approve`, {
@@ -82,7 +98,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ policy_version: policyVersion ?? null, rerun_ai: rerunAi }),
     }, true),
-  reconcile: () => request<{ touched: number }>("/merchant/reconcile", { method: "POST" }, true),
+  reconcile: () => request<{ touched: number; disputes_synced?: number }>("/merchant/reconcile", { method: "POST" }, true),
   policies: () => request<Policy[]>("/policies", {}, true),
   simulate: (body: {
     policy_version: string;

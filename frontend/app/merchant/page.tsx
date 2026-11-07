@@ -5,11 +5,12 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry, themeQuartz, type ColDef, type ICellRendererParams } from "ag-grid-community";
 import { api, ApiError, setMerchantToken } from "@/lib/api";
-import type { ClaimRow, Stats } from "@/lib/types";
+import type { ClaimRow, DisputeRow, Stats } from "@/lib/types";
 import { ago, label, money } from "@/lib/format";
 import ClaimDrawer from "@/components/ClaimDrawer";
+import DisputeDrawer from "@/components/DisputeDrawer";
 import TokenGate, { signOut } from "@/components/TokenGate";
-import { Button, ErrorNote, FactChip, OutcomeBadge, StatusBadge } from "@/components/ui";
+import { Badge, Button, ErrorNote, FactChip, OutcomeBadge, StatusBadge } from "@/components/ui";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -30,19 +31,31 @@ function StatCard({ title, value, hint }: { title: string; value: string | numbe
   );
 }
 
+type TabFilter = "open" | "all" | "disputes";
+
 function Queue() {
   const params = useSearchParams();
   const [rows, setRows] = useState<ClaimRow[]>([]);
+  const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"open" | "all">(params.get("tab") === "all" ? "all" : "open");
+  const [openDisputeId, setOpenDisputeId] = useState<string | null>(null);
+  const initialTab = params.get("tab");
+  const [filter, setFilter] = useState<TabFilter>(
+    initialTab === "all" ? "all" : initialTab === "disputes" ? "disputes" : "open",
+  );
 
   const load = useCallback(async () => {
     try {
-      const [r, s] = await Promise.all([api.merchantClaims(), api.stats()]);
+      const [r, s, d] = await Promise.all([
+        api.merchantClaims(),
+        api.stats(),
+        api.merchantDisputes().catch(() => [] as DisputeRow[]),
+      ]);
       setRows(r);
       setStats(s);
+      setDisputes(d);
       setError(null);
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
@@ -59,7 +72,8 @@ function Queue() {
   }, [load]);
 
   useEffect(() => {
-    if (params.get("tab") === "all") setFilter("all");
+    const tab = params.get("tab");
+    if (tab === "all" || tab === "disputes" || tab === "open") setFilter(tab);
   }, [params]);
 
   const openRows = useMemo(
@@ -104,17 +118,62 @@ function Queue() {
     [],
   );
 
+  const disputeColumns = useMemo<ColDef<DisputeRow>[]>(
+    () => [
+      {
+        headerName: "Dispute / Item",
+        field: "paypal_dispute_id",
+        flex: 2,
+        minWidth: 220,
+        cellRenderer: (p: ICellRendererParams<DisputeRow>) =>
+          p.data && (
+            <div className="flex h-full items-center gap-3">
+              {p.data.product_image_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={p.data.product_image_url} alt="" className="h-9 w-9 rounded object-cover" />
+              ) : (
+                <div className="flex h-9 w-9 items-center justify-center rounded bg-gray-100 text-xs font-medium text-gray-500">
+                  PP
+                </div>
+              )}
+              <div className="min-w-0 leading-tight">
+                <p className="truncate font-medium">
+                  {p.data.product_name ?? "Unmatched order"}{" "}
+                  <span className="font-mono text-xs text-gray-500">({p.data.paypal_dispute_id})</span>
+                </p>
+                <p className="text-xs text-gray-500">
+                  {p.data.order_id ? `order #${p.data.order_id} · capture ${p.data.capture_id}` : "no matching capture"}
+                </p>
+              </div>
+            </div>
+          ),
+      },
+      { headerName: "Status", field: "status", width: 175, cellRenderer: (p: ICellRendererParams<DisputeRow>) => <StatusBadge status={p.value} /> },
+      { headerName: "Stage", field: "stage", width: 120, cellRenderer: (p: ICellRendererParams<DisputeRow>) => <Badge tone="violet">{label(p.value)}</Badge> },
+      { headerName: "Reason", field: "reason", width: 180, valueFormatter: (p) => label(p.value) },
+      { headerName: "Disputed", field: "dispute_amount_cents", width: 115, type: "rightAligned", valueFormatter: (p) => money(p.value, p.data?.currency) },
+      { headerName: "Policy outcome", field: "outcome", width: 140, cellRenderer: (p: ICellRendererParams<DisputeRow>) => <OutcomeBadge outcome={p.value} /> },
+      { headerName: "Rule", field: "rule_id", width: 110, valueFormatter: (p) => p.value ?? "—" },
+      { headerName: "Suggested", field: "suggested_cents", width: 115, type: "rightAligned", valueFormatter: (p) => money(p.value, p.data?.currency) },
+      { headerName: "Remaining", field: "remaining_cents", width: 110, type: "rightAligned", valueFormatter: (p) => (p.value !== null && p.value !== undefined ? money(p.value, p.data?.currency) : "—") },
+      { headerName: "Age", field: "created_at", width: 80, sort: "desc", valueFormatter: (p) => ago(p.value) },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Claims queue</h1>
+          <h1 className="text-2xl font-semibold">Claims &amp; Disputes queue</h1>
           <p className="mt-1 text-sm text-gray-600">
             AI returns structured observations and uncertainty, your versioned policy calculates the suggestion, and you approve. PayPal executes.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => api.reconcile().then(load).catch((e) => setError(e.message))}>Reconcile with PayPal</Button>
+          <Button variant="secondary" onClick={() => api.reconcile().then(load).catch((e) => setError(e.message))}>
+            Reconcile &amp; sync PayPal
+          </Button>
           <Button variant="ghost" onClick={signOut}>Sign out</Button>
         </div>
       </div>
@@ -129,10 +188,14 @@ function Queue() {
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 text-sm">
-          {(["open", "all"] as const).map((f) => (
+          {(["open", "all", "disputes"] as const).map((f) => (
             <button key={f} onClick={() => setFilter(f)}
               className={`rounded-lg px-3 py-1.5 ${filter === f ? "bg-white font-medium shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-gray-100"}`}>
-              {f === "open" ? `Open (${openRows.length})` : `All claims (${rows.length})`}
+              {f === "open"
+                ? `Open (${openRows.length})`
+                : f === "all"
+                  ? `All claims (${rows.length})`
+                  : `Disputes (${disputes.length})`}
             </button>
           ))}
         </div>
@@ -150,18 +213,32 @@ function Queue() {
         )}
       </div>
       <div style={{ height: 520 }}>
-        <AgGridReact<ClaimRow>
-          theme={theme}
-          rowData={shown}
-          columnDefs={columns}
-          defaultColDef={{ sortable: true, filter: true, resizable: true }}
-          getRowId={(p) => p.data.id}
-          onRowClicked={(e) => e.data && setOpenId(e.data.id)}
-          rowClass="cursor-pointer"
-          overlayNoRowsTemplate="No open claims right now. Click 'All claims' above to inspect completed refunds and hard cases, or submit a new claim from the Buyer page."
-        />
+        {filter === "disputes" ? (
+          <AgGridReact<DisputeRow>
+            theme={theme}
+            rowData={disputes}
+            columnDefs={disputeColumns}
+            defaultColDef={{ sortable: true, filter: true, resizable: true }}
+            getRowId={(p) => p.data.id}
+            onRowClicked={(e) => e.data && setOpenDisputeId(e.data.id)}
+            rowClass="cursor-pointer"
+            overlayNoRowsTemplate="No PayPal disputes found. Click 'Reconcile & sync PayPal' above to pull open disputes from the PayPal Disputes API."
+          />
+        ) : (
+          <AgGridReact<ClaimRow>
+            theme={theme}
+            rowData={shown}
+            columnDefs={columns}
+            defaultColDef={{ sortable: true, filter: true, resizable: true }}
+            getRowId={(p) => p.data.id}
+            onRowClicked={(e) => e.data && setOpenId(e.data.id)}
+            rowClass="cursor-pointer"
+            overlayNoRowsTemplate="No open claims right now. Click 'All claims' above to inspect completed refunds and hard cases, or submit a new claim from the Buyer page."
+          />
+        )}
       </div>
       {openId && <ClaimDrawer id={openId} onClose={() => setOpenId(null)} onChanged={load} />}
+      {openDisputeId && <DisputeDrawer id={openDisputeId} onClose={() => setOpenDisputeId(null)} onChanged={load} />}
     </div>
   );
 }

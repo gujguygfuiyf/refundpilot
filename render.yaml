@@ -26,6 +26,8 @@ services:
         value: gemini
       - key: GEMINI_MODEL
         value: gemini-3.8-flash
+      - key: DISPUTES_ENABLED
+        value: "true"
       # Added later in the dashboard: PAYPAL_WEBHOOK_ID (after registering the webhook), and optionally
       # OPENAI_API_KEY + OPENAI_MODEL for an OpenAI backup.
       - key: MERCHANT_TOKEN          # random; the web service copies it so judges skip sign-in

@@ -120,6 +120,55 @@ export interface ClaimRow {
   updated_at: string;
 }
 
+export interface DisputeRow {
+  id: string;
+  paypal_dispute_id: string;
+  status: string;
+  stage: string;
+  reason: string;
+  dispute_amount_cents: number;
+  currency: string;
+  order_id: number | null;
+  capture_id: string | null;
+  product_name: string | null;
+  product_image_url: string | null;
+  order_amount_cents: number | null;
+  remaining_cents: number | null;
+  claim_id: string | null;
+  outcome: string | null;
+  rule_id: string | null;
+  suggested_cents: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DisputeEvidencePreview {
+  evidence_type: string;
+  refund_ids: string[];
+  notes: string;
+  photo_urls: string[];
+}
+
+export interface Dispute {
+  id: string;
+  paypal_dispute_id: string;
+  status: string;
+  stage: string;
+  reason: string;
+  dispute_amount_cents: number;
+  currency: string;
+  suggested_cents: number;
+  order: Order | null;
+  claim: Claim | null;
+  evidence_preview: DisputeEvidencePreview;
+  submitted_evidence_notes: string | null;
+  timeline: AuditEntry[];
+  raw: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+}
+
 export interface Stats {
   pending_review: number;
   evidence_requested: number;

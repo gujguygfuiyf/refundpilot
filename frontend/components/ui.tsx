@@ -37,6 +37,11 @@ const STATUS_TONE: Record<string, Tone> = {
   UNKNOWN: "amber",
   PENDING: "amber",
   CREATED: "gray",
+  WAITING_FOR_SELLER_RESPONSE: "amber",
+  WAITING_FOR_BUYER_RESPONSE: "blue",
+  UNDER_REVIEW: "violet",
+  OPEN: "amber",
+  RESOLVED: "green",
 };
 
 export function StatusBadge({ status }: { status: string }) {

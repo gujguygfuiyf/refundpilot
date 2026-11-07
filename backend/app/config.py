@@ -40,6 +40,7 @@ class Settings(BaseSettings):
 
     # Behaviour
     default_policy_version: str = "standard-1.2"
+    disputes_enabled: bool = True
     delivered_offset_days: int = 2       # demo: delivered = captured + N days
     reconcile_interval_s: int = 60
     # Slow tick for work that isn't urgent (rolling demo delivery dates, a safety reconcile). Everything else in the
