@@ -10,7 +10,7 @@ import { ago, label, money } from "@/lib/format";
 import ClaimDrawer from "@/components/ClaimDrawer";
 import DisputeDrawer from "@/components/DisputeDrawer";
 import TokenGate, { signOut } from "@/components/TokenGate";
-import { Badge, Button, ErrorNote, FactChip, OutcomeBadge, StatusBadge } from "@/components/ui";
+import { Badge, Button, ErrorNote, FactChip, OutcomeBadge, Spinner, StatusBadge } from "@/components/ui";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -40,6 +40,8 @@ function Queue() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [health, setHealth] = useState<{ ok: boolean; paypal: string; assessor: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState(false);
+  const [reconcileFeedback, setReconcileFeedback] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(() => params.get("claim"));
   const [openDisputeId, setOpenDisputeId] = useState<string | null>(() => params.get("dispute"));
   const [previewDisputeClaimId, setPreviewDisputeClaimId] = useState<string | null>(null);
@@ -237,12 +239,38 @@ function Queue() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={() => api.reconcile().then(load).catch((e) => setError(e.message))}>
-            Reconcile &amp; sync PayPal
+          <Button
+            variant="secondary"
+            disabled={reconciling}
+            onClick={async () => {
+              setReconciling(true);
+              setReconcileFeedback(null);
+              setError(null);
+              try {
+                const res = await api.reconcile();
+                await load();
+                setReconcileFeedback(
+                  `✓ Sync complete with PayPal Sandbox: ${res.touched} pending refund(s) resolved, ${res.disputes_synced ?? 0} dispute(s) synced, ${res.ledger?.orders_calibrated ?? 0} order(s) calibrated.`,
+                );
+                setTimeout(() => setReconcileFeedback(null), 5000);
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setReconciling(false);
+              }
+            }}
+          >
+            {reconciling && <Spinner />}
+            <span>{reconciling ? "Syncing PayPal Sandbox..." : "Reconcile & sync PayPal"}</span>
           </Button>
           <Button variant="ghost" onClick={signOut}>Sign out</Button>
         </div>
       </div>
+      {reconcileFeedback && (
+        <div className="rounded-lg bg-emerald-50 px-3.5 py-2 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+          {reconcileFeedback}
+        </div>
+      )}
       <ErrorNote error={error} />
       {stats && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

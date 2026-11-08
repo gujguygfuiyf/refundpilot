@@ -216,7 +216,23 @@ def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
 
     paypal_refreshed = 0
     if paypal is not None:
-        paypal_refreshed = refresh_captures(db, paypal)
+        claimed_ids = select(Claim.order_id)
+        orders_to_check = db.execute(
+            select(Order).where(
+                Order.capture_id.not_like("DEMO-%"),
+                (Order.id.in_(claimed_ids)) | (Order.refunded_cents > 0) | (Order.capture_status == "REFUNDED"),
+            )
+        ).scalars().all()
+        for row in orders_to_check:
+            try:
+                live = paypal.get_capture(row.capture_id)
+            except Exception:
+                continue
+            row.capture_status = live.get("status", row.capture_status)
+            if row.capture_status == "REFUNDED" and row.refunded_cents < row.amount_cents:
+                row.refunded_cents = row.amount_cents
+                paypal_refreshed += 1
+            db.commit()
 
     return {
         "claims_restored": claims_restored,

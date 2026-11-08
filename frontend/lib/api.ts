@@ -103,7 +103,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ policy_version: policyVersion ?? null, rerun_ai: rerunAi }),
     }, true),
-  reconcile: () => request<{ touched: number; disputes_synced?: number }>("/merchant/reconcile", { method: "POST" }, true),
+  reconcile: () =>
+    request<{
+      touched: number;
+      disputes_synced?: number;
+      ledger?: { claims_restored: number; orders_calibrated: number; paypal_captures_refreshed: number };
+    }>("/merchant/reconcile", { method: "POST" }, true),
   policies: () => request<Policy[]>("/policies", {}, true),
   simulate: (body: {
     policy_version: string;
