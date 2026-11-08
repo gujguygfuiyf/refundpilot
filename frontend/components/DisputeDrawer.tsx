@@ -12,10 +12,12 @@ const ACTIONABLE_STATUSES = ["WAITING_FOR_SELLER_RESPONSE", "OPEN"];
 
 export default function DisputeDrawer({
   id,
+  previewClaimId,
   onClose,
   onChanged,
 }: {
   id: string;
+  previewClaimId?: string | null;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -27,20 +29,85 @@ export default function DisputeDrawer({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(
-    () =>
-      api
-        .merchantDispute(id)
-        .then((d) => {
+  const load = useCallback(() => {
+    if (previewClaimId) {
+      return api
+        .merchantClaim(previewClaimId)
+        .then((c) => {
+          const refundIds = (c.refunds || [])
+            .filter((r) => r.status === "COMPLETED" && r.paypal_refund_id)
+            .map((r) => r.paypal_refund_id as string);
+
+          const lines: string[] = [
+            `Order #${c.order.id} (${c.order.product.name}, SKU ${c.order.product.sku}) · PayPal capture ${c.order.capture_id}.`,
+            `RefundPilot claim ${c.id} (status ${c.status}).`,
+          ];
+          if (c.assessment) {
+            lines.push(
+              `AI evidence assessment (${c.assessment.provider}/${c.assessment.model}): product_match=${c.assessment.output.product_match}, damage_type=${c.assessment.output.damage_type}, severity=${c.assessment.output.severity}, evidence_quality=${c.assessment.output.evidence_quality}.`,
+            );
+          }
+          if (c.decision) {
+            lines.push(
+              `Policy ${c.decision.policy_version} rule ${c.decision.rule_id} -> ${c.decision.outcome} (suggested $${(c.decision.suggested_cents / 100).toFixed(2)}): ${c.decision.reason}`,
+            );
+          }
+          if (refundIds.length > 0) {
+            lines.push(
+              `Completed PayPal refund ID(s): ${refundIds.join(", ")} ($${(c.order.refunded_cents / 100).toFixed(2)} refunded).`,
+            );
+          }
+          const notesLines = lines.join("\n");
+
+          const d: Dispute = {
+            id: "preview",
+            paypal_dispute_id: "PP-PREVIEW-SANDBOX",
+            status: "WAITING_FOR_SELLER_RESPONSE",
+            stage: "INQUIRY",
+            reason: "MERCHANDISE_OR_SERVICE_NOT_AS_DESCRIBED",
+            dispute_amount_cents: c.order.amount_cents,
+            currency: c.order.currency,
+            suggested_cents: Math.min(c.decision?.suggested_cents ?? 0, c.order.remaining_cents),
+            has_policy_decision: Boolean(c.decision),
+            can_accept_claim: true,
+            can_provide_evidence: true,
+            allowed_accept_claim_types: ["REFUND", "PARTIAL_REFUND"],
+            order: c.order,
+            claim: c,
+            evidence_preview: {
+              evidence_type: refundIds.length ? "PROOF_OF_REFUND" : "OTHER",
+              refund_ids: refundIds,
+              notes: notesLines,
+              photo_urls: c.photo_urls,
+            },
+            submitted_evidence_notes: null,
+            timeline: c.timeline,
+            raw: { preview_only: true },
+            created_at: c.created_at,
+            updated_at: c.updated_at,
+            resolved_at: null,
+          };
+
           setDispute(d);
           setAmount((prev) =>
             prev || (d.suggested_cents > 0 ? (d.suggested_cents / 100).toFixed(2) : ""),
           );
-          setEvidenceNotes((prev) => prev || d.evidence_preview.notes);
+          setEvidenceNotes(d.evidence_preview.notes);
         })
-        .catch((e) => setError(e.message)),
-    [id],
-  );
+        .catch((e) => setError(e.message));
+    }
+
+    return api
+      .merchantDispute(id)
+      .then((d) => {
+        setDispute(d);
+        setAmount((prev) =>
+          prev || (d.suggested_cents > 0 ? (d.suggested_cents / 100).toFixed(2) : ""),
+        );
+        setEvidenceNotes((prev) => prev || d.evidence_preview.notes);
+      })
+      .catch((e) => setError(e.message));
+  }, [id, previewClaimId]);
 
   useEffect(() => {
     setDispute(null);
@@ -50,7 +117,7 @@ export default function DisputeDrawer({
     setConfirmMode(null);
     setError(null);
     load();
-  }, [id, load]);
+  }, [id, previewClaimId, load]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -146,6 +213,23 @@ export default function DisputeDrawer({
             </p>
           ) : (
             <>
+              {Boolean(previewClaimId) && dispute.claim && dispute.order && (
+                <div className="rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-blue-50 p-4 text-xs text-violet-950 shadow-sm">
+                  <div className="flex items-center gap-2 font-semibold text-violet-900">
+                    <Badge tone="violet">Interactive Architecture Preview</Badge>
+                    <span>Built from real recorded claim</span>
+                  </div>
+                  <p className="mt-1.5 leading-relaxed">
+                    Interactive Architecture Preview — Built from real recorded claim{" "}
+                    <code className="rounded bg-violet-100/80 px-1 py-0.5 font-mono">{dispute.claim.id}</code> (PayPal capture{" "}
+                    <code className="rounded bg-violet-100/80 px-1 py-0.5 font-mono">{dispute.order.capture_id}</code>). Shows how
+                    RefundPilot auto-assembles a <strong>{dispute.evidence_preview.evidence_type}</strong> evidence package and enforces
+                    the remaining-balance cap (<strong>{money(dispute.order.remaining_cents, currency)}</strong> left) if a buyer opens a PayPal dispute.
+                    Live PayPal write calls are disabled in preview mode.
+                  </p>
+                </div>
+              )}
+
               <Card
                 title="PayPal Dispute Summary"
                 aside={
@@ -418,6 +502,11 @@ export default function DisputeDrawer({
                         `Accepted under policy (${dispute.claim?.policy_version ?? "standard-1.2"})`}
                     </p>
                   </div>
+                  {Boolean(previewClaimId) && (
+                    <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+                      Architecture preview mode — no live PayPal dispute ID exists in Sandbox to POST to.
+                    </p>
+                  )}
                   <div className="mt-4 flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setConfirmMode(null)} disabled={!!busy}>
                       Cancel
@@ -432,7 +521,7 @@ export default function DisputeDrawer({
                           ),
                         )
                       }
-                      disabled={!!busy}
+                      disabled={!!busy || Boolean(previewClaimId)}
                     >
                       {busy === "accept" && <Spinner />} Confirm &amp; refund {money(cents, currency)}
                     </Button>
@@ -463,6 +552,11 @@ export default function DisputeDrawer({
                       {evidenceNotes}
                     </pre>
                   </div>
+                  {Boolean(previewClaimId) && (
+                    <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900 ring-1 ring-amber-200">
+                      Architecture preview mode — no live PayPal dispute ID exists in Sandbox to POST to.
+                    </p>
+                  )}
                   <div className="mt-4 flex justify-end gap-2">
                     <Button variant="secondary" onClick={() => setConfirmMode(null)} disabled={!!busy}>
                       Cancel
@@ -471,7 +565,7 @@ export default function DisputeDrawer({
                       onClick={() =>
                         act("evidence", () => api.provideDisputeEvidence(dispute.id, evidenceNotes.trim()))
                       }
-                      disabled={!!busy}
+                      disabled={!!busy || Boolean(previewClaimId)}
                     >
                       {busy === "evidence" && <Spinner />} Confirm &amp; send to PayPal
                     </Button>

@@ -42,6 +42,7 @@ function Queue() {
   const [error, setError] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(() => params.get("claim"));
   const [openDisputeId, setOpenDisputeId] = useState<string | null>(() => params.get("dispute"));
+  const [previewDisputeClaimId, setPreviewDisputeClaimId] = useState<string | null>(null);
   const initialTab = params.get("tab");
   const [filter, setFilter] = useState<TabFilter>(
     initialTab === "all" ? "all" : initialTab === "disputes" ? "disputes" : "open",
@@ -126,6 +127,11 @@ function Queue() {
 
     return list;
   }, [rows]);
+
+  const sampleDisputeClaim = useMemo(
+    () => rows.find((r) => r.status === "COMPLETED") ?? rows[0] ?? null,
+    [rows],
+  );
 
   const columns = useMemo<ColDef<ClaimRow>[]>(
     () => [
@@ -291,6 +297,25 @@ function Queue() {
         </div>
       )}
 
+      {filter === "disputes" && disputes.length === 0 && sampleDisputeClaim !== null && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-xs text-violet-950">
+          <div className="flex items-center gap-2">
+            <Badge tone="violet">Dispute Architecture Preview</Badge>
+            <span>
+              No active buyer disputes in PayPal Sandbox right now. Inspect how RefundPilot links a PayPal dispute to its prior claim,
+              enforces the remaining-balance cap, and auto-builds a PROOF_OF_REFUND evidence package:
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPreviewDisputeClaimId(sampleDisputeClaim.id)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-violet-900 shadow-xs ring-1 ring-violet-300 transition hover:bg-violet-100/60"
+          >
+            Preview Dispute Drawer &amp; Evidence Package ({sampleDisputeClaim.product_name}) →
+          </button>
+        </div>
+      )}
+
       <div style={{ height: 520 }}>
         {filter === "disputes" ? (
           <AgGridReact<DisputeRow>
@@ -318,6 +343,14 @@ function Queue() {
       </div>
       {openId && <ClaimDrawer id={openId} onClose={() => setOpenId(null)} onChanged={load} />}
       {openDisputeId && <DisputeDrawer id={openDisputeId} onClose={() => setOpenDisputeId(null)} onChanged={load} />}
+      {previewDisputeClaimId && (
+        <DisputeDrawer
+          id="preview"
+          previewClaimId={previewDisputeClaimId}
+          onClose={() => setPreviewDisputeClaimId(null)}
+          onChanged={load}
+        />
+      )}
     </div>
   );
 }
