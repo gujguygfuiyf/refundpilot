@@ -67,6 +67,18 @@ We wrote 29 claim scenarios (genuine damage, scratches, wrong products, blurry, 
 - Run 2, after the fix: 87 of 87 runs passed, 0 suggestions above predefined caps. Because that's the same set we used to find the bug, we then **pre-registered 12 new scenarios, including additional product categories**, committing the expected outcomes to git before generating their photos or running them: 36 of 36 runs passed, 0 suggestions above predefined caps, median 7.1 s per assessment ([held-out results](https://github.com/gujguygfuiyf/refundpilot/blob/main/docs/EVALUATION-heldout.md)).
 - Limits, stated plainly: 17 of the test photos are AI-generated, the sets are small, and a photo can't reveal staged damage or a buyer reusing a real photo of their own earlier damage. Those are covered by the report window, one claim per order, and the human approval, not by the model. Merchant pilots are the next step.
 
+#### Quick External Usability Check (Non-Merchant Testers, n = 2)
+
+To check whether the evidence-to-decision drawer is understandable to first-time users outside the team, we ran an informal walkthrough with **2 independent non-merchant testers** inspecting recorded claims in `/merchant?tab=all`:
+
+| Tester (Non-merchant) | Review Time per Case | Outcome & Rule Comprehension | Verbatim / Summarized Feedback |
+| :--- | :--- | :--- | :--- |
+| **Tester 1** | ~20s | Correctly identified the matched rule and suggested payout | Positive on workflow speed—noted that having AI verify the photo against the SKU and letting rules calculate the exact dollar amount saves time, and immediately asked about **per-claim AI inference cost**. |
+| **Tester 2** | ~30s | Correctly identified the matched rule and suggested payout | Understood the decision trace within half a minute, but noted that the **UI feels utilitarian / engineering-heavy and could be more visually polished**. |
+
+- **Takeaway on inference cost (answering Tester 1)**: Because the multimodal model is called only once per claim submission (outputting a compact structured JSON schema) and all policy replays run deterministically in Python/JSON with zero extra LLM calls, the estimated AI API cost on flash-tier multimodal models is **well under $0.01 per claim**.
+- **Takeaway on UI polish & scope limits (answering Tester 2)**: This small check (`n = 2`, non-merchants) only shows that first-time readers can follow the decision trace in ~20–30 seconds; it does not prove live merchant ROI. It also highlights a clear next step: simplifying visual density in the review drawer for non-technical store operators.
+
 ### What we learned
 Trustworthy AI in payments is mostly about boundaries: decide what the model is allowed to say, make everything that moves money deterministic and replayable, and keep a human on the final click.
 

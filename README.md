@@ -55,6 +55,18 @@ held-out set, whose expected outcomes were committed before its photos existed, 
 suggestion above its predefined cap. Results, failures and limits: [docs/EVALUATION.md](docs/EVALUATION.md),
 [docs/EVALUATION-heldout.md](docs/EVALUATION-heldout.md).
 
+### Quick External Usability Check (Non-Merchant Testers, n = 2)
+
+To check whether the evidence-to-decision drawer is understandable to first-time users outside the team, we ran an informal walkthrough with **2 independent non-merchant testers** inspecting recorded claims in `/merchant?tab=all`:
+
+| Tester (Non-merchant) | Review Time per Case | Outcome & Rule Comprehension | Verbatim / Summarized Feedback |
+| :--- | :--- | :--- | :--- |
+| **Tester 1** | ~20s | Correctly identified the matched rule and suggested payout | Positive on workflow speed—noted that having AI verify the photo against the SKU and letting rules calculate the exact dollar amount saves time, and immediately asked about **per-claim AI inference cost**. |
+| **Tester 2** | ~30s | Correctly identified the matched rule and suggested payout | Understood the decision trace within half a minute, but noted that the **UI feels utilitarian / engineering-heavy and could be more visually polished**. |
+
+- **Takeaway on inference cost (answering Tester 1)**: Because the multimodal model is called only once per claim submission (outputting a compact structured JSON schema) and all policy replays run deterministically in Python/JSON with zero extra LLM calls, the estimated AI API cost on flash-tier multimodal models is **well under $0.01 per claim**.
+- **Takeaway on UI polish & scope limits (answering Tester 2)**: This small check (`n = 2`, non-merchants) only shows that first-time readers can follow the decision trace in ~20–30 seconds; it does not prove live merchant ROI. It also highlights a clear next step: simplifying visual density in the review drawer for non-technical store operators.
+
 ## Architecture
 
 ```mermaid
