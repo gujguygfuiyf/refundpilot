@@ -23,10 +23,10 @@ const theme = themeQuartz.withParams({
 
 function StatCard({ title, value, hint }: { title: string; value: string | number; hint?: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium text-gray-500 uppercase">{title}</p>
-      <p className="mt-1 text-2xl font-semibold">{value}</p>
-      {hint && <p className="text-xs text-gray-500">{hint}</p>}
+    <div className="rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-100">
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+      <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   );
 }
@@ -89,6 +89,22 @@ function Queue() {
     () => rows.filter((r) => !["COMPLETED", "REJECTED", "CANCELLED"].includes(r.status)),
     [rows],
   );
+
+  const openCount = useMemo(() => {
+    const fromRows = openRows.length;
+    const fromStats = stats
+      ? stats.pending_review + stats.evidence_requested + stats.processing
+      : 0;
+    return Math.max(fromRows, fromStats);
+  }, [openRows.length, stats]);
+
+  const allCount = useMemo(() => {
+    const fromRows = rows.length;
+    const fromStats = stats
+      ? stats.pending_review + stats.evidence_requested + stats.processing + stats.completed
+      : 0;
+    return Math.max(fromRows, fromStats);
+  }, [rows.length, stats]);
 
   const shown = useMemo(
     () => (filter === "all" ? rows : openRows),
@@ -283,45 +299,52 @@ function Queue() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1 text-sm">
           {(["open", "all", "disputes"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`rounded-lg px-3 py-1.5 ${filter === f ? "bg-white font-medium shadow-sm ring-1 ring-gray-200" : "text-gray-600 hover:bg-gray-100"}`}>
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`rounded-lg px-3 py-1.5 transition ${
+                filter === f
+                  ? "bg-white font-medium shadow-sm ring-1 ring-slate-200"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
               {f === "open"
-                ? `Open (${openRows.length})`
+                ? `Open (${openCount})`
                 : f === "all"
-                  ? `All claims (${rows.length})`
+                  ? `All claims (${allCount})`
                   : `Disputes (${disputes.length})`}
             </button>
           ))}
         </div>
-        {filter === "open" && openRows.length === 0 && rows.length > 0 && (
-          <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs text-blue-900">
+        {filter === "open" && openCount === 0 && allCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50/80 px-3 py-1.5 text-xs text-blue-900 shadow-2xs">
             <span>No pending claims in the Open queue right now.</span>
             <button
               type="button"
               onClick={() => setFilter("all")}
               className="font-semibold text-brand-dark underline hover:text-brand"
             >
-              View all {rows.length} recorded claims &amp; hard cases →
+              View all {allCount} recorded claims &amp; hard cases →
             </button>
           </div>
         )}
       </div>
 
       {showcaseCases.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-gray-50/80 px-3 py-2 text-xs text-gray-700">
-          <span className="font-semibold text-gray-900">Quick-inspect recorded cases:</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 text-xs text-slate-700 shadow-2xs">
+          <span className="font-semibold text-slate-900">Quick-inspect recorded cases:</span>
           {showcaseCases.map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => setOpenId(c.id)}
-              className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-gray-800 shadow-2xs ring-1 ring-gray-300 transition hover:bg-gray-50 hover:text-brand"
+              className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1 text-xs font-medium text-slate-800 shadow-2xs ring-1 ring-slate-300 transition hover:bg-slate-50 hover:text-brand hover:ring-brand/40"
             >
               <span>{c.label}</span>
-              <span className="text-gray-400">→</span>
+              <span className="text-slate-400">→</span>
             </button>
           ))}
-          <span className="ml-auto text-[11px] text-gray-500">Click to open drawer with full PayPal audit trail</span>
+          <span className="ml-auto text-[11px] text-slate-500">Click to open drawer with full PayPal audit trail</span>
         </div>
       )}
 

@@ -47,7 +47,7 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 p-5 shadow-sm">
+      <section className="rounded-xl border border-blue-200/90 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 p-5 shadow-sm ring-1 ring-blue-100">
         <p className="mb-3 text-sm leading-relaxed text-gray-700">
           For a small PayPal merchant, a damaged-item claim means checking photos, interpreting a refund policy, deciding an amount, and confirming that the payment was actually refunded.{" "}
           <strong className="font-semibold text-gray-900">RefundPilot</strong> brings those steps into one reviewable workflow: AI describes the evidence, versioned rules calculate a recommendation, the merchant approves, and PayPal executes the refund. Each completed case links the evidence and decision to its PayPal refund record.
@@ -84,7 +84,7 @@ export default function OrdersPage() {
             return (
               <div
                 key={s.key}
-                className="flex flex-col justify-between rounded-lg border border-gray-200 bg-white p-3.5 shadow-2xs"
+                className="flex flex-col justify-between rounded-lg border border-slate-200/90 bg-white p-3.5 shadow-2xs ring-1 ring-slate-100"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2">

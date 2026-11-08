@@ -10,11 +10,11 @@ export default function NavBar() {
   const isMerchantActive = pathname === "/merchant";
   const isPolicyActive = pathname.startsWith("/merchant/policy");
 
-  const activeClass = "rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-brand-dark ring-1 ring-blue-200";
+  const activeClass = "rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-brand-dark ring-1 ring-blue-200 shadow-2xs";
   const inactiveClass = "rounded-lg px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-gray-900";
 
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b border-slate-200/80 bg-white/95 shadow-2xs backdrop-blur-xs">
       <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:gap-4">
         <Link href="/" className="mr-2 text-base font-semibold text-brand-dark">
           Refund<span className="text-brand">Pilot</span>

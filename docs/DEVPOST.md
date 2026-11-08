@@ -78,6 +78,8 @@ To check whether the evidence-to-decision drawer is understandable to first-time
 
 - **Takeaway on inference cost (answering Tester 1)**: Because the multimodal model is called only once per claim submission (outputting a compact structured JSON schema) and all policy replays run deterministically in Python/JSON with zero extra LLM calls, the estimated AI API cost on flash-tier multimodal models is **well under $0.01 per claim**.
 - **Takeaway on UI polish & scope limits (answering Tester 2)**: This small check (`n = 2`, non-merchants) only shows that first-time readers can follow the decision trace in ~20–30 seconds; it does not prove live merchant ROI. It also highlights a clear next step: simplifying visual density in the review drawer for non-technical store operators.
+- **Action taken on Tester 1's cost question**: Added explicit per-claim cost transparency (<$0.01/claim via a single structured multimodal pass + $0 deterministic local policy replay) and configurable cost assumptions in the simulator.
+- **Action taken on Tester 2's UI polish feedback**: Upgraded the visual hierarchy of the Decision card and Merchant drawer with color-coded verdict banners, structured step pills for the 4-step rule trace, and cleaner badge contrast so non-technical reviewers can scan the outcome immediately before inspecting raw audit logs.
 
 ### What we learned
 Trustworthy AI in payments is mostly about boundaries: decide what the model is allowed to say, make everything that moves money deterministic and replayable, and keep a human on the final click.
@@ -94,12 +96,12 @@ Trustworthy AI in payments is mostly about boundaries: decide what the model is 
 
 1. Open [All claims](https://refundpilot-web.onrender.com/merchant?tab=all) and select **Completed refund** under **Quick-inspect recorded cases** (no sign-in needed; the sandbox merchant token is prefilled).
 2. Compare the product reference and buyer photo, then inspect the matched policy rule (`R1-broken` under `standard-1.1`) and the **$49.00** refund recommendation.
-3. Check the completed PayPal refund ID (`7RC15719L64464848`) and the audit timeline, including merchant approval and the API and webhook completion events.
+3. Check the completed PayPal refund ID (e.g., `7RC15719L64464848` / `3160410806932083S`) and the audit timeline, including merchant approval and the API and webhook completion events.
 4. Use **Simulate 3 policies ↗** to compare recommendations from the same recorded decision inputs. No new payment is needed for this walkthrough.
 
 **Explore further:**
 - Use the [Buyer Portal](https://refundpilot-web.onrender.com) presets (**Clearly broken item**, **Blurry photo**, **Suspected reused screenshot**, or the **Prompt-injection stress test**) to submit a new assessment on one of the 30+ unused PayPal sandbox orders, or open the [batch policy simulator](https://refundpilot-web.onrender.com/merchant/policy).
-- The hosted demo uses PayPal Sandbox; after 15 idle minutes on Render's free tier the first load can take about a minute while the service wakes up (kept awake by a scheduled GitHub Action during the Dec 1–15 judging window). Unclaimed demo orders automatically keep a fresh delivery date (`DEMO_ROLLING_DELIVERY=true` rolls unclaimed orders to "delivered 3 days ago") so the 14-day report window stays open during judging, while already-claimed orders preserve their original dates so recorded decisions remain reproducible. Experimental Disputes write flows are covered by automated tests with `FakePayPal`; they have not been validated end-to-end against PayPal Sandbox.
+- The hosted demo uses PayPal Sandbox; after 15 idle minutes on Render's free tier the first load can take about a minute while the service wakes up (kept awake by a scheduled GitHub Action during the Nov–Dec judging window). Unclaimed demo orders automatically keep a fresh delivery date (`DEMO_ROLLING_DELIVERY=true` rolls unclaimed orders to "delivered 3 days ago") so the 14-day report window stays open during judging, while already-claimed orders preserve their original dates so recorded decisions remain reproducible. Experimental Disputes write flows are covered by automated tests with `FakePayPal`; they have not been validated end-to-end against PayPal Sandbox.
 
 ---
 

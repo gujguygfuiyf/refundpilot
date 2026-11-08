@@ -224,6 +224,12 @@ export function DecisionCard({ claim }: { claim: Claim }) {
   const prior = d?.decision_inputs?.prior_claims ?? 0;
 
   const injection = detectPromptInjection(claim.buyer_text, claim.order.amount_cents);
+  const isCompleted = claim.status === "COMPLETED" || (claim.refunds || []).some((r) => r.status === "COMPLETED");
+  const completedRefundAmount =
+    (claim.refunds || []).find((r) => r.status === "COMPLETED")?.amount_cents ??
+    claim.order.refunded_cents ??
+    d?.suggested_cents ??
+    0;
 
   return (
     <Card title="Decision" aside={d && <Badge>policy {d.policy_version}</Badge>}>
@@ -231,6 +237,104 @@ export function DecisionCard({ claim }: { claim: Claim }) {
         <p className="text-sm text-gray-500">Waiting for the evidence assessment.</p>
       ) : (
         <div className="space-y-3 text-sm">
+          {/* Verdict Banner */}
+          {isCompleted ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-2xs">
+                  ✓
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                    PayPal Refund Completed
+                  </div>
+                  <div className="text-sm font-semibold text-emerald-950">
+                    ✓ PayPal Refund Completed: {money(completedRefundAmount, currency)}
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-300 ring-inset">
+                COMPLETED
+              </span>
+            </div>
+          ) : d.outcome === "FULL_REFUND" || d.outcome === "PARTIAL_REFUND" ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs">
+                  ℹ
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-blue-800">
+                    Suggested Refund · Policy Recommendation
+                  </div>
+                  <div className="text-sm font-semibold text-blue-950">
+                    Suggested {d.outcome === "FULL_REFUND" ? "Full Refund" : "Partial Refund"}: {money(d.suggested_cents, currency)}
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800 ring-1 ring-blue-300 ring-inset">
+                {d.requires_approval ? "Awaiting Merchant Approval" : "Eligible for Auto-Approval"}
+              </span>
+            </div>
+          ) : d.outcome === "REQUEST_EVIDENCE" ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white shadow-2xs">
+                  ⚠
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                    Additional Evidence Required
+                  </div>
+                  <div className="text-sm font-semibold text-amber-950">
+                    Held at $0.00 suggested payout · Photo or documentation needed
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-300 ring-inset">
+                REQUEST EVIDENCE
+              </span>
+            </div>
+          ) : d.outcome === "REVIEW" ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white shadow-2xs">
+                  ⚠
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                    Manual Merchant Review Required
+                  </div>
+                  <div className="text-sm font-semibold text-amber-950">
+                    Held at $0.00 suggested payout · Routed to store operator
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-300 ring-inset">
+                MANUAL REVIEW
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs">
+                  ✕
+                </span>
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-rose-900">
+                    Claim Rejected under Store Policy
+                  </div>
+                  <div className="text-sm font-semibold text-rose-950">
+                    $0.00 payout · Ineligible under store return policy
+                  </div>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800 ring-1 ring-rose-300 ring-inset">
+                REJECTED
+              </span>
+            </div>
+          )}
+
           {/* Task 1: Untrusted Input Notice */}
           {injection.isInjection && (
             <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-4 shadow-2xs">
@@ -283,67 +387,156 @@ export function DecisionCard({ claim }: { claim: Claim }) {
             {d.requires_approval ? "needs merchant approval" : "eligible for auto-approval"}
           </p>
 
-          <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50/70 p-3 text-xs">
-            <div className="mb-2 font-medium text-gray-700">Rule evaluation trace</div>
-            <ul className="space-y-1.5 font-mono">
-              <li className="flex items-start gap-1.5">
-                {d.rule_id === "PRE-nothing-left" ? (
-                  <>
-                    <span className="font-bold text-amber-600">✕</span>
-                    <span className="text-amber-800">
-                      Balance guard tripped: order already fully refunded ({money(rem, currency)} available)
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-emerald-600">✓</span>
-                    <span className="text-gray-700">
-                      Refundable balance check passed ({money(rem, currency)} available)
-                    </span>
-                  </>
-                )}
-              </li>
-              <li className="flex items-start gap-1.5">
-                {d.rule_id === "PRE-window" ? (
-                  <>
-                    <span className="font-bold text-amber-600">✕</span>
-                    <span className="text-amber-800">
-                      Report window guard tripped: reported outside allowable window{typeof days === "number" ? ` (${days}d since delivery)` : ""}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-emerald-600">✓</span>
-                    <span className="text-gray-700">
-                      Delivery window check passed{typeof days === "number" ? ` (${days}d since delivery)` : ""}
-                    </span>
-                  </>
-                )}
-              </li>
-              <li className="flex items-start gap-1.5">
-                {d.rule_id === "PRE-repeat" ? (
-                  <>
-                    <span className="font-bold text-amber-600">✕</span>
-                    <span className="text-amber-800">
-                      Repeat-claim guard tripped: prior claims detected ({prior})
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-emerald-600">✓</span>
-                    <span className="text-gray-700">
-                      Single-claim guard passed (prior claims: {prior})
-                    </span>
-                  </>
-                )}
-              </li>
-              <li className="flex items-start gap-1.5 rounded bg-blue-50/90 px-1.5 py-1 font-medium text-blue-950 ring-1 ring-blue-200/80">
-                <span className="font-bold text-blue-600">●</span>
-                <span>
-                  Matched {d.rule_id} under {d.policy_version} &rarr; {d.outcome} ({money(d.suggested_cents, currency)})
+          <div className="mt-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 shadow-2xs">
+            <div className="mb-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-700">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[10px] text-slate-600">
+                  4
                 </span>
-              </li>
-            </ul>
+                <span>Deterministic Rule Evaluation Trace</span>
+              </div>
+              <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-500">
+                Engine: local json-rules
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {/* Step 1: Balance Guard */}
+              <div
+                className={`flex items-center justify-between rounded-lg border p-2 text-xs transition ${
+                  d.rule_id === "PRE-nothing-left"
+                    ? "border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
+                    : "border-slate-200/70 bg-white text-slate-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                      d.rule_id === "PRE-nothing-left"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {d.rule_id === "PRE-nothing-left" ? "✕" : "✓"}
+                  </span>
+                  <div>
+                    <span className="font-medium text-slate-900">Step 1 · Refundable Balance Guard: </span>
+                    <span className="text-slate-600">
+                      {d.rule_id === "PRE-nothing-left"
+                        ? `Order fully refunded (${money(rem, currency)} available)`
+                        : `Order balance available (${money(rem, currency)} available)`}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                    d.rule_id === "PRE-nothing-left"
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                      : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  }`}
+                >
+                  {d.rule_id === "PRE-nothing-left" ? "TRIPPED" : "✓ PASSED"}
+                </span>
+              </div>
+
+              {/* Step 2: Delivery Window */}
+              <div
+                className={`flex items-center justify-between rounded-lg border p-2 text-xs transition ${
+                  d.rule_id === "PRE-window"
+                    ? "border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
+                    : "border-slate-200/70 bg-white text-slate-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                      d.rule_id === "PRE-window"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {d.rule_id === "PRE-window" ? "✕" : "✓"}
+                  </span>
+                  <div>
+                    <span className="font-medium text-slate-900">Step 2 · Delivery Window Guard: </span>
+                    <span className="text-slate-600">
+                      {d.rule_id === "PRE-window"
+                        ? `Outside allowable policy window${typeof days === "number" ? ` (${days}d since delivery)` : ""}`
+                        : `Within allowable policy window${typeof days === "number" ? ` (${days}d since delivery)` : ""}`}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                    d.rule_id === "PRE-window"
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                      : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  }`}
+                >
+                  {d.rule_id === "PRE-window" ? "TRIPPED" : "✓ PASSED"}
+                </span>
+              </div>
+
+              {/* Step 3: Prior Claims Guard */}
+              <div
+                className={`flex items-center justify-between rounded-lg border p-2 text-xs transition ${
+                  d.rule_id === "PRE-repeat"
+                    ? "border-amber-300 bg-amber-50/90 text-amber-900 shadow-2xs"
+                    : "border-slate-200/70 bg-white text-slate-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                      d.rule_id === "PRE-repeat"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {d.rule_id === "PRE-repeat" ? "✕" : "✓"}
+                  </span>
+                  <div>
+                    <span className="font-medium text-slate-900">Step 3 · Prior Claims Guard: </span>
+                    <span className="text-slate-600">
+                      {d.rule_id === "PRE-repeat"
+                        ? `Prior claims detected on order (${prior})`
+                        : `Single claim verified (${prior} prior claims)`}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                    d.rule_id === "PRE-repeat"
+                      ? "bg-amber-100 text-amber-800 ring-1 ring-amber-300"
+                      : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                  }`}
+                >
+                  {d.rule_id === "PRE-repeat" ? "TRIPPED" : "✓ PASSED"}
+                </span>
+              </div>
+
+              {/* Step 4: Final Matched Rule */}
+              <div className="flex items-center justify-between rounded-lg border border-blue-300 bg-gradient-to-r from-blue-50/90 to-indigo-50/60 p-2.5 text-xs text-blue-950 shadow-2xs ring-1 ring-blue-200/80">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-2xs">
+                    ★
+                  </span>
+                  <div>
+                    <span className="font-bold text-blue-950">Step 4 · Matched Policy Rule: </span>
+                    <code className="rounded bg-blue-100 px-1 py-0.5 font-mono text-[11px] font-semibold text-blue-900">
+                      {d.rule_id}
+                    </code>
+                    <span className="mx-1 text-blue-400">·</span>
+                    <span className="font-medium text-blue-900">
+                      outcome: <strong>{d.outcome}</strong> ({money(d.suggested_cents, currency)})
+                    </span>
+                  </div>
+                </div>
+                <span className="shrink-0 rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-semibold text-white uppercase shadow-2xs">
+                  MATCHED
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -356,22 +549,83 @@ export function DecisionCard({ claim }: { claim: Claim }) {
   );
 }
 
+export function CopyPill({ label, value }: { label: string; value: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // fallback
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      title={`Click to copy ${label}: ${value}`}
+      className="group inline-flex items-center gap-1.5 rounded-md bg-slate-100 px-2.5 py-1 font-mono text-xs text-slate-700 ring-1 ring-slate-200/90 transition hover:bg-slate-200/80 hover:text-slate-900 focus:outline-hidden"
+    >
+      <span className="font-sans text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+        {label}:
+      </span>
+      <span className="font-mono text-xs font-medium text-slate-900">{value}</span>
+      <span className="text-[11px] text-slate-400 group-hover:text-slate-600">
+        {copied ? <span className="font-sans font-semibold text-emerald-600">✓ copied</span> : "⎘"}
+      </span>
+    </button>
+  );
+}
+
 export function RefundCard({ claim }: { claim: Claim }) {
   if (!claim.refunds.length) return null;
   return (
-    <Card title="PayPal refund">
-      <ul className="space-y-3 text-sm">
-        {claim.refunds.map((r) => (
-          <li key={r.id} className="flex flex-wrap items-center gap-3">
-            <StatusBadge status={r.status} />
-            <span className="font-medium">{money(r.amount_cents, r.currency)}</span>
-            {r.paypal_refund_id && <code className="rounded bg-gray-100 px-1 text-xs">refund {r.paypal_refund_id}</code>}
-            <code className="rounded bg-gray-100 px-1 text-xs text-gray-500">{r.paypal_request_id}</code>
-            {r.error && <span className="text-xs text-red-700">{r.error}</span>}
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-xs text-gray-500">&ldquo;Refunded&rdquo; is shown only when PayPal reports the refund as COMPLETED.</p>
+    <Card title="PayPal refund" aside={<Badge tone="green">live capture &amp; refund</Badge>}>
+      <div className="space-y-3 text-sm">
+        {claim.order.capture_id && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-slate-500">Source PayPal Capture:</span>
+            <CopyPill label="Capture ID" value={claim.order.capture_id} />
+          </div>
+        )}
+        <ul className="space-y-3">
+          {claim.refunds.map((r) => (
+            <li key={r.id} className="rounded-lg border border-slate-200/80 bg-slate-50/60 p-3 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <StatusBadge status={r.status} />
+                  <span className="text-base font-semibold text-slate-900">
+                    {money(r.amount_cents, r.currency)}
+                  </span>
+                </div>
+                {r.status === "COMPLETED" && (
+                  <span className="text-xs font-medium text-emerald-700">
+                    ✓ Settled via PayPal REST API
+                  </span>
+                )}
+              </div>
+              <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                {r.paypal_refund_id && (
+                  <CopyPill label="Refund ID" value={r.paypal_refund_id} />
+                )}
+                {r.paypal_request_id && (
+                  <CopyPill label="Idempotency Key" value={r.paypal_request_id} />
+                )}
+              </div>
+              {r.error && (
+                <div className="mt-2 rounded bg-red-50 p-2 text-xs font-medium text-red-700 ring-1 ring-red-200">
+                  PayPal error: {r.error}
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-gray-500">
+          &ldquo;Refunded&rdquo; is shown only when PayPal reports the refund as COMPLETED.
+        </p>
+      </div>
     </Card>
   );
 }

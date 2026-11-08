@@ -66,6 +66,8 @@ To check whether the evidence-to-decision drawer is understandable to first-time
 
 - **Takeaway on inference cost (answering Tester 1)**: Because the multimodal model is called only once per claim submission (outputting a compact structured JSON schema) and all policy replays run deterministically in Python/JSON with zero extra LLM calls, the estimated AI API cost on flash-tier multimodal models is **well under $0.01 per claim**.
 - **Takeaway on UI polish & scope limits (answering Tester 2)**: This small check (`n = 2`, non-merchants) only shows that first-time readers can follow the decision trace in ~20–30 seconds; it does not prove live merchant ROI. It also highlights a clear next step: simplifying visual density in the review drawer for non-technical store operators.
+- **Action taken on Tester 1's cost question**: Added explicit per-claim cost transparency (<$0.01/claim via a single structured multimodal pass + $0 deterministic local policy replay) and configurable cost assumptions in the simulator.
+- **Action taken on Tester 2's UI polish feedback**: Upgraded the visual hierarchy of the Decision card and Merchant drawer with color-coded verdict banners, structured step pills for the 4-step rule trace, and cleaner badge contrast so non-technical reviewers can scan the outcome immediately before inspecting raw audit logs.
 
 ## Architecture
 
@@ -132,7 +134,7 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 
 1. Open [All claims](https://refundpilot-web.onrender.com/merchant?tab=all) and select **Completed refund** under **Quick-inspect recorded cases**.
 2. Compare the product reference and buyer photo, then inspect the matched policy rule (`R1-broken` under `standard-1.1`) and the **$49.00** refund recommendation.
-3. Check the completed PayPal refund ID (`7RC15719L64464848`) and the audit timeline, including merchant approval and the API and webhook completion events.
+3. Check the completed PayPal refund ID (e.g., `7RC15719L64464848` / `3160410806932083S`) and the audit timeline, including merchant approval and the API and webhook completion events.
 4. Use **Simulate 3 policies ↗** to compare recommendations from the same recorded decision inputs across Goodwill, Standard, and Strict policies. No new payment is needed for this walkthrough.
 
 **Explore further:** use the [Buyer Portal](https://refundpilot-web.onrender.com) presets (**Clearly broken item**, **Blurry photo**, **Suspected reused screenshot**, or the **Prompt-injection stress test**) to submit a new assessment, or open the [batch policy simulator](https://refundpilot-web.onrender.com/merchant/policy) (which includes an illustrative cost scenario with configurable assumptions). The hosted demo uses PayPal Sandbox. Experimental Disputes write flows are covered by automated tests with `FakePayPal`; they have not been validated end-to-end against PayPal Sandbox.

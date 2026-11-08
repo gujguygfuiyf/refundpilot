@@ -73,7 +73,7 @@ export function FactChip({ value }: { value: string | boolean | null | undefined
 
 export function Card({ title, aside, children, className = "" }: { title?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-xl border border-gray-200 bg-white p-5 shadow-sm ${className}`}>
+    <section className={`rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-100/80 ${className}`}>
       {(title || aside) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-sm font-semibold tracking-wide text-gray-900 uppercase">{title}</h2>}
