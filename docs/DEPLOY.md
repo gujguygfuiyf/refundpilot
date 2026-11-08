@@ -54,9 +54,9 @@ uvicorn app.main:app --reload
 5. 看两个服务的实际网址。如果 API 不是 `https://refundpilot-api.onrender.com`（名字被占用时 Render 会加后缀）：去 `refundpilot-web` → Environment，把 `NEXT_PUBLIC_API_URL` 改成 API 的实际网址，选 **Save, rebuild, and deploy**（这个值是构建时写进前端的）。web 的网址带后缀不用管，CORS 已经按正则放行。
 6. 可选：要 OpenAI 备用，在 API 的 Environment 里加 `OPENAI_API_KEY` 和 `OPENAI_MODEL`。
 
-免费版的代价：15 分钟没人访问就休眠，下一次访问约 1 分钟才醒（README 里已经提醒评委）；每月 750 小时免费额度，只在运行时计时，够用。Neon 闲置 5 分钟自动暂停，下次连接自动唤醒，不用管。
+免费版的代价：15 分钟没人访问就休眠，下一次访问约 1 分钟才醒（README 里已经提醒评委）；每月 750 小时免费额度按实际运行时间统计。健康检查不查询数据库；数据库实际消耗仍需通过 Neon 控制台确认。
 
-**评审期保持清醒**：`.github/workflows/keep-demo-awake.yml` 在 12 月 1 日 20:00 到 12 月 15 日 17:00（UTC）之间每 5 分钟访问一次两个服务，约用 666 小时，在 750 小时额度以内。它只访问 `/health`（不碰数据库），后端的后台任务也只在有退款等 PayPal 确认时才连数据库，所以 Neon 照样能休眠，不会用完每月 100 CU 小时的免费额度。录视频前想先叫醒网站：GitHub → Actions → keep-demo-awake → Run workflow。
+**评审期保持清醒**：`.github/workflows/keep-demo-awake.yml` 在 12 月 1 日 20:00 到 12 月 15 日 17:00（UTC）之间每 10 分钟访问一次两个服务，共 333 小时，两个服务预计消耗 666 实例小时，以降低评审期间遇到冷启动的概率。750 小时中剩余的 84 小时仅为未扣除其他用量前的理论余量，不能视为账号实际可用余额；Render 工作区实际剩余额度尚未通过 API 确认，需确保同一工作区无其他免费服务共享额度，并为已有使用量及窗口外访问预留安全余量。健康检查不查询数据库；数据库实际消耗仍需通过 Neon 控制台确认。11 月未安排定时自动保活（实际消耗取决于既有使用量、访问、手动预热及同工作区其他服务，尚未确认）；录制演示或需要测试前可手动叫醒：GitHub → Actions → keep-demo-awake → Run workflow。
 
 **完成标准：** `https://<api>/health` 返回 `"paypal": "PayPalClient"`、`"assessor": "chain"`；web 首页能看到订单；在线提交一笔并批准成功。
 

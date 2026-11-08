@@ -1,13 +1,25 @@
-# Keeps the free Render services awake during the judging window, so a judge never waits a minute for a cold start.
-# Render's free plan gives 750 instance-hours per workspace per month. Two services pinged around the clock for the
-# window below use about 670 of them, which is why the window is limited instead of running all month.
-# /health doesn't touch the database, so the Neon database still scales to zero between real visits.
+# Keeps the free Render services awake during the formal judging window, reducing the chance of encountering a cold start during judging.
+#
+# Render Free Plan Quota & Usage Math:
+# - Render provides 750 free instance-hours per workspace per calendar month across all free web services.
+# - Free services idle-sleep after 15 minutes without traffic. Pinging within 15 minutes keeps a service running 24/7.
+# - Two services (refundpilot-api + refundpilot-web) running 24/7 consume 2 * 24 = 48 instance-hours per day.
+# - Formal judging window: 2026-12-01 22:00 UTC to 2026-12-15 16:00 UTC.
+# - Window with pre-warming buffer: 2026-12-01 20:00 UTC to 2026-12-15 17:00 UTC (13 days 21 hours = 333 hours).
+# - Estimated December usage: 333 hours * 2 services = 666 instance-hours (~88.8% of December's 750h allowance).
+#   This leaves ~84 instance-hours in December as a theoretical margin before deducting other usage (not actual confirmed account balance).
+# - November usage: No scheduled automatic keep-awake in November. Actual November consumption depends on existing
+#   usage, visits, manual pre-warming, and other services in the workspace, and is unconfirmed (尚未确认).
+#   Pre-demo testing in November uses manual trigger (workflow_dispatch) or cold start (~50s).
+# - Note: Remaining quota in the user's Render workspace is unconfirmed (尚未确认) via API; users must verify no other
+#   free services share this workspace quota.
+# - Health checks (/health) do not query PostgreSQL; actual database consumption must still be confirmed via the Neon console.
 name: keep-demo-awake
 
 on:
   schedule:
-    - cron: "*/10 * * 11,12 *"     # every 10 minutes across Nov & Dec (UTC); the step trims this to the exact window
-  workflow_dispatch: {}           # manual run from the Actions tab, to test it or to wake the demo before a recording
+    - cron: "*/10 * 1-15 12 *"     # every 10 minutes on Dec 1-15 (UTC); step checks exact WINDOW_START/END
+  workflow_dispatch: {}           # manual on-demand run from Actions tab, to warm demo before recording or review
 
 permissions: {}
 
@@ -16,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      WINDOW_START: "2026-11-08T00:00:00Z"   # active from submission (Nov 8) through judging completion
-      WINDOW_END: "2026-12-20T23:59:59Z"     # active through Dec 20
+      WINDOW_START: "2026-12-01T20:00:00Z"   # judging opens Dec 1, 22:00 UTC; start 2 hours early for pre-warm
+      WINDOW_END: "2026-12-15T17:00:00Z"     # judging closes Dec 15, 16:00 UTC; 1 hour post-close buffer
       URLS: "https://refundpilot-api.onrender.com/health https://refundpilot-web.onrender.com/"
     steps:
       - name: Ping the API and the web app

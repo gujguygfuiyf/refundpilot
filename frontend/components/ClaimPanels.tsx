@@ -246,10 +246,10 @@ export function DecisionCard({ claim }: { claim: Claim }) {
                 </span>
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                    PayPal Refund Completed
+                    PayPal Sandbox Refund Completed
                   </div>
                   <div className="text-sm font-semibold text-emerald-950">
-                    ✓ PayPal Refund Completed: {money(completedRefundAmount, currency)}
+                    ✓ PayPal Sandbox Refund Completed: {money(completedRefundAmount, currency)}
                   </div>
                 </div>
               </div>
@@ -582,7 +582,7 @@ export function CopyPill({ label, value }: { label: string; value: string }) {
 export function RefundCard({ claim }: { claim: Claim }) {
   if (!claim.refunds.length) return null;
   return (
-    <Card title="PayPal refund" aside={<Badge tone="green">live capture &amp; refund</Badge>}>
+    <Card title="PayPal refund" aside={<Badge tone="green">PayPal Sandbox test refund</Badge>}>
       <div className="space-y-3 text-sm">
         {claim.order.capture_id && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -602,7 +602,7 @@ export function RefundCard({ claim }: { claim: Claim }) {
                 </div>
                 {r.status === "COMPLETED" && (
                   <span className="text-xs font-medium text-emerald-700">
-                    ✓ Settled via PayPal REST API
+                    ✓ Settled via PayPal Sandbox REST API
                   </span>
                 )}
               </div>

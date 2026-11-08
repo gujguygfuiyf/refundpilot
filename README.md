@@ -57,17 +57,17 @@ suggestion above its predefined cap. Results, failures and limits: [docs/EVALUAT
 
 ### Quick External Usability Check (Non-Merchant Testers, n = 2)
 
-To check whether the evidence-to-decision drawer is understandable to first-time users outside the team, we ran an informal walkthrough with **2 independent non-merchant testers** inspecting recorded claims in `/merchant?tab=all`:
+To check whether the evidence-to-decision review drawer is understandable to first-time readers outside the team, we ran an informal qualitative check with **2 independent non-merchant testers**. Both participants inspected pre-recorded claims in `/merchant?tab=all` (they did not submit or process new live claims):
 
-| Tester (Non-merchant) | Review Time per Case | Outcome & Rule Comprehension | Verbatim / Summarized Feedback |
+| Tester (Non-merchant) | Timed Inspection Task (~seconds) | Specific Task Outcome | Feedback Summary |
 | :--- | :--- | :--- | :--- |
-| **Tester 1** | ~20s | Correctly identified the matched rule and suggested payout | Positive on workflow speed—noted that having AI verify the photo against the SKU and letting rules calculate the exact dollar amount saves time, and immediately asked about **per-claim AI inference cost**. |
-| **Tester 2** | ~30s | Correctly identified the matched rule and suggested payout | Understood the decision trace within half a minute, but noted that the **UI feels utilitarian / engineering-heavy and could be more visually polished**. |
+| **Tester 1** | ~20s to inspect drawer | Located suggested payout amount and read matched rule | Summarized feedback: noted that having structured visual observations paired with deterministic rules felt fast to scan, and asked how per-claim AI inference costs scale. |
+| **Tester 2** | ~30s to inspect drawer | Located suggested payout amount and read matched rule | Summarized feedback: found the rule trace understandable, but noted that the interface felt utilitarian / engineering-heavy and recommended greater visual polish. |
 
-- **Takeaway on inference cost (answering Tester 1)**: Because the multimodal model is called only once per claim submission (outputting a compact structured JSON schema) and all policy replays run deterministically in Python/JSON with zero extra LLM calls, the estimated AI API cost on flash-tier multimodal models is **well under $0.01 per claim**.
-- **Takeaway on UI polish & scope limits (answering Tester 2)**: This small check (`n = 2`, non-merchants) only shows that first-time readers can follow the decision trace in ~20–30 seconds; it does not prove live merchant ROI. It also highlights a clear next step: simplifying visual density in the review drawer for non-technical store operators.
-- **Action taken on Tester 1's cost question**: Added explicit per-claim cost transparency (<$0.01/claim via a single structured multimodal pass + $0 deterministic local policy replay) and configurable cost assumptions in the simulator.
-- **Action taken on Tester 2's UI polish feedback**: Upgraded the visual hierarchy of the Decision card and Merchant drawer with color-coded verdict banners, structured step pills for the 4-step rule trace, and cleaner badge contrast so non-technical reviewers can scan the outcome immediately before inspecting raw audit logs.
+- **Clarification on inference cost (answering Tester 1)**: Policy replay uses deterministic local rules and incurs no additional LLM API charges. Assessment cost depends on the configured model, input size, and any retries or fallback calls.
+- **Scope limits & lack of market validation (answering Tester 2)**: This small informal check (`n = 2`, non-merchants) only demonstrates that two first-time reviewers could locate the decision inputs and rule recommendation in ~20–30 seconds when inspecting a pre-recorded case drawer. It does not measure merchant operational cycle time, proven time savings, merchant ROI, or commercial demand.
+- **Action taken on Tester 1's cost question**: Documented that local policy replay adds no extra LLM API charges, and added configurable ops and dispute risk assumptions in the policy simulator (`/merchant/policy`) so merchants can model operational trade-offs across policies.
+- **Action taken on Tester 2's UI polish feedback**: Adjusted the visual hierarchy of the Decision card and Merchant drawer based on this feedback (adding color-coded verdict banners, structured step cards for the 4-step rule trace, and copyable credential pills). These adjustments have not been formally re-tested with users.
 
 ## Architecture
 
@@ -132,9 +132,9 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
 
 ### Quick judge walkthrough — inspect a completed case first
 
-1. Open [All claims](https://refundpilot-web.onrender.com/merchant?tab=all) and select **Completed refund** under **Quick-inspect recorded cases**.
+1. Open [All claims](https://refundpilot-web.onrender.com/merchant?tab=all) and select **Completed refund** under **Quick-inspect recorded cases** to inspect an actual completed PayPal Sandbox test refund (no waiting for new AI analysis).
 2. Compare the product reference and buyer photo, then inspect the matched policy rule (`R1-broken` under `standard-1.1`) and the **$49.00** refund recommendation.
-3. Check the completed PayPal refund ID (e.g., `7RC15719L64464848` / `3160410806932083S`) and the audit timeline, including merchant approval and the API and webhook completion events.
+3. Check the completed PayPal Sandbox refund ID (e.g., `7RC15719L64464848` / `3160410806932083S`) and the audit timeline, including merchant approval and the API and webhook completion events.
 4. Use **Simulate 3 policies ↗** to compare recommendations from the same recorded decision inputs across Goodwill, Standard, and Strict policies. No new payment is needed for this walkthrough.
 
 **Explore further:** use the [Buyer Portal](https://refundpilot-web.onrender.com) presets (**Clearly broken item**, **Blurry photo**, **Suspected reused screenshot**, or the **Prompt-injection stress test**) to submit a new assessment, or open the [batch policy simulator](https://refundpilot-web.onrender.com/merchant/policy) (which includes an illustrative cost scenario with configurable assumptions). The hosted demo uses PayPal Sandbox. Experimental Disputes write flows are covered by automated tests with `FakePayPal`; they have not been validated end-to-end against PayPal Sandbox.
@@ -151,9 +151,14 @@ to `backend/seed/orders.json`. Restart the API to load new orders.
   demo only). Orders with a claim keep their dates, so recorded decisions stay reproducible.
 - **Abuse limits.** Each submission costs one AI call, so the public demo allows 5 submissions per minute per IP and
   200 AI assessments per day (`CLAIMS_PER_IP_PER_MINUTE`, `AI_CALLS_PER_DAY`). You'll see HTTP 429 past that.
-- **Free hosting.** The demo runs on Render's free plan with a free Neon database. During the judging window a
-  scheduled GitHub Action ([`keep-demo-awake.yml`](.github/workflows/keep-demo-awake.yml)) keeps it awake; outside
-  it, the first request after 15 idle minutes can take about a minute while the server wakes up.
+- **Free hosting.** The demo runs on Render's free plan with a free Neon database. During the formal Dec 1–15 judging
+  window (Dec 1, 20:00 UTC to Dec 15, 17:00 UTC, 333 hours), a scheduled GitHub Action ([`keep-demo-awake.yml`](.github/workflows/keep-demo-awake.yml))
+  keeps the two services awake (~666 instance-hours total, leaving ~84 instance-hours as a theoretical margin before deducting
+  other usage; actual workspace balance remains unconfirmed), reducing the chance of encountering a cold start during judging.
+  Health checks do not query the database; actual database consumption must still be confirmed via the Neon console.
+  November has no scheduled automatic keep-awake (actual consumption depends on existing usage, visits, manual pre-warming,
+  and other services in the workspace, and is unconfirmed). Outside the judging window, the first request after 15 idle
+  minutes takes about a minute while the service wakes up, or can be pre-warmed manually anytime via GitHub Actions `workflow_dispatch`.
 
 ## Tests
 

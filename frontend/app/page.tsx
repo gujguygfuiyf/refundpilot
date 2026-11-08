@@ -56,10 +56,10 @@ export default function OrdersPage() {
           <div>
             <div className="flex items-center gap-2">
               <Badge tone="blue">Quick judge walkthrough</Badge>
-              <span className="text-xs text-gray-500">Inspect a completed $49 PayPal refund first, or submit a 1-click sample claim below</span>
+              <span className="text-xs text-gray-500">Inspect a completed $49 PayPal Sandbox test refund first (no waiting for new AI analysis), or submit a 1-click sample claim below</span>
             </div>
             <h2 className="mt-1.5 text-lg font-semibold text-gray-900">
-              Start with a completed PayPal refund case, or test a new scenario
+              Start with a completed PayPal Sandbox test refund case, or test a new scenario
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -67,7 +67,7 @@ export default function OrdersPage() {
               href="/merchant?tab=all"
               className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-brand-dark"
             >
-              1. Inspect completed $49 refund &amp; recorded cases →
+              1. Inspect completed $49 Sandbox refund (no waiting for new AI analysis) →
             </Link>
             <Link
               href="/merchant/policy"
