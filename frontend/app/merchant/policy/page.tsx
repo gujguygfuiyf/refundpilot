@@ -307,11 +307,12 @@ function Simulator() {
 
   const batchSummary = useMemo(() => {
     if (!batchComplete) return [];
-    return policies.map((p) => {
+    const basePolicyVer = policies[0]?.version;
+    const items = policies.map((p) => {
       let totalSuggested = 0;
       let reviewOrEvidenceCount = 0;
+      let rejectCount = 0;
       let changedVsFirst = 0;
-      const basePolicyVer = policies[0]?.version;
 
       for (const bc of batchCases) {
         const r = batchMatrix[bc.id]?.[p.version];
@@ -321,18 +322,35 @@ function Simulator() {
         if (r.outcome === "REVIEW" || r.outcome === "REQUEST_EVIDENCE") {
           reviewOrEvidenceCount += 1;
         }
+        if (r.outcome === "REJECT") {
+          rejectCount += 1;
+        }
         if (rBase && (r.outcome !== rBase.outcome || r.suggested_cents !== rBase.suggested_cents)) {
           changedVsFirst += 1;
         }
       }
+      const manualOpsCents = reviewOrEvidenceCount * 350; // $3.50 per manual review
+      const disputeRiskCents = rejectCount * 1500; // $15.00 dispute escalation / chargeback fee risk
+      const totalEffectiveCents = totalSuggested + manualOpsCents + disputeRiskCents;
+
       return {
         policy: p,
         totalSuggested,
         reviewRate: batchCases.length ? Math.round((reviewOrEvidenceCount / batchCases.length) * 100) : 0,
         reviewOrEvidenceCount,
+        rejectCount,
+        manualOpsCents,
+        disputeRiskCents,
+        totalEffectiveCents,
         changedVsFirst,
       };
     });
+
+    const minEffective = items.length ? Math.min(...items.map((i) => i.totalEffectiveCents)) : 0;
+    return items.map((i) => ({
+      ...i,
+      isLowestCost: i.totalEffectiveCents === minEffective,
+    }));
   }, [batchComplete, policies, batchCases, batchMatrix]);
 
   const set = <K extends keyof EvidenceAssessment>(k: K, v: EvidenceAssessment[K]) => setA((x) => ({ ...x, [k]: v }));
@@ -508,31 +526,97 @@ function Simulator() {
             </div>
 
             <div className="mb-5 grid gap-4 sm:grid-cols-3">
-              {batchSummary.map(({ policy: p, totalSuggested, reviewRate, reviewOrEvidenceCount, changedVsFirst }, idx) => (
-                <div key={p.version} className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-gray-900">{p.name}</span>
-                    <code className="rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200">{p.version}</code>
-                  </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="block text-[11px] text-gray-500 uppercase">Total suggested</span>
-                      <span className="text-xl font-semibold text-gray-900">{money(totalSuggested)}</span>
+              {batchSummary.map(
+                (
+                  {
+                    policy: p,
+                    totalSuggested,
+                    reviewRate,
+                    reviewOrEvidenceCount,
+                    rejectCount,
+                    manualOpsCents,
+                    disputeRiskCents,
+                    totalEffectiveCents,
+                    changedVsFirst,
+                    isLowestCost,
+                  },
+                  idx,
+                ) => (
+                  <div
+                    key={p.version}
+                    className={`rounded-xl border p-4 transition ${
+                      isLowestCost
+                        ? "border-emerald-300 bg-emerald-50/40 ring-1 ring-emerald-200"
+                        : "border-gray-200 bg-gray-50/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-gray-900">{p.name}</span>
+                        {isLowestCost && (
+                          <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                            ★ Lowest Total Cost
+                          </span>
+                        )}
+                      </div>
+                      <code className="rounded bg-white px-1.5 py-0.5 text-xs text-gray-600 ring-1 ring-gray-200">
+                        {p.version}
+                      </code>
                     </div>
-                    <div>
-                      <span className="block text-[11px] text-gray-500 uppercase">Review / Evidence</span>
-                      <span className="text-xl font-semibold text-gray-900">
-                        {reviewRate}% <span className="text-xs font-normal text-gray-500">({reviewOrEvidenceCount}/{batchCases.length})</span>
-                      </span>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="block text-[11px] uppercase text-gray-500">Direct Payout</span>
+                        <span className="text-lg font-semibold text-gray-900">{money(totalSuggested)}</span>
+                      </div>
+                      <div>
+                        <span className="block text-[11px] uppercase text-gray-500">Review Rate</span>
+                        <span className="text-lg font-semibold text-gray-900">
+                          {reviewRate}%{" "}
+                          <span className="text-xs font-normal text-gray-500">
+                            ({reviewOrEvidenceCount}/{batchCases.length})
+                          </span>
+                        </span>
+                      </div>
                     </div>
+
+                    {/* CFO Net Merchant Impact breakdown */}
+                    <div className="mt-3 space-y-1 rounded-lg border border-gray-200/80 bg-white/90 p-2.5 text-xs">
+                      <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-gray-500">
+                        <span>CFO Net Merchant Cost</span>
+                        <span className="text-xs font-bold text-gray-900">{money(totalEffectiveCents)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-gray-600">
+                        <span>• Direct refund payout:</span>
+                        <span>{money(totalSuggested)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-gray-600">
+                        <span>• Ops labor ({reviewOrEvidenceCount} rev @ $3.50):</span>
+                        <span className="text-amber-700">+{money(manualOpsCents)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] text-gray-600">
+                        <span>• Dispute risk ({rejectCount} rej @ $15.00):</span>
+                        <span className={rejectCount > 0 ? "font-medium text-red-700" : "text-gray-400"}>
+                          +{money(disputeRiskCents)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-2 text-xs text-gray-500">
+                      {idx === 0
+                        ? "Baseline policy for comparison"
+                        : `${changedVsFirst} of ${batchCases.length} cases change outcome or amount vs. ${policies[0]?.name}`}
+                    </p>
                   </div>
-                  <p className="mt-2 text-xs text-gray-500">
-                    {idx === 0
-                      ? "Baseline policy for comparison"
-                      : `${changedVsFirst} of ${batchCases.length} cases change outcome or amount vs. ${policies[0]?.name}`}
-                  </p>
-                </div>
-              ))}
+                ),
+              )}
+            </div>
+
+            <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-blue-50/70 p-3 text-xs text-blue-900 ring-1 ring-blue-100">
+              <span className="text-sm leading-none">💡</span>
+              <div>
+                <span className="font-semibold">CFO Net Merchant Impact Model:</span> Effective cost combines direct refund payouts + manual agent review labor ($3.50/case) + dispute escalation chargeback risk ($15.00/rejected claim). This models why ultra-strict rejection policies often generate hidden net losses through PayPal dispute fees and customer churn.
+              </div>
             </div>
 
             <div className="overflow-x-auto">

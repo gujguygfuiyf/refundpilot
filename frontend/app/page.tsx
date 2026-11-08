@@ -34,10 +34,30 @@ const QUICK_SCENARIOS = [
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
 
   useEffect(() => {
     api.orders().then(setOrders).catch((e) => setError(`Could not load orders: ${e.message}`));
   }, []);
+
+  const handleResetDemo = async () => {
+    setResetting(true);
+    setResetMsg(null);
+    setError(null);
+    try {
+      const res = await api.resetDemo();
+      const updatedOrders = await api.orders();
+      setOrders(updatedOrders);
+      setResetMsg(
+        `Reset complete: ${res.cancelled_claims} test claim(s) cancelled, ${res.reset_orders} demo order(s) restored to full balance. Canonical showcase claims (Orders 1, 4, 5) preserved.`,
+      );
+    } catch (e) {
+      setError(`Failed to reset demo claims: ${(e as Error).message}`);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   // Strictly match LAMP-02 for the three lamp sample presets so a lamp photo is never paired with a mug or headphones order.
   const lampSampleOrder = useMemo(() => {
@@ -59,6 +79,16 @@ export default function OrdersPage() {
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleResetDemo}
+              disabled={resetting}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
+              title="Cancel open test claims on demo orders and restore full refundable balances without touching canonical showcase claims"
+            >
+              {resetting ? <Spinner /> : <span className="text-gray-500">↺</span>}
+              <span>{resetting ? "Resetting demo..." : "Reset Demo Claims"}</span>
+            </button>
             <Link
               href="/merchant?tab=all"
               className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50"
@@ -73,6 +103,21 @@ export default function OrdersPage() {
             </Link>
           </div>
         </div>
+
+        {resetMsg && (
+          <div className="mt-3 flex items-center justify-between rounded-lg bg-emerald-50 px-3.5 py-2 text-xs text-emerald-800 ring-1 ring-emerald-200">
+            <span className="flex items-center gap-1.5">
+              <span>✓</span> {resetMsg}
+            </span>
+            <button
+              type="button"
+              onClick={() => setResetMsg(null)}
+              className="font-bold text-emerald-700 hover:text-emerald-900"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {QUICK_SCENARIOS.map((s) => {
@@ -100,12 +145,14 @@ export default function OrdersPage() {
                       Load on Desk Lamp Order #{lampSampleOrder.id} →
                     </Link>
                   ) : orders ? (
-                    <Link
-                      href="/merchant?tab=all"
-                      className="block w-full rounded-lg bg-gray-100 px-3 py-1.5 text-center text-xs font-medium text-gray-800 hover:bg-gray-200"
+                    <button
+                      type="button"
+                      onClick={handleResetDemo}
+                      disabled={resetting}
+                      className="block w-full rounded-lg bg-amber-50 px-3 py-1.5 text-center text-xs font-medium text-amber-800 ring-1 ring-amber-200 hover:bg-amber-100 disabled:opacity-50"
                     >
-                      All lamp orders claimed · View recorded claims →
-                    </Link>
+                      {resetting ? "Resetting demo..." : "All demo lamps claimed · ↺ Click to Reset"}
+                    </button>
                   ) : (
                     <span className="block text-center text-xs text-gray-400">Finding a claimable LAMP-02 order…</span>
                   )}
