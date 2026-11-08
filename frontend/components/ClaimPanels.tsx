@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Claim } from "@/lib/types";
 import { photoUrl } from "@/lib/api";
 import { label, money, when } from "@/lib/format";
@@ -211,8 +212,92 @@ const ACTOR_DOT: Record<string, string> = {
 };
 
 export function Timeline({ claim }: { claim: Claim }) {
+  const [showJson, setShowJson] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const auditBundle = {
+    schema: "refundpilot.audit_bundle.v1",
+    claim_id: claim.id,
+    status: claim.status,
+    created_at: claim.created_at,
+    resolved_at: claim.resolved_at,
+    order: {
+      order_id: claim.order.id,
+      paypal_order_id: claim.order.paypal_order_id,
+      paypal_capture_id: claim.order.capture_id,
+      product_sku: claim.order.product.sku,
+      amount_cents: claim.order.amount_cents,
+      refunded_cents: claim.order.refunded_cents,
+      remaining_cents: claim.order.remaining_cents,
+      currency: claim.order.currency,
+    },
+    evidence: {
+      buyer_text: claim.buyer_text,
+      photo_urls: claim.photo_urls,
+      ai_assessment: claim.assessment,
+    },
+    policy_decision: claim.decision,
+    paypal_settlements: claim.refunds,
+    audit_trail: claim.timeline,
+  };
+
+  const handleCopy = () => {
+    const jsonStr = JSON.stringify(auditBundle, null, 2);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
+  const handleDownload = () => {
+    const jsonStr = JSON.stringify(auditBundle, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `refundpilot-audit-${claim.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <Card title="Audit trail">
+    <Card
+      title="Audit trail"
+      aside={
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowJson(!showJson)}
+            className="text-xs font-medium text-brand hover:underline"
+          >
+            {showJson ? "Hide Audit JSON" : "Inspect Audit JSON"}
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700 shadow-2xs hover:bg-gray-50"
+          >
+            {copied ? "✓ Copied JSON" : "Copy JSON"}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="rounded border border-gray-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-700 shadow-2xs hover:bg-gray-50"
+          >
+            Download .json
+          </button>
+        </div>
+      }
+    >
+      {showJson && (
+        <pre className="mb-4 max-h-72 overflow-auto rounded-lg bg-gray-900 p-3 font-mono text-xs text-gray-100">
+          {JSON.stringify(auditBundle, null, 2)}
+        </pre>
+      )}
       <ol className="relative space-y-3 border-l border-gray-200 pl-5">
         {claim.timeline.map((t, i) => (
           <li key={i} className="text-sm">
