@@ -48,28 +48,32 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <p className="mb-3 text-sm leading-relaxed text-gray-700">
+          For a small PayPal merchant, a damaged-item claim means checking photos, interpreting a refund policy, deciding an amount, and confirming that the payment was actually refunded.{" "}
+          <strong className="font-semibold text-gray-900">RefundPilot</strong> brings those steps into one reviewable workflow: AI describes the evidence, versioned rules calculate a recommendation, the merchant approves, and PayPal executes the refund. Each completed case links the evidence and decision to its PayPal refund record.
+        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3 border-t border-blue-100/80 pt-3.5">
           <div>
             <div className="flex items-center gap-2">
-              <Badge tone="blue">Quick start for judges</Badge>
-              <span className="text-xs text-gray-500">No file download needed · pre-fills SKU-matched photo &amp; description</span>
+              <Badge tone="blue">Quick judge walkthrough</Badge>
+              <span className="text-xs text-gray-500">Inspect a completed $49 PayPal refund first, or submit a 1-click sample claim below</span>
             </div>
             <h2 className="mt-1.5 text-lg font-semibold text-gray-900">
-              Try a sample scenario in one click, or inspect recorded claims
+              Start with a completed PayPal refund case, or test a new scenario
             </h2>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href="/merchant?tab=all"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-800 shadow-xs ring-1 ring-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-brand-dark"
             >
-              View completed &amp; hard-case claims →
+              1. Inspect completed $49 refund &amp; recorded cases →
             </Link>
             <Link
               href="/merchant/policy"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-brand-dark shadow-xs ring-1 ring-blue-200 hover:bg-blue-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-medium text-brand-dark shadow-xs ring-1 ring-blue-200 hover:bg-blue-50"
             >
-              Batch policy replay simulator →
+              2. Compare 3 policies in simulator →
             </Link>
           </div>
         </div>
