@@ -234,37 +234,39 @@ export function DecisionCard({ claim }: { claim: Claim }) {
           {/* Task 1: Security Boundary Callout */}
           {injection.isInjection && (
             <div className="rounded-xl border-2 border-red-300 bg-gradient-to-br from-red-50/90 via-amber-50/60 to-white p-4 shadow-2xs">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                  🛡
-                </span>
-                <h3 className="text-xs font-bold tracking-wider text-red-950 uppercase">
-                  Security Boundary Callout · Adversarial Injection Defended
-                </h3>
-                <span className="ml-auto inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-red-300 ring-inset">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                    🛡
+                  </span>
+                  <h3 className="text-xs font-bold tracking-wider text-red-950 uppercase">
+                    Security Boundary Callout · Adversarial Injection Defended
+                  </h3>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-red-300 ring-inset">
                   Prompt Injection Neutralized
                 </span>
               </div>
               <div className="mt-2.5 space-y-2 text-xs">
-                <div className="flex items-start gap-2 rounded-lg bg-white/80 p-2 ring-1 ring-red-200">
-                  <span className="shrink-0 font-semibold text-red-900">1. Untrusted Buyer Input:</span>
-                  <span className="text-gray-800">
+                <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-red-200">
+                  <span className="font-semibold text-red-900">1. Untrusted Buyer Input: </span>
+                  <span>
                     Detected override attempt in buyer note ({injection.snippet ? `"${injection.snippet}"` : `"approve $500"`}) — treated strictly as untrusted unstructured text.
                   </span>
                 </div>
-                <div className="flex items-start gap-2 rounded-lg bg-white/80 p-2 ring-1 ring-blue-200">
-                  <span className="shrink-0 font-semibold text-blue-900">
-                    2. AI Assessment Schema (<code>EvidenceAssessment</code>):
+                <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-blue-200">
+                  <span className="font-semibold text-blue-900">
+                    2. AI Assessment Schema (<code>EvidenceAssessment</code>):{" "}
                   </span>
-                  <span className="text-gray-800">
-                    <strong className="text-blue-900">0 monetary fields</strong> — structurally incapable of outputting, parsing, or overriding refund dollar amounts.
+                  <span>
+                    <strong className="font-bold text-blue-900">0 monetary fields</strong> — structurally incapable of outputting, parsing, or overriding refund dollar amounts.
                   </span>
                 </div>
-                <div className="flex items-start gap-2 rounded-lg bg-white/80 p-2 ring-1 ring-emerald-200">
-                  <span className="shrink-0 font-semibold text-emerald-900">3. Deterministic Policy Output:</span>
-                  <span className="text-gray-800">
-                    <strong className="text-emerald-900">{money(d.suggested_cents, currency)}</strong> (Strictly bounded by remaining order balance &amp; matched rule{" "}
-                    <code className="rounded bg-emerald-100 px-1">{d.rule_id}</code>).
+                <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-emerald-200">
+                  <span className="font-semibold text-emerald-900">3. Deterministic Policy Output: </span>
+                  <span>
+                    <strong className="font-bold text-emerald-900">{money(d.suggested_cents, currency)}</strong> (Strictly bounded by remaining order balance &amp; matched rule{" "}
+                    <code className="rounded bg-emerald-100 px-1 font-mono text-[11px]">{d.rule_id}</code>).
                   </span>
                 </div>
               </div>
