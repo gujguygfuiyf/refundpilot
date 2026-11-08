@@ -79,8 +79,9 @@ def _background_loop(stop: threading.Event) -> None:
 def _refresh_captures_once() -> None:
     db = SessionLocal()
     try:
-        n = refresh_captures(db, get_paypal())
-        log.info("capture status refreshed in the background (%d newly refunded elsewhere)", n)
+        from .seed import reconcile_orders_and_ledger
+        calib = reconcile_orders_and_ledger(db, get_paypal())
+        log.info("orders and ledger calibrated in the background: %s", calib)
         if settings.disputes_enabled:
             svc = ClaimService(db, get_paypal(), get_assessor(), settings.default_policy_version)
             d_synced = svc.sync_disputes()

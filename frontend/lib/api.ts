@@ -50,11 +50,6 @@ export const api = {
   health: () => request<{ ok: boolean; paypal: string; assessor: string; disputes_enabled?: boolean }>("/health"),
   orders: () => request<Order[]>("/orders"),
   claim: (id: string) => request<Claim>(`/claims/${id}`),
-  resetDemo: () =>
-    request<{ status: string; cancelled_claims: number; reset_orders: number; refreshed_delivery_dates: number }>(
-      "/claims/reset-demo",
-      { method: "POST" },
-    ),
   createClaim: (orderId: number, text: string, photos: Blob[]) => {
     const fd = new FormData();
     fd.set("order_id", String(orderId));

@@ -6,11 +6,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .config import settings
-from .models import Claim, Order, Policy, Product
+from .models import Claim, Order, Policy, Product, Refund
 from .policy import load_policy_files, policy_sha
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "seed"
@@ -150,10 +150,86 @@ def refresh_demo_delivery(db: Session, now: datetime | None = None) -> int:
     return n
 
 
+def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
+    """Calibrate orders and refund ledger:
+    1. Restore any claims that have COMPLETED refunds back to COMPLETED status if they were mistakenly marked CANCELLED.
+    2. Ensure every order's refunded_cents is at least the sum of all known COMPLETED refunds on that order and the seed baseline.
+    3. Restore original delivered_at from seed/orders.json for orders with refunds or claims so historical audit traces remain reproducible.
+    4. Query live PayPal captures (if paypal gateway provided) to capture any external refunds in PayPal Sandbox."""
+    claims_restored = 0
+    cancelled_with_refunds = (
+        db.execute(
+            select(Claim)
+            .join(Refund, Claim.id == Refund.claim_id)
+            .where(Refund.status == "COMPLETED", Claim.status == "CANCELLED")
+        )
+        .scalars()
+        .all()
+    )
+    for c in cancelled_with_refunds:
+        c.status = "COMPLETED"
+        claims_restored += 1
+
+    seed_map: dict[str, dict] = {}
+    orders_json_path = SEED_DIR / "orders.json"
+    if orders_json_path.exists():
+        try:
+            for item in json.loads(orders_json_path.read_text(encoding="utf-8")):
+                seed_map[item["capture_id"]] = item
+        except Exception as e:
+            log.warning("could not read seed orders.json: %s", e)
+
+    orders_calibrated = 0
+    orders = db.execute(select(Order)).scalars().all()
+    for o in orders:
+        orig_refunded = o.refunded_cents
+        orig_delivered = o.delivered_at
+
+        completed_cents = db.execute(
+            select(func.coalesce(func.sum(Refund.amount_cents), 0))
+            .where(Refund.capture_id == o.capture_id, Refund.status == "COMPLETED")
+        ).scalar_one()
+
+        seed_entry = seed_map.get(o.capture_id)
+        seed_refunded = seed_entry.get("refunded_cents", 0) if seed_entry else 0
+
+        target_refunded = max(o.refunded_cents, completed_cents, seed_refunded)
+        if target_refunded != o.refunded_cents:
+            o.refunded_cents = target_refunded
+
+        has_history = o.refunded_cents > 0 or db.execute(
+            select(Claim).where(Claim.order_id == o.id, Claim.status != "CANCELLED")
+        ).first() is not None
+
+        if seed_entry and has_history:
+            captured_iso = seed_entry.get("captured_at") or o.captured_at
+            delivered_iso = seed_entry.get("delivered_at") or (
+                datetime.fromisoformat(captured_iso) + timedelta(days=settings.delivered_offset_days)
+            ).isoformat(timespec="seconds")
+            o.delivered_at = delivered_iso
+            o.captured_at = captured_iso
+
+        if o.refunded_cents != orig_refunded or o.delivered_at != orig_delivered:
+            orders_calibrated += 1
+
+    db.commit()
+
+    paypal_refreshed = 0
+    if paypal is not None:
+        paypal_refreshed = refresh_captures(db, paypal)
+
+    return {
+        "claims_restored": claims_restored,
+        "orders_calibrated": orders_calibrated,
+        "paypal_captures_refreshed": paypal_refreshed,
+    }
+
+
 def seed_all(db: Session, paypal=None, refresh: bool = True) -> dict:
     """refresh=False skips the per-order PayPal status check (the API's startup does it in the background)."""
     out = {"policies": seed_policies(db), "products": seed_products(db),
            "orders": seed_orders(db, paypal=paypal if refresh else None)}
     out["demo_orders"] = seed_demo_orders(db, paypal)
+    out["ledger_calibrated"] = reconcile_orders_and_ledger(db, paypal=paypal if refresh else None)
     out["delivery_refreshed"] = refresh_demo_delivery(db)
     return out

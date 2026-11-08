@@ -141,6 +141,10 @@ function Simulator() {
   const [batchError, setBatchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
+  // Illustrative Cost Scenario assumptions
+  const [assumedReviewCost, setAssumedReviewCost] = useState<number>(3.5);
+  const [assumedDisputeCost, setAssumedDisputeCost] = useState<number>(15.0);
+
   const loadClaim = useCallback(async (id: string) => {
     try {
       setSelectedClaimId(id);
@@ -308,6 +312,9 @@ function Simulator() {
   const batchSummary = useMemo(() => {
     if (!batchComplete) return [];
     const basePolicyVer = policies[0]?.version;
+    const reviewCents = Math.round(assumedReviewCost * 100);
+    const disputeCents = Math.round(assumedDisputeCost * 100);
+
     const items = policies.map((p) => {
       let totalSuggested = 0;
       let reviewOrEvidenceCount = 0;
@@ -329,8 +336,8 @@ function Simulator() {
           changedVsFirst += 1;
         }
       }
-      const manualOpsCents = reviewOrEvidenceCount * 350; // $3.50 per manual review
-      const disputeRiskCents = rejectCount * 1500; // $15.00 dispute escalation / chargeback fee risk
+      const manualOpsCents = reviewOrEvidenceCount * reviewCents;
+      const disputeRiskCents = rejectCount * disputeCents;
       const totalEffectiveCents = totalSuggested + manualOpsCents + disputeRiskCents;
 
       return {
@@ -351,7 +358,7 @@ function Simulator() {
       ...i,
       isLowestCost: i.totalEffectiveCents === minEffective,
     }));
-  }, [batchComplete, policies, batchCases, batchMatrix]);
+  }, [batchComplete, policies, batchCases, batchMatrix, assumedReviewCost, assumedDisputeCost]);
 
   const set = <K extends keyof EvidenceAssessment>(k: K, v: EvidenceAssessment[K]) => setA((x) => ({ ...x, [k]: v }));
 
@@ -525,6 +532,46 @@ function Simulator() {
               </Badge>
             </div>
 
+            {/* Illustrative Cost Scenario Controls */}
+            <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3.5 shadow-2xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-semibold tracking-wider text-gray-800 uppercase">
+                    Illustrative Cost Scenario (Configurable Assumptions)
+                  </h3>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Model sensitivity across policies by adjusting assumed operational review and dispute escalation weights:
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-4 text-xs">
+                  <label className="flex items-center gap-2">
+                    <span className="text-gray-600">Assumed review handling cost ($/case):</span>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="0"
+                      max="100"
+                      value={assumedReviewCost}
+                      onChange={(e) => setAssumedReviewCost(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-20 rounded-md border border-gray-300 px-2 py-1 text-right text-xs font-medium text-gray-900 focus:border-brand focus:outline-none"
+                    />
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <span className="text-gray-600">Assumed dispute/escalation cost ($/rejected claim):</span>
+                    <input
+                      type="number"
+                      step="1.00"
+                      min="0"
+                      max="200"
+                      value={assumedDisputeCost}
+                      onChange={(e) => setAssumedDisputeCost(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-20 rounded-md border border-gray-300 px-2 py-1 text-right text-xs font-medium text-gray-900 focus:border-brand focus:outline-none"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <div className="mb-5 grid gap-4 sm:grid-cols-3">
               {batchSummary.map(
                 (
@@ -555,7 +602,7 @@ function Simulator() {
                         <span className="font-semibold text-gray-900">{p.name}</span>
                         {isLowestCost && (
                           <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800">
-                            ★ Lowest Total Cost
+                            Lowest Est. Cost Under Current Assumptions
                           </span>
                         )}
                       </div>
@@ -580,10 +627,10 @@ function Simulator() {
                       </div>
                     </div>
 
-                    {/* CFO Net Merchant Impact breakdown */}
+                    {/* Illustrative Cost Scenario Breakdown */}
                     <div className="mt-3 space-y-1 rounded-lg border border-gray-200/80 bg-white/90 p-2.5 text-xs">
                       <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-gray-500">
-                        <span>CFO Net Merchant Cost</span>
+                        <span>Illustrative Est. Total Cost</span>
                         <span className="text-xs font-bold text-gray-900">{money(totalEffectiveCents)}</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-gray-600">
@@ -591,11 +638,15 @@ function Simulator() {
                         <span>{money(totalSuggested)}</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-gray-600">
-                        <span>• Ops labor ({reviewOrEvidenceCount} rev @ $3.50):</span>
+                        <span>
+                          • Assumed ops handling ({reviewOrEvidenceCount} rev @ ${assumedReviewCost.toFixed(2)}):
+                        </span>
                         <span className="text-amber-700">+{money(manualOpsCents)}</span>
                       </div>
                       <div className="flex justify-between text-[11px] text-gray-600">
-                        <span>• Dispute risk ({rejectCount} rej @ $15.00):</span>
+                        <span>
+                          • Assumed dispute risk ({rejectCount} rej @ ${assumedDisputeCost.toFixed(2)}):
+                        </span>
                         <span className={rejectCount > 0 ? "font-medium text-red-700" : "text-gray-400"}>
                           +{money(disputeRiskCents)}
                         </span>
@@ -612,10 +663,10 @@ function Simulator() {
               )}
             </div>
 
-            <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-blue-50/70 p-3 text-xs text-blue-900 ring-1 ring-blue-100">
-              <span className="text-sm leading-none">💡</span>
+            <div className="mb-4 flex items-start gap-2.5 rounded-lg bg-gray-50 p-3 text-xs text-gray-700 ring-1 ring-gray-200">
+              <span className="text-sm leading-none">ℹ</span>
               <div>
-                <span className="font-semibold">CFO Net Merchant Impact Model:</span> Effective cost combines direct refund payouts + manual agent review labor ($3.50/case) + dispute escalation chargeback risk ($15.00/rejected claim). This models why ultra-strict rejection policies often generate hidden net losses through PayPal dispute fees and customer churn.
+                <span className="font-semibold">Illustrative Cost Scenario:</span> Illustrative scenario combining suggested refund payouts with assumed review handling and rejection escalation weights. Adjust the assumptions above to explore sensitivity across store policies.
               </div>
             </div>
 

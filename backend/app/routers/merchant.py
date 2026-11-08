@@ -260,10 +260,12 @@ def reset_dispute_accept(dispute_id: str, body: DisputeResetIn | None = None,
 
 
 @router.post("/reconcile")
-def reconcile(svc: ClaimService = Depends(get_service)) -> dict:
+def reconcile(svc: ClaimService = Depends(get_service), db: Session = Depends(get_db)) -> dict:
     touched = svc.reconcile()
     synced = svc.sync_disputes() if settings.disputes_enabled else 0
-    return {"touched": touched, "disputes_synced": synced}
+    from ..seed import reconcile_orders_and_ledger
+    ledger = reconcile_orders_and_ledger(db, paypal=svc.paypal)
+    return {"touched": touched, "disputes_synced": synced, "ledger": ledger}
 
 
 @router.get("/stats", response_model=StatsOut)

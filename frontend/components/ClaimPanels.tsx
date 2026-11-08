@@ -231,42 +231,41 @@ export function DecisionCard({ claim }: { claim: Claim }) {
         <p className="text-sm text-gray-500">Waiting for the evidence assessment.</p>
       ) : (
         <div className="space-y-3 text-sm">
-          {/* Task 1: Security Boundary Callout */}
+          {/* Task 1: Untrusted Input Notice */}
           {injection.isInjection && (
-            <div className="rounded-xl border-2 border-red-300 bg-gradient-to-br from-red-50/90 via-amber-50/60 to-white p-4 shadow-2xs">
+            <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-4 shadow-2xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                    🛡
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white">
+                    !
                   </span>
-                  <h3 className="text-xs font-bold tracking-wider text-red-950 uppercase">
-                    Security Boundary Callout · Adversarial Injection Defended
+                  <h3 className="text-xs font-bold tracking-wider text-amber-950 uppercase">
+                    UNTRUSTED INPUT NOTICE · SCHEMA &amp; POLICY SEPARATION
                   </h3>
                 </div>
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800 ring-1 ring-red-300 ring-inset">
-                  Prompt Injection Neutralized
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-300 ring-inset">
+                  Override Phrase Flagged in Note
                 </span>
               </div>
               <div className="mt-2.5 space-y-2 text-xs">
-                <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-red-200">
-                  <span className="font-semibold text-red-900">1. Untrusted Buyer Input: </span>
+                <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-amber-200">
+                  <span className="font-semibold text-amber-900">1. Buyer Note (Untrusted Text): </span>
                   <span>
-                    Detected override attempt in buyer note ({injection.snippet ? `"${injection.snippet}"` : `"approve $500"`}) — treated strictly as untrusted unstructured text.
+                    Override-style phrasing detected in buyer description ({injection.snippet ? `"${injection.snippet}"` : `"system override"`} / &ldquo;$500&rdquo;). Buyer text is passed as untrusted context.
                   </span>
                 </div>
                 <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-blue-200">
                   <span className="font-semibold text-blue-900">
-                    2. AI Assessment Schema (<code>EvidenceAssessment</code>):{" "}
+                    2. AI Output Schema (<code>EvidenceAssessment</code>):{" "}
                   </span>
                   <span>
-                    <strong className="font-bold text-blue-900">0 monetary fields</strong> — structurally incapable of outputting, parsing, or overriding refund dollar amounts.
+                    Contains <strong className="font-bold text-blue-900">0 monetary fields</strong>—the model returns structured visual observations and uncertainty flags rather than setting a dollar payout directly (though model classification accuracy still affects rule matching).
                   </span>
                 </div>
                 <div className="rounded-lg bg-white/80 p-2.5 leading-relaxed text-gray-800 ring-1 ring-emerald-200">
-                  <span className="font-semibold text-emerald-900">3. Deterministic Policy Output: </span>
+                  <span className="font-semibold text-emerald-900">3. Policy &amp; Human Gate: </span>
                   <span>
-                    <strong className="font-bold text-emerald-900">{money(d.suggested_cents, currency)}</strong> (Strictly bounded by remaining order balance &amp; matched rule{" "}
-                    <code className="rounded bg-emerald-100 px-1 font-mono text-[11px]">{d.rule_id}</code>).
+                    Versioned policy rules (<code className="rounded bg-gray-100 px-1 font-mono text-[11px]">{d.policy_version}</code> · <code className="rounded bg-emerald-100 px-1 font-mono text-[11px]">{d.rule_id}</code>) compute the suggested amount (<strong className="font-bold text-emerald-900">{money(d.suggested_cents, currency)}</strong>) within the order&apos;s remaining refundable balance, and a merchant must explicitly approve any PayPal payout.
                   </span>
                 </div>
               </div>
@@ -467,11 +466,10 @@ export function Timeline({ claim }: { claim: Claim }) {
           <button
             type="button"
             onClick={handleCopyHash}
-            title="Click to copy full SHA-256 tamper-evident digest"
-            className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-300 ring-inset hover:bg-emerald-100"
+            title="Click to copy full SHA-256 export checksum"
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 font-mono text-[11px] font-medium text-gray-700 ring-1 ring-gray-300 ring-inset hover:bg-gray-200"
           >
-            <span className="font-bold text-emerald-600">✓</span>
-            <span>{copiedHash ? "Copied SHA-256!" : `SHA-256: ${shortSha}`}</span>
+            <span>{copiedHash ? "Copied checksum!" : `SHA-256 export checksum: ${shortSha}`}</span>
           </button>
           <button
             type="button"
@@ -499,13 +497,15 @@ export function Timeline({ claim }: { claim: Claim }) {
     >
       {showJson && (
         <div className="mb-4 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-emerald-950 px-3 py-2 text-xs font-mono text-emerald-300">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-900 px-3 py-2 text-xs font-mono text-gray-300">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>Tamper-evident Digest:</span>
+              <span className="h-2 w-2 rounded-full bg-blue-400" />
+              <span>SHA-256 Checksum:</span>
               <strong className="text-white">{bundleSha}</strong>
             </span>
-            <span className="text-[11px] text-emerald-400">Canonical key order verified</span>
+            <span className="text-[11px] text-gray-400">
+              Canonical JSON (RFC 8785) export checksum for deterministic payload comparison.
+            </span>
           </div>
           <pre className="max-h-72 overflow-auto rounded-lg bg-gray-900 p-3 font-mono text-xs text-gray-100">
             {JSON.stringify(auditBundle, null, 2)}

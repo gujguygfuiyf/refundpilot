@@ -68,42 +68,6 @@ async def create_claim(background: BackgroundTasks, order_id: int = Form(...), b
     return claim_out(db, claim)
 
 
-CANONICAL_ORDERS = {1, 4, 5}
-
-
-@router.post("/reset-demo")
-def reset_demo(db: Session = Depends(get_db), paypal=Depends(get_paypal)) -> dict:
-    """Reset testing claims on demo orders (Orders 2, 3, etc.) so judges can repeatedly run all 4 presets.
-    Showcase recorded claims on Orders 1, 4, 5 are strictly preserved."""
-    demo_orders = db.execute(select(Order).where(Order.id.not_in(CANONICAL_ORDERS))).scalars().all()
-    demo_order_ids = [o.id for o in demo_orders]
-
-    claims_to_cancel = db.execute(
-        select(Claim).where(Claim.order_id.in_(demo_order_ids), Claim.status != "CANCELLED")
-    ).scalars().all()
-
-    for c in claims_to_cancel:
-        c.status = "CANCELLED"
-        c.resolution_note = "Demo reset by judge/user"
-
-    for o in demo_orders:
-        o.refunded_cents = 0
-        if hasattr(paypal, "captures") and o.capture_id in getattr(paypal, "captures", {}):
-            paypal.captures[o.capture_id]["refunded"] = 0
-
-    db.commit()
-
-    from ..seed import refresh_demo_delivery
-    refreshed = refresh_demo_delivery(db)
-
-    return {
-        "status": "ok",
-        "cancelled_claims": len(claims_to_cancel),
-        "reset_orders": len(demo_orders),
-        "refreshed_delivery_dates": refreshed,
-    }
-
-
 @router.get("/{claim_id}", response_model=ClaimOut)
 def get_claim(claim_id: str, svc: ClaimService = Depends(get_service), db: Session = Depends(get_db)) -> ClaimOut:
     try:
