@@ -82,7 +82,12 @@ export function EvidenceCard({ claim }: { claim: Claim }) {
 export function DecisionCard({ claim }: { claim: Claim }) {
   const d = claim.decision;
   const currency = claim.order.currency;
-  const rem = d?.decision_inputs?.remaining_cents ?? claim.order.remaining_cents;
+  const ownCompletedRefunds = (claim.refunds || [])
+    .filter((r) => r.status === "COMPLETED")
+    .reduce((acc, r) => acc + r.amount_cents, 0);
+  const rem =
+    d?.decision_inputs?.remaining_cents ??
+    Math.min(claim.order.amount_cents, claim.order.remaining_cents + ownCompletedRefunds);
   const days = d?.decision_inputs?.days_since_delivery;
   const prior = d?.decision_inputs?.prior_claims ?? 0;
 
