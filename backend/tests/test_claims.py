@@ -124,3 +124,36 @@ def test_redecide_under_other_policy(svc):
     c = svc.get_claim(c.id)
     assert c.policy_version == "goodwill-1.2" and c.latest_decision.suggested_cents == 950
     assert len(c.assessments) == 1                 # no new AI call
+
+
+def test_reconcile_preserves_delivered_at_and_policy_outcome(svc, db):
+    from datetime import datetime, timedelta, timezone
+    from app.models import Order
+    from app.seed import reconcile_orders_and_ledger
+
+    # 1. Select order and roll forward delivered_at to 2 days ago (within 14-day window)
+    order = db.get(Order, 1)
+    order.capture_id = "6MK00753UB8233300"
+    rolled_delivered = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(timespec="seconds")
+    order.delivered_at = rolled_delivered
+    db.commit()
+
+    # 2. Submit a broken item claim which matches R1-broken -> $19.00
+    c = submit(svc, order_id=1, text="handle broke on arrival")
+    assert c.latest_decision.outcome == "FULL_REFUND"
+    assert c.latest_decision.suggested_cents == 1900
+    assert c.latest_decision.rule_id == "R1-broken"
+
+    # 3. Execute reconcile_orders_and_ledger
+    reconcile_orders_and_ledger(db)
+
+    # 4. Assert that delivered_at is completely preserved as-is
+    db.refresh(order)
+    assert order.delivered_at == rolled_delivered
+
+    # 5. Assert re-decision keeps the exact same rule and outcome without degrading to PRE-window ($0.00)
+    svc.redecide(c.id, "standard-1.2")
+    c_after = svc.get_claim(c.id)
+    assert c_after.latest_decision.rule_id == "R1-broken"
+    assert c_after.latest_decision.outcome == "FULL_REFUND"
+    assert c_after.latest_decision.suggested_cents == 1900

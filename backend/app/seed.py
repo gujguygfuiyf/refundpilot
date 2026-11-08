@@ -154,8 +154,8 @@ def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
     """Calibrate orders and refund ledger:
     1. Restore any claims that have COMPLETED refunds back to COMPLETED status if they were mistakenly marked CANCELLED.
     2. Ensure every order's refunded_cents is at least the sum of all known COMPLETED refunds on that order and the seed baseline.
-    3. Restore original delivered_at from seed/orders.json for orders with refunds or claims so historical audit traces remain reproducible.
-    4. Query live PayPal captures (if paypal gateway provided) to capture any external refunds in PayPal Sandbox."""
+    3. Strictly preserve each order's existing delivered_at so demo report-window policy evaluations remain consistent.
+    4. When remote PayPal capture is marked REFUNDED, synchronizes full refund status (does not infer partial external refunds)."""
     claims_restored = 0
     cancelled_with_refunds = (
         db.execute(
@@ -183,7 +183,6 @@ def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
     orders = db.execute(select(Order)).scalars().all()
     for o in orders:
         orig_refunded = o.refunded_cents
-        orig_delivered = o.delivered_at
 
         completed_cents = db.execute(
             select(func.coalesce(func.sum(Refund.amount_cents), 0))
@@ -196,20 +195,6 @@ def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
         target_refunded = max(o.refunded_cents, completed_cents, seed_refunded)
         if target_refunded != o.refunded_cents:
             o.refunded_cents = target_refunded
-
-        has_history = o.refunded_cents > 0 or db.execute(
-            select(Claim).where(Claim.order_id == o.id, Claim.status != "CANCELLED")
-        ).first() is not None
-
-        if seed_entry and has_history:
-            captured_iso = seed_entry.get("captured_at") or o.captured_at
-            delivered_iso = seed_entry.get("delivered_at") or (
-                datetime.fromisoformat(captured_iso) + timedelta(days=settings.delivered_offset_days)
-            ).isoformat(timespec="seconds")
-            o.delivered_at = delivered_iso
-            o.captured_at = captured_iso
-
-        if o.refunded_cents != orig_refunded or o.delivered_at != orig_delivered:
             orders_calibrated += 1
 
     db.commit()
@@ -229,6 +214,7 @@ def reconcile_orders_and_ledger(db: Session, paypal=None) -> dict:
             except Exception:
                 continue
             row.capture_status = live.get("status", row.capture_status)
+            # Only synchronizes when remote capture is explicitly marked REFUNDED (full refund)
             if row.capture_status == "REFUNDED" and row.refunded_cents < row.amount_cents:
                 row.refunded_cents = row.amount_cents
                 paypal_refreshed += 1
