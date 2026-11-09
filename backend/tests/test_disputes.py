@@ -464,3 +464,40 @@ def test_missing_links_or_allowed_response_options_fetches_detail_and_fails_clos
     assert svc.dispute_capabilities(disp_no_opts.raw, status_override=disp_no_opts.status) == (False, True, [])
     with pytest.raises(Conflict, match="accept-claim"):
         svc.accept_dispute("PP-D-NO-OPTS", override_cents=1000)
+
+
+def test_snake_case_hateoas_rels_are_accepted(svc, paypal):
+    """PayPal's docs name dispute actions after their endpoints (accept-claim) while link rels may use underscores
+    (accept_claim). Both spellings must enable the action; otherwise real sandbox disputes would always fail closed."""
+    claim = submit(svc, order_id=1)                       # broken mug -> policy suggests the full $19.00
+    payload = paypal.open_dispute("CAP1", dispute_id="PP-D-SNAKE-1")
+    for link in payload["links"]:
+        link["rel"] = link["rel"].replace("-", "_")       # self, accept_claim, provide_evidence
+    svc.sync_disputes()
+
+    disp = svc.get_dispute("PP-D-SNAKE-1")
+    assert svc.dispute_capabilities(disp.raw, status_override=disp.status) == (True, True, ["REFUND", "PARTIAL_REFUND"])
+    r = svc.accept_dispute("PP-D-SNAKE-1")
+    assert r.status == "COMPLETED" and r.amount_cents == 1900
+    assert svc.get_claim(claim.id).order.refunded_cents == 1900
+
+    submit(svc, order_id=2)
+    payload2 = paypal.open_dispute("CAP2", dispute_id="PP-D-SNAKE-2")
+    for link in payload2["links"]:
+        link["rel"] = link["rel"].replace("-", "_")
+    svc.sync_disputes()
+    assert svc.submit_dispute_evidence("PP-D-SNAKE-2").status == "UNDER_REVIEW"
+
+
+def test_blocked_dispute_action_names_what_paypal_offers(svc, paypal):
+    submit(svc, order_id=1)
+    payload = paypal.open_dispute("CAP1", dispute_id="PP-D-INQUIRY")
+    payload["links"] = [{"rel": "self", "href": "/v1/customer/disputes/PP-D-INQUIRY", "method": "GET"},
+                        {"rel": "send_message", "href": "/v1/customer/disputes/PP-D-INQUIRY/send-message", "method": "POST"},
+                        {"rel": "make_offer", "href": "/v1/customer/disputes/PP-D-INQUIRY/make-offer", "method": "POST"}]
+    svc.sync_disputes()
+    with pytest.raises(Conflict, match="PayPal offers: send-message, make-offer"):
+        svc.accept_dispute("PP-D-INQUIRY", override_cents=1900)
+    with pytest.raises(Conflict, match="PayPal offers: send-message, make-offer"):
+        svc.submit_dispute_evidence("PP-D-INQUIRY")
+    assert not [c for c in paypal.calls if c[0] in ("accept_claim", "provide_evidence")]
