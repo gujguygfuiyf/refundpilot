@@ -37,6 +37,24 @@ def fmt_amount(cents: int) -> str:
     return f"{cents // 100}.{cents % 100:02d}"
 
 
+def link_actions(payload: dict | None) -> list[str] | None:
+    """HATEOAS action names on a PayPal resource, spelled like the endpoint path ("accept-claim").
+
+    PayPal's docs name dispute actions after their endpoints (`accept-claim`, `provide-evidence`) while link `rel`
+    values may use underscores (`accept_claim`), so both spellings are normalised to the hyphenated form.
+    Returns None when the payload has no `links` list at all (callers fail closed on that)."""
+    links = (payload or {}).get("links")
+    if not isinstance(links, list):
+        return None
+    out: list[str] = []
+    for lk in links:
+        if isinstance(lk, dict):
+            name = str(lk.get("rel") or "").strip().lower().replace("_", "-")
+            if name and name not in out:
+                out.append(name)
+    return out
+
+
 class PayPalClient:
     def __init__(self, client_id: str, secret: str, base_url: str = "https://api-m.sandbox.paypal.com"):
         self._http = httpx.Client(base_url=base_url, timeout=httpx.Timeout(30.0, connect=10.0))
@@ -276,8 +294,7 @@ class FakePayPal:
         d = self.get_dispute(dispute_id)
         if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
-        links = d.get("links") or []
-        if not any((lk.get("rel") or "") == "accept-claim" for lk in links):
+        if "accept-claim" not in (link_actions(d) or []):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACTION_NOT_ALLOWED"}]}')
         claim_type = "PARTIAL_REFUND" if cents < dispute_amount_cents else "REFUND"
         allowed_types = ((d.get("allowed_response_options") or {}).get("accept_claim") or {}).get("accept_claim_types")
@@ -335,8 +352,7 @@ class FakePayPal:
         d = self.get_dispute(dispute_id)
         if d.get("status") not in ("WAITING_FOR_SELLER_RESPONSE", "OPEN"):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"INVALID_DISPUTE_STATUS"}]}')
-        links = d.get("links") or []
-        if not any((lk.get("rel") or "") == "provide-evidence" for lk in links):
+        if "provide-evidence" not in (link_actions(d) or []):
             raise PayPalError(422, '{"name":"UNPROCESSABLE_ENTITY","details":[{"issue":"ACTION_NOT_ALLOWED"}]}')
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         d["status"] = "UNDER_REVIEW"

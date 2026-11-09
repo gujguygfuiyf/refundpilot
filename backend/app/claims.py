@@ -14,7 +14,7 @@ from .audit import audit
 from .config import settings
 from .models import (APPROVABLE_STATES, OPEN_STATES, TERMINAL_STATES, AIAssessment, AuditLog, Claim, Decision, Dispute,
                      Order, Photo, Policy, Refund, now_iso)
-from .paypal import PayPalError, PayPalGateway, fmt_amount
+from .paypal import PayPalError, PayPalGateway, fmt_amount, link_actions
 from .policy import decide, status_for
 
 
@@ -451,14 +451,19 @@ class ClaimService:
     @staticmethod
     def _has_complete_dispute_capabilities(payload: dict | None) -> bool:
         raw = payload or {}
-        if not isinstance(raw.get("links"), list):
+        rels = link_actions(raw)
+        if rels is None:
             return False
-        rels = {(lk.get("rel") or "").strip() for lk in raw["links"] if isinstance(lk, dict)}
         if "accept-claim" in rels:
             allowed_opts = ((raw.get("allowed_response_options") or {}).get("accept_claim") or {}).get("accept_claim_types")
             if not isinstance(allowed_opts, list):
                 return False
         return True
+
+    @staticmethod
+    def _offered_actions(payload: dict | None) -> str:
+        """For error messages: the actions PayPal currently lists on the dispute, e.g. "send-message, make-offer"."""
+        return ", ".join(a for a in (link_actions(payload) or []) if a != "self") or "none"
 
     def refresh_dispute_capabilities_if_needed(self, dispute: Dispute) -> None:
         """If stored dispute JSON lacks HATEOAS links or allowed_response_options, fetch full dispute detail from PayPal."""
@@ -484,14 +489,9 @@ class ClaimService:
         raw = payload or {}
         status = status_override if status_override is not None else (raw.get("status") or "")
         actionable = status in DISPUTE_ACTIONABLE_STATUSES
-        links = raw.get("links")
-        if isinstance(links, list):
-            rels = {(lk.get("rel") or "").strip() for lk in links if isinstance(lk, dict)}
-            has_accept_link = "accept-claim" in rels
-            has_evidence_link = "provide-evidence" in rels
-        else:
-            has_accept_link = False
-            has_evidence_link = False
+        rels = link_actions(raw) or []           # "accept_claim" and "accept-claim" both count
+        has_accept_link = "accept-claim" in rels
+        has_evidence_link = "provide-evidence" in rels
 
         allowed_opts = ((raw.get("allowed_response_options") or {}).get("accept_claim") or {}).get("accept_claim_types")
         if isinstance(allowed_opts, list):
@@ -745,7 +745,8 @@ class ClaimService:
         self.refresh_dispute_capabilities_if_needed(dispute)
         can_accept, _, allowed_types = self.dispute_capabilities(dispute.raw, status_override=dispute.status)
         if not can_accept:
-            raise Conflict("PayPal does not allow accept-claim on this dispute (missing accept-claim link or allowed_response_options)")
+            raise Conflict("PayPal does not allow accept-claim on this dispute (missing accept-claim link or "
+                           f"allowed_response_options; PayPal offers: {self._offered_actions(dispute.raw)})")
 
         claim = dispute.claim or self.latest_claim_for_order(order.id)
         if claim is None:
@@ -976,7 +977,8 @@ class ClaimService:
         self.refresh_dispute_capabilities_if_needed(dispute)
         _, can_evidence, _ = self.dispute_capabilities(dispute.raw, status_override=dispute.status)
         if not can_evidence:
-            raise Conflict("PayPal does not allow provide-evidence on this dispute (missing provide-evidence action link)")
+            raise Conflict("PayPal does not allow provide-evidence on this dispute (missing provide-evidence action "
+                           f"link; PayPal offers: {self._offered_actions(dispute.raw)})")
 
         pkg = self.build_dispute_evidence(dispute)
         final_notes = (notes.strip() if notes and notes.strip() else pkg["notes"])[:2000]

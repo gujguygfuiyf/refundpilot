@@ -163,6 +163,17 @@ export default function DisputeDrawer({
   const actionable = dispute ? ACTIONABLE_STATUSES.includes(dispute.status) : false;
   const canAcceptClaim = Boolean(dispute?.can_accept_claim) && allowedAcceptTypes.length > 0;
   const canProvideEvidence = Boolean(dispute?.can_provide_evidence);
+  // Actions PayPal lists on the dispute right now (HATEOAS links), shown when an action is unavailable.
+  const rawLinks = (dispute?.raw as { links?: Array<{ rel?: string }> } | undefined)?.links;
+  const paypalActions = Array.isArray(rawLinks)
+    ? rawLinks.map((l) => String(l?.rel ?? "")).filter((rel) => rel && rel !== "self")
+    : [];
+  const offeredNote =
+    paypalActions.length > 0 ? (
+      <>
+        {" "}Actions PayPal offers now: <code>{paypalActions.join(", ")}</code>.
+      </>
+    ) : null;
   const hasUnknownAccept = Boolean(
     dispute?.claim?.refunds?.some(
       (r) => r.status === "UNKNOWN" && r.paypal_request_id.startsWith("rp-dispute-accept-"),
@@ -312,6 +323,7 @@ export default function DisputeDrawer({
                     {!canAcceptClaim ? (
                       <p className="text-xs text-amber-800">
                         PayPal does not currently expose an <code>accept-claim</code> action link for this dispute.
+                        {offeredNote}
                       </p>
                     ) : (
                       <>
@@ -386,6 +398,7 @@ export default function DisputeDrawer({
                     {!canProvideEvidence ? (
                       <p className="text-xs text-amber-800">
                         PayPal does not currently expose a <code>provide-evidence</code> action link for this dispute.
+                        {offeredNote}
                       </p>
                     ) : (
                       <>
