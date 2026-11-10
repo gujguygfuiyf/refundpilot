@@ -514,7 +514,10 @@ class ClaimService:
         # Summary items from GET /v1/customer/disputes may omit disputed_transactions, links, or allowed_response_options;
         # fetch full detail if needed.
         txs = payload.get("disputed_transactions") or []
-        if not txs or not self._has_complete_dispute_capabilities(payload):
+        if (
+            not any(tx.get("seller_transaction_id") for tx in txs)
+            or not self._has_complete_dispute_capabilities(payload)
+        ):
             try:
                 full = self.paypal.get_dispute(did)
                 if full and full.get("dispute_id"):

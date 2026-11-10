@@ -501,3 +501,21 @@ def test_blocked_dispute_action_names_what_paypal_offers(svc, paypal):
     with pytest.raises(Conflict, match="PayPal offers: send-message, make-offer"):
         svc.submit_dispute_evidence("PP-D-INQUIRY")
     assert not [c for c in paypal.calls if c[0] in ("accept_claim", "provide_evidence")]
+
+
+def test_dispute_summary_without_seller_transaction_fetches_detail(svc, paypal):
+    full = paypal.open_dispute("CAP1", dispute_id="PP-D-SELF-ONLY")
+    full["status"] = "WAITING_FOR_SELLER_RESPONSE"
+    for link in full["links"]:
+        link["rel"] = link["rel"].replace("-", "_")
+    summary = {
+        **full,
+        "disputed_transactions": [{"buyer_transaction_id": "BUYER-TX"}],
+        "links": [{"rel": "self"}],
+    }
+
+    dispute = svc.upsert_dispute_from_paypal(summary, source="poll")
+
+    assert dispute.order_id == 1
+    can_accept, can_evidence, _ = svc.dispute_capabilities(dispute.raw)
+    assert can_accept and can_evidence
