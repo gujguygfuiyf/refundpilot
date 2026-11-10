@@ -18,6 +18,10 @@ from PIL import Image
 from pydantic import BaseModel, Field, ValidationError
 
 MAX_EDGE = 1568
+GEMINI_TIMEOUT_MS = 60_000
+# A model call that fails with one of these is worth repeating: rate limit, overload, gateway error, timeout.
+TRANSIENT_HTTP = frozenset({408, 429, 500, 502, 503, 504})
+RETRY_DELAYS_S = (1.5, 4.0)          # pause after the first and the second failed attempt, then give up
 
 
 class EvidenceAssessment(BaseModel):
@@ -177,7 +181,9 @@ class GeminiAssessor:
         from google import genai
         from google.genai import types
         # Pin the API version: google-genai 3.x defaults to v1, where the "-latest" model aliases don't exist.
-        self.client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1beta"))
+        # The timeout is per request, in milliseconds: without one a stalled call would leave the claim "analyzing".
+        self.client = genai.Client(api_key=api_key, http_options=types.HttpOptions(api_version="v1beta",
+                                                                                   timeout=GEMINI_TIMEOUT_MS))
         self.model = model
 
     def assess(self, inp: AssessmentInput) -> AssessmentResult:
@@ -213,20 +219,47 @@ class GeminiAssessor:
 
 # ----------------------------------------------------------------- composition
 
+def is_transient(e: Exception) -> bool:
+    """True for failures that often clear on their own: HTTP 408/429/5xx from the provider (google-genai exposes
+    `code`, openai `status_code`), a timeout or a dropped connection. Bad keys and bad requests are not retried."""
+    for attr in ("code", "status_code"):
+        code = getattr(e, attr, None)
+        if isinstance(code, int):
+            return code in TRANSIENT_HTTP
+    if isinstance(e, (TimeoutError, ConnectionError)):
+        return True
+    name = type(e).__name__       # httpx / openai transport errors, without importing every client library here
+    return any(part in name for part in ("Timeout", "Connect", "Transport", "Protocol", "Network", "ReadError",
+                                         "WriteError"))
+
+
 class ChainAssessor:
-    """Try providers in order; a provider exception moves to the next; all failed -> fallback to human."""
+    """Try providers in order. A transient failure (see is_transient) is retried on the same provider after a short
+    pause; any other failure, or running out of retries, moves to the next provider; all failed -> fallback to a
+    human. One overloaded-model response must not turn a clear claim into "assessment unavailable"."""
     name = "chain"
 
-    def __init__(self, providers: list[Assessor]):
+    def __init__(self, providers: list[Assessor], retry_delays_s: tuple[float, ...] = RETRY_DELAYS_S,
+                 sleep=time.sleep):
         self.providers = providers
+        self.retry_delays_s = retry_delays_s
+        self.sleep = sleep
 
     def assess(self, inp: AssessmentInput) -> AssessmentResult:
+        log = logging.getLogger("refundpilot")
         errors = []
         for p in self.providers:
-            try:
-                return p.assess(inp)
-            except Exception as e:  # network, auth, quota: try the next provider
-                errors.append(f"{p.name}: {type(e).__name__}: {str(e)[:120]}")
+            for attempt in range(len(self.retry_delays_s) + 1):
+                try:
+                    return p.assess(inp)
+                except Exception as e:  # network, auth, quota
+                    last = f"{p.name}: {type(e).__name__}: {str(e)[:120]}"
+                    if attempt < len(self.retry_delays_s) and is_transient(e):
+                        log.warning("assessment attempt %d failed, retrying: %s", attempt + 1, last)
+                        self.sleep(self.retry_delays_s[attempt])
+                        continue
+                    errors.append(last if attempt == 0 else f"{last} (after {attempt + 1} attempts)")
+                    break               # try the next provider
         return AssessmentResult(assessment=fallback_assessment("assessment unavailable: " + "; ".join(errors)),
                                 provider="none", model="", refused=False)
 

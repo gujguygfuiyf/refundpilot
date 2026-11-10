@@ -19,6 +19,7 @@ const theme = themeQuartz.withParams({
   headerFontWeight: 600,
   rowHeight: 56,
   fontFamily: "inherit",
+  cellHorizontalPadding: 12,
 });
 
 function StatCard({ title, value, hint }: { title: string; value: string | number; hint?: string }) {
@@ -156,8 +157,8 @@ function Queue() {
       {
         headerName: "Item",
         field: "product_name",
-        flex: 2,
-        minWidth: 200,
+        flex: 1,
+        minWidth: 176,
         cellRenderer: (p: ICellRendererParams<ClaimRow>) =>
           p.data && (
             <div className="flex h-full items-center gap-3">
@@ -170,15 +171,16 @@ function Queue() {
             </div>
           ),
       },
+      // Fixed widths total 1040 px; with the Item column that fits the 1248 px page (xl breakpoint) without scrolling.
       { headerName: "Status", field: "status", width: 150, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <StatusBadge status={p.value} /> },
-      { headerName: "Damage", field: "damage_type", width: 120, valueFormatter: (p) => label(p.value), cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
-      { headerName: "Evidence", field: "evidence_quality", width: 120, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
-      { headerName: "Match", field: "product_match", width: 110, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
-      { headerName: "Outcome", field: "outcome", width: 140, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <OutcomeBadge outcome={p.value} /> },
-      { headerName: "Rule", field: "rule_id", width: 115 },
-      { headerName: "Suggested", field: "suggested_cents", width: 120, type: "rightAligned", valueFormatter: (p) => money(p.value) },
-      { headerName: "Order", field: "amount_cents", width: 100, type: "rightAligned", valueFormatter: (p) => money(p.value) },
-      { headerName: "Age", field: "created_at", width: 80, sort: "desc", valueFormatter: (p) => ago(p.value) },
+      { headerName: "Damage", field: "damage_type", width: 110, valueFormatter: (p) => label(p.value), cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
+      { headerName: "Evidence", field: "evidence_quality", width: 114, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
+      { headerName: "Match", field: "product_match", width: 98, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <FactChip value={p.value} /> },
+      { headerName: "Outcome", field: "outcome", width: 144, cellRenderer: (p: ICellRendererParams<ClaimRow>) => <OutcomeBadge outcome={p.value} /> },
+      { headerName: "Rule", field: "rule_id", width: 104 },
+      { headerName: "Suggested", field: "suggested_cents", width: 128, type: "rightAligned", valueFormatter: (p) => money(p.value) },
+      { headerName: "Order", field: "amount_cents", width: 96, type: "rightAligned", valueFormatter: (p) => money(p.value) },
+      { headerName: "Age", field: "created_at", width: 96, sort: "desc", valueFormatter: (p) => ago(p.value) },
     ],
     [],
   );
@@ -233,7 +235,8 @@ function Queue() {
   );
 
   return (
-    <div className="space-y-6">
+    // The queue is the one data-dense page: from the xl breakpoint it is 128 px wider than the reading-width pages.
+    <div className="space-y-6 xl:-mx-16">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">

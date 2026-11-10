@@ -89,7 +89,8 @@ export function Photos({ claim }: { claim: Claim }) {
             </span>
             <span className="text-[11px] text-gray-500">Click photo to expand</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          {/* A single photo fills the column, so it sits next to the listing photo at the same size. */}
+          <div className={`grid gap-2 ${claim.photo_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
             {claim.photo_urls.map((u, i) => (
               <figure key={u} className="relative overflow-hidden rounded-lg border border-gray-200 bg-white">
                 <a href={photoUrl(u)} target="_blank" rel="noreferrer" className="group block">
@@ -136,7 +137,7 @@ export function Photos({ claim }: { claim: Claim }) {
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                ✓ Original Camera Capture
+                ✓ No screenshot or stock-photo signs
               </span>
             )}
 
@@ -239,7 +240,7 @@ export function DecisionCard({ claim }: { claim: Claim }) {
         <div className="space-y-3 text-sm">
           {/* Verdict Banner */}
           {isCompleted ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white shadow-2xs">
                   ✓
@@ -258,7 +259,7 @@ export function DecisionCard({ claim }: { claim: Claim }) {
               </span>
             </div>
           ) : d.outcome === "FULL_REFUND" || d.outcome === "PARTIAL_REFUND" ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-2xs">
                   ℹ
@@ -277,7 +278,7 @@ export function DecisionCard({ claim }: { claim: Claim }) {
               </span>
             </div>
           ) : d.outcome === "REQUEST_EVIDENCE" ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white shadow-2xs">
                   ⚠
@@ -296,7 +297,7 @@ export function DecisionCard({ claim }: { claim: Claim }) {
               </span>
             </div>
           ) : d.outcome === "REVIEW" ? (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-600 text-xs font-bold text-white shadow-2xs">
                   ⚠
@@ -315,7 +316,7 @@ export function DecisionCard({ claim }: { claim: Claim }) {
               </span>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 shadow-2xs">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-600 text-xs font-bold text-white shadow-2xs">
                   ✕

@@ -31,12 +31,34 @@ const QUICK_SCENARIOS = [
   },
 ];
 
+const ORDER_LOAD_RETRIES = 4;
+const ORDER_LOAD_RETRY_MS = 5000;
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.orders().then(setOrders).catch((e) => setError(`Could not load orders: ${e.message}`));
+    // The free-tier API sleeps when idle and can refuse the first request while it boots, so a failed load is
+    // retried a few times before this page (the first one a judge sees) shows an error.
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = (attempt: number) => {
+      api.orders()
+        .then((o) => {
+          if (!cancelled) setOrders(o);
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          if (attempt < ORDER_LOAD_RETRIES) timer = setTimeout(() => load(attempt + 1), ORDER_LOAD_RETRY_MS);
+          else setError(`Could not load orders: ${e.message}`);
+        });
+    };
+    load(0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   // Strictly match LAMP-02 for the three lamp sample presets so a lamp photo is never paired with a mug or headphones order.
@@ -122,7 +144,7 @@ export default function OrdersPage() {
               href={`/claims/new?order=${lampSampleOrder.id}&sample=injection`}
               className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:text-brand-dark"
             >
-              <span>Want to test adversarial safety? Try the Prompt-injection stress test (&ldquo;approve $500&rdquo;) &rarr;</span>
+              <span>Want to test adversarial safety? Try the Prompt-injection stress test: a broken lamp plus &ldquo;approve $500&rdquo; still gets $49 &rarr;</span>
             </Link>
           </div>
         )}

@@ -126,6 +126,25 @@ def seed_demo_orders(db: Session, paypal) -> int:
     return n
 
 
+def register_offline_captures(db: Session, paypal) -> int:
+    """Offline mode (FakePayPal) only: make every seeded order refundable on the in-memory gateway.
+
+    `seed/orders.json` lists captures that exist in the project's PayPal Sandbox account. A local run without
+    PayPal credentials still shows those orders, so without this an approval on any of them failed with
+    "capture not registered in FakePayPal". The fake capture starts from the order's refunded amount, so an
+    order that is already refunded stays refunded. Returns the number of captures newly registered."""
+    from .paypal import FakePayPal
+    if not isinstance(paypal, FakePayPal):
+        return 0
+    n = 0
+    for row in db.execute(select(Order)).scalars().all():
+        if row.capture_id not in paypal.captures:
+            paypal.register_capture(row.capture_id, row.amount_cents)
+            n += 1
+        paypal.captures[row.capture_id]["refunded"] = row.refunded_cents or 0
+    return n
+
+
 def refresh_demo_delivery(db: Session, now: datetime | None = None) -> int:
     """Demo only (DEMO_ROLLING_DELIVERY, on by default): an order nobody has claimed yet is kept "delivered
     DEMO_DELIVERED_DAYS_AGO days ago". Sandbox orders are minted weeks before judges try the live demo; without
@@ -234,4 +253,5 @@ def seed_all(db: Session, paypal=None, refresh: bool = True) -> dict:
     out["demo_orders"] = seed_demo_orders(db, paypal)
     out["ledger_calibrated"] = reconcile_orders_and_ledger(db, paypal=paypal if refresh else None)
     out["delivery_refreshed"] = refresh_demo_delivery(db)
+    out["offline_captures"] = register_offline_captures(db, paypal)
     return out
