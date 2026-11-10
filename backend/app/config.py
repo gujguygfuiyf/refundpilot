@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     claims_per_ip_per_minute: int = 5
     ai_calls_per_day: int = 200
 
+    # Insights assistant: AG Studio's agent turns, answered by Gemini through this API (see app/assistant.py).
+    # Off without a key. ASSISTANT_API_KEY / ASSISTANT_MODEL default to the Gemini ones; a separate key keeps the
+    # assistant's usage apart from claim assessments. One question to the assistant takes several turns.
+    assistant_enabled: bool = True
+    assistant_api_key: str = ""
+    assistant_model: str = ""
+    assistant_turns_per_day: int = 300            # per UTC day, counted in the database (0 = no limit)
+    assistant_turns_per_ip_per_minute: int = 40   # sliding minute, in memory (0 = no limit)
+    assistant_max_output_tokens: int = 16384
+    assistant_thinking_level: str = ""            # empty = the model's default
+
     # Behaviour
     default_policy_version: str = "standard-1.2"
     disputes_enabled: bool = True

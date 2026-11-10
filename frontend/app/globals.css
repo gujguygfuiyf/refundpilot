@@ -10,3 +10,28 @@ body {
   background: #f6f7f9;
   color: #111827;
 }
+
+/* Tokens for the AG Studio dashboard (lib/insights/theme.ts). They point at the app's own palette. */
+:root {
+  --insights-font: var(--font-sans);
+  --insights-ink: #111827;
+  --insights-muted: #64748b;
+  --insights-surface: #ffffff;
+  --insights-canvas: #f6f7f9;
+  --insights-header: #f8fafc;
+  --insights-border: #e2e8f0;
+  --insights-gridline: #eef2f6;
+  --insights-highlight: #eff6ff;
+  --insights-brand: var(--color-brand);
+  --insights-brand-dark: var(--color-brand-dark);
+  --insights-chart-1: #0070e0;
+  --insights-chart-2: #94a3b8;
+  --insights-chart-3: #f59e0b;
+  --insights-chart-4: #e11d48;
+  --insights-chart-5: #7c3aed;
+  --insights-chart-6: #10b981;
+  --insights-chart-7: #003087;
+  --insights-chart-8: #0ea5e9;
+  --insights-chart-9: #f97316;
+  --insights-chart-10: #475569;
+}

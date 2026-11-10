@@ -32,6 +32,17 @@ policy's report window doesn't expire weeks after minting. `POST /claims` and `/
 `CLAIMS_PER_IP_PER_MINUTE` (5) and `AI_CALLS_PER_DAY` (200); a deployed API refuses to start with an empty or
 `change-me` `MERCHANT_TOKEN`.
 
+## Insights assistant
+
+The Insights page's AG Studio agents ask `POST /merchant/assistant/turn` for one model turn at a time
+(`app/assistant.py`). It is on when `ASSISTANT_ENABLED=true` (the default) and a Gemini key is set; `ASSISTANT_API_KEY`
+and `ASSISTANT_MODEL` override `GEMINI_API_KEY` and `GEMINI_MODEL`. Limits: `ASSISTANT_TURNS_PER_DAY` (300, counted
+in the database) and `ASSISTANT_TURNS_PER_IP_PER_MINUTE` (40). The tests use a scripted model; to try the real one:
+
+```bash
+python scripts/assistant_smoke.py      # runs the Studio-shaped requests in tests/fixtures, prints SMOKE: n/3
+```
+
 ## Tests
 
 ```bash
@@ -49,7 +60,8 @@ Buyer (anonymous): `GET /orders`, `POST /claims` (multipart: order_id, buyer_tex
 
 Merchant (`Authorization: Bearer $MERCHANT_TOKEN`): `GET /merchant/claims`, `GET /merchant/claims/{id}`,
 `POST /merchant/claims/{id}/approve` (`{"override_cents": n}` optional), `/request-evidence`, `/reject`, `/reassess`,
-`POST /merchant/reconcile`, `GET /merchant/stats`, `GET /policies`, `POST /policies/simulate`.
+`POST /merchant/reconcile`, `GET /merchant/stats`, `GET /policies`, `POST /policies/simulate`,
+`GET /merchant/assistant/status`, `POST /merchant/assistant/turn` (one AG Studio model turn, run on Gemini).
 
 Webhook: `POST /webhooks/paypal` (signature verified via PayPal when `PAYPAL_WEBHOOK_ID` is set).
 

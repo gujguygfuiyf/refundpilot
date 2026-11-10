@@ -30,6 +30,9 @@ services:
         value: "true"
       # Added later in the dashboard: PAYPAL_WEBHOOK_ID (after registering the webhook), and optionally
       # OPENAI_API_KEY + OPENAI_MODEL for an OpenAI backup.
+      # The Insights assistant is on whenever GEMINI_API_KEY is set. Its switches are left to the dashboard on
+      # purpose, so a Blueprint sync never turns it back on: ASSISTANT_ENABLED=false (off), ASSISTANT_TURNS_PER_DAY
+      # (default 300), ASSISTANT_API_KEY (its own Gemini key, so it can't use up the quota of claim assessments).
       - key: MERCHANT_TOKEN          # random; the web service copies it so judges skip sign-in
         generateValue: true
       - key: DEV_TOKEN               # random and private; only for POST /dev/seed
@@ -56,3 +59,5 @@ services:
           type: web
           name: refundpilot-api
           envVarKey: MERCHANT_TOKEN
+      - key: NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY # AG Studio's licence key, set in the dashboard; read at build time
+        sync: false

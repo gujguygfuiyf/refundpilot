@@ -8,12 +8,13 @@ from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from .ai import Assessor, build_assessor
+from .assistant import TurnModel, build_turn_model
 from .claims import ClaimService
 from .config import settings
 from .db import get_db
 from .paypal import FakePayPal, PayPalClient, PayPalGateway
 
-# Tests override these two via app.dependency_overrides.
+# Tests override these via app.dependency_overrides.
 
 @lru_cache(maxsize=1)
 def get_paypal() -> PayPalGateway:
@@ -25,6 +26,11 @@ def get_paypal() -> PayPalGateway:
 @lru_cache(maxsize=1)
 def get_assessor() -> Assessor:
     return build_assessor(settings)
+
+
+@lru_cache(maxsize=1)
+def get_turn_model() -> TurnModel | None:
+    return build_turn_model(settings)
 
 
 def get_service(db: Session = Depends(get_db), paypal: PayPalGateway = Depends(get_paypal),

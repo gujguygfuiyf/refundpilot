@@ -14,7 +14,7 @@ from .config import settings
 from .db import Base, SessionLocal, engine
 from .deps import WEAK_TOKENS, get_assessor, get_paypal
 from .paypal import FakePayPal
-from .routers import claims, dev, merchant, orders, policy, webhooks
+from .routers import assistant, claims, dev, merchant, orders, policy, webhooks
 from .seed import refresh_captures, refresh_demo_delivery, seed_all
 
 log = logging.getLogger("refundpilot")
@@ -128,7 +128,7 @@ app = FastAPI(title="RefundPilot API", version="0.1.0",
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
                    allow_origin_regex=settings.cors_origin_regex or None, allow_methods=["*"], allow_headers=["*"])
 
-for r in (orders.router, claims.router, merchant.router, policy.router, webhooks.router, dev.router):
+for r in (orders.router, claims.router, merchant.router, assistant.router, policy.router, webhooks.router, dev.router):
     app.include_router(r)
 
 

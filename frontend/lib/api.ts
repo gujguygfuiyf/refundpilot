@@ -109,6 +109,7 @@ export const api = {
       disputes_synced?: number;
       ledger?: { claims_restored: number; orders_calibrated: number; paypal_captures_refreshed: number };
     }>("/merchant/reconcile", { method: "POST" }, true),
+  assistantStatus: () => request<{ enabled: boolean; model?: string; reason?: string }>("/merchant/assistant/status", {}, true),
   policies: () => request<Policy[]>("/policies", {}, true),
   simulate: (body: {
     policy_version: string;

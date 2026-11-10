@@ -62,6 +62,50 @@ Prompt injection is part of both sets: across 7 injection scenarios (21 runs), f
 
 An informal two-person usability check of the review drawer is written up in [docs/USABILITY-CHECK.md](docs/USABILITY-CHECK.md).
 
+## Insights dashboard (AG Studio)
+
+[**4. Insights**](https://refundpilot-web.onrender.com/merchant/insights) is a dashboard built on AG Studio 3.1.0
+(`ag-studio-react`), AG Grid's embedded dashboard product. It has two pages:
+
+- **AI evaluation:** the 123 recorded Gemini runs behind the numbers above (87 main, 36 held-out). Outcomes, rules,
+  amounts and latency per scenario group, and what the Goodwill policy would have paid for the same AI findings.
+- **Live claims:** the merchant queue by status, outcome, rule and product.
+
+What we added to Studio:
+
+- **A custom widget, "Guardrail check"** ([`GuardrailWidget.tsx`](frontend/components/insights/GuardrailWidget.tsx)):
+  violations out of rows checked, for example "0 of 123" overpayments. It follows the page's filters, has its own
+  "RefundPilot" group in Studio's widget picker, and describes itself to Studio's agents so they can place it too.
+- **A theme** ([`theme.ts`](frontend/lib/insights/theme.ts)) whose colours point at CSS tokens in `app/globals.css`.
+- **An editable layout.** **Edit dashboard** opens Studio's layout tools; the result is kept in the visitor's
+  browser and **Reset layout** restores the default.
+- **An assistant on Studio's Agent Framework** ([`lib/insights/ai.ts`](frontend/lib/insights/ai.ts)): Studio's
+  five built-in agents (lead, data, page, planning, widget) plus our own **Refund policy analyst**. Its two tools
+  call the real policy engine on the API: `list_refund_policies` (`GET /policies`) reads the rules, and
+  `simulate_refund_policy` (`POST /policies/simulate`) computes what a policy suggests for given AI findings.
+
+**How a model turn runs.** Studio runs agents and tools in the browser and asks a language-model adapter for one turn
+at a time. Ours posts each turn to `POST /merchant/assistant/turn`, which runs it on Gemini so the key never reaches
+the browser ([`backend/app/assistant.py`](backend/app/assistant.py)). Studio's tool schemas are written for another
+provider's strict mode (recursive `$defs`), so instead of native function calling the tools go into the system
+instruction and the model answers with one JSON envelope (`{"message": ..., "tool_calls": [...]}`); Studio validates
+the arguments and returns any problem as a tool result. Guards: a fixed model, a 1.5 MB request limit, 40 turns per IP
+per minute, 300 turns per UTC day counted in the database, and one repair attempt for an unusable reply.
+
+**Limits.** No assistant tool can change a claim or move money. The assistant can be wrong. The policy analyst is
+told to state only amounts it got from the policy engine or a query. One question takes several turns. The model
+turns are covered by tests with a scripted model; `python scripts/assistant_smoke.py` (from `backend/`) runs the same
+turns against the configured Gemini key. `GET /merchant/assistant/status` reports whether the assistant is on, and
+`ASSISTANT_ENABLED=false` switches it off; the dashboard works without it.
+
+**Data.** `cd backend && python -m eval.export_insights` writes `frontend/lib/insights/eval-runs.json` from the recorded
+result files. It replays the Standard policy on each run's recorded AI findings, stops if that does not reproduce the
+recorded outcome, rule and amount, and adds the Goodwill policy's suggestion.
+
+**Licence.** AG Studio is a commercial product and pulls in `ag-grid-enterprise` and `ag-charts-enterprise`; the
+merchant queue stays on AG Grid Community. The demo uses AG's free trial key (`NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY`,
+read at build time). Without a key Studio still works but shows a watermark.
+
 ## Architecture
 
 ```mermaid
@@ -70,6 +114,7 @@ flowchart LR
         B[Buyer pages]
         M[Merchant queue & Disputes · AG Grid]
         S[Policy simulator]
+        I[Insights · AG Studio<br/>agents run in the browser]
     end
     subgraph API["FastAPI"]
         CS[Claim & Dispute service<br/>state machine · idempotent approve]
@@ -77,9 +122,12 @@ flowchart LR
         PE[Policy engine<br/>versioned JSON]
         PP[PayPal client<br/>Orders · Payments · Disputes]
         WH[Webhook + reconciler]
+        AT[Assistant turns<br/>Gemini · rate limits]
     end
     DB[(Postgres / SQLite)]
     B & M & S --> CS
+    I --> AT
+    I --> PE
     CS --> AI
     CS --> PE
     CS --> PP --> PAYPAL[(PayPal Sandbox)]
@@ -164,6 +212,8 @@ demo guards: rolling delivery dates, rate limits, token checks, first boot on an
 - **Gemini** (`google-genai`, `response_schema`) for the vision assessment; **OpenAI** structured outputs as an
   optional automatic backup when `OPENAI_API_KEY` is set
 - **AG Grid** Community: the merchant claims & disputes queue (custom cell renderers, Quartz theme)
+- **AG Studio** 3.1.0 (commercial; trial key in the demo): the Insights dashboard, with a custom widget, a custom
+  theme, an editable layout and a custom agent on Studio's Agent Framework
 - **Render**: `render.yaml` blueprint deploys the API and the web app in one step (free plan, Frankfurt);
   the database is a free Neon Postgres passed in as `DATABASE_URL`
 - FastAPI, SQLAlchemy 2, Next.js 15, Tailwind CSS 4

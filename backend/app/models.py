@@ -169,6 +169,15 @@ class AuditLog(Base):
     ts: Mapped[str] = mapped_column(String(40), default=now_iso)
 
 
+class AssistantUsage(Base):
+    """Insights assistant usage, one row per UTC day: the daily ceiling is read from here, so it survives restarts."""
+    __tablename__ = "assistant_usage"
+    day: Mapped[str] = mapped_column(String(10), primary_key=True)     # YYYY-MM-DD (UTC)
+    turns: Mapped[int] = mapped_column(Integer, default=0)
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"
     id: Mapped[str] = mapped_column(String(64), primary_key=True)   # PayPal event id

@@ -1,0 +1,110 @@
+{
+ "input": [
+  {
+   "id": "msg-user-1",
+   "kind": "input",
+   "type": "message",
+   "role": "user",
+   "status": "completed",
+   "content": [
+    {
+     "type": "text",
+     "text": "Summarise what this page shows: every widget, the fields it reads, and what stands out."
+    }
+   ]
+  }
+ ],
+ "instructions": "You are the lead agent of a dashboard assistant. Look at the page, delegate specialised work to the other agents, and answer the user.\n\nThis dashboard belongs to RefundPilot, a refund-claim tool for PayPal merchants. For any question about refund policies, rules, caps or what a policy would pay, delegate to the 'refund-policy' agent.",
+ "tools": [
+  {
+   "name": "view_page",
+   "kind": "client",
+   "description": "Show the current page: its widgets, their data mapping and layout.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "delegate_to",
+   "kind": "client",
+   "description": "Hand a subtask to a specialised agent, which runs it and returns a summary.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "anyOf": [
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "enum": [
+           "data"
+          ]
+         }
+        },
+        "required": [
+         "id"
+        ],
+        "additionalProperties": false,
+        "description": "Explores the data and runs queries."
+       },
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "enum": [
+           "page"
+          ]
+         },
+         "pageId": {
+          "type": "string",
+          "enum": [
+           "evaluation",
+           "claims"
+          ]
+         }
+        },
+        "required": [
+         "id"
+        ],
+        "additionalProperties": false,
+        "description": "Places and moves widgets on a page."
+       },
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "enum": [
+           "refund-policy"
+          ]
+         }
+        },
+        "required": [
+         "id"
+        ],
+        "additionalProperties": false,
+        "description": "Explains and compares RefundPilot's refund policies and computes what a policy suggests with the real policy engine."
+       }
+      ]
+     },
+     "instructions": {
+      "type": "string",
+      "description": "The task for the delegate."
+     }
+    },
+    "required": [
+     "type",
+     "instructions"
+    ],
+    "additionalProperties": false
+   }
+  }
+ ],
+ "tool_choice": "auto"
+}
