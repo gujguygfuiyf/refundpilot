@@ -49,7 +49,7 @@ An experimental Disputes tab syncs open PayPal disputes, matches them to orders 
 Click **4. Insights** in the live demo. It runs on AG Studio 3.1.0, fed by our own data: 123 recorded Gemini evaluation runs and the live claims queue.
 - **Custom widget:** "Guardrail check" shows violations out of rows checked ("0 of 123" overpayments), follows page filters and has a RefundPilot group in the widget picker.
 - **Theming:** a Studio theme built on the app's CSS tokens.
-- **Layout tools:** **Edit dashboard** to rearrange or add widgets; the layout stays in your browser, with a reset.
+- **Layout tools:** switch to **Edit** to rearrange or add widgets; the layout stays in your browser, with a reset.
 - **Agent Framework:** Studio's five built-in agents plus our own Refund policy analyst, whose two tools run our real policy engine, so an amount from them is computed, not guessed. No assistant tool can change a claim or move money.
 
 ### How we used AI

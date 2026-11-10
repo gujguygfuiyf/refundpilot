@@ -77,8 +77,9 @@ What we added to Studio:
   violations out of rows checked, for example "0 of 123" overpayments. It follows the page's filters, has its own
   "RefundPilot" group in Studio's widget picker, and describes itself to Studio's agents so they can place it too.
 - **A theme** ([`theme.ts`](frontend/lib/insights/theme.ts)) whose colours point at CSS tokens in `app/globals.css`.
-- **An editable layout.** **Edit dashboard** opens Studio's layout tools; the result is kept in the visitor's
-  browser and **Reset layout** restores the default.
+- **An editable layout.** Three modes: **View**, **Ask the assistant** (the chat beside the dashboard) and **Edit**,
+  which opens Studio's layout tools. A changed layout is kept in the visitor's browser and **Reset layout** restores
+  the default.
 - **An assistant on Studio's Agent Framework** ([`lib/insights/ai.ts`](frontend/lib/insights/ai.ts)): Studio's
   five built-in agents (lead, data, page, planning, widget) plus our own **Refund policy analyst**. Its two tools
   call the real policy engine on the API: `list_refund_policies` (`GET /policies`) reads the rules, and
