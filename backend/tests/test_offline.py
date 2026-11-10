@@ -68,3 +68,28 @@ def test_fake_refund_ids_survive_a_restart():
     a = first.refund_capture("CAP", 100, "USD", request_id="rp-1", invoice_id="inv-1")
     b = after_restart.refund_capture("CAP", 100, "USD", request_id="rp-2", invoice_id="inv-2")
     assert a["id"] != b["id"]
+
+
+def test_seeded_sandbox_orders_are_refundable_offline(db, assessor):
+    """Regression: a local run without PayPal credentials lists the sandbox captures from seed/orders.json, but only
+    the DEMO-* captures were registered in the fake gateway, so approving any other order failed with a 404."""
+    pp = FakePayPal()
+    out = seed_all(db, paypal=pp, refresh=False)
+    assert out["offline_captures"] > 0
+    orders = db.query(Order).all()
+    assert all(o.capture_id in pp.captures for o in orders)
+    assert all(pp.captures[o.capture_id]["refunded"] == o.refunded_cents for o in orders)
+    sandbox = next(o for o in orders if not o.capture_id.startswith(("DEMO-", "CAP")) and o.remaining_cents > 0)
+    svc = ClaimService(db, pp, assessor, "standard-1.2")
+    c = svc.create_claim(sandbox.id, "arrived broken", [jpeg_bytes()])
+    svc.run_assessment(c.id)
+    assert svc.approve(c.id).status == "COMPLETED"
+    assert seed_all(db, paypal=pp, refresh=False)["offline_captures"] == 0     # idempotent
+    assert pp.captures[sandbox.capture_id]["refunded"] == sandbox.amount_cents  # a re-seed keeps the refund
+
+
+def test_real_gateway_is_left_alone(db):
+    class NotFake:                      # anything that isn't FakePayPal, e.g. PayPalClient
+        captures = {}
+    from app.seed import register_offline_captures
+    assert register_offline_captures(db, NotFake()) == 0 and NotFake.captures == {}

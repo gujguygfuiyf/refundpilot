@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ColdStartNotice from "@/components/ColdStartNotice";
 import NavBar from "@/components/NavBar";
 import "./globals.css";
 
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="min-h-screen font-sans antialiased">
         <NavBar />
+        <ColdStartNotice />
         <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
       </body>
     </html>
