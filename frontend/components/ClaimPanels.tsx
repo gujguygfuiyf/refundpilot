@@ -87,8 +87,9 @@ export function Photos({ claim }: { claim: Claim }) {
             <span className="text-xs font-semibold tracking-wide text-gray-700 uppercase">
               Submitted Evidence ({claim.photo_urls.length})
             </span>
-            <span className="text-[11px] text-gray-500">Click photo to expand</span>
+            {claim.photo_urls.length > 0 && <span className="text-[11px] text-gray-500">Click photo to expand</span>}
           </div>
+          {claim.photo_urls.length === 0 && <p className="text-sm text-gray-500">No buyer photos were provided.</p>}
           {/* A single photo fills the column, so it sits next to the listing photo at the same size. */}
           <div className={`grid gap-2 ${claim.photo_urls.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
             {claim.photo_urls.map((u, i) => (
@@ -165,7 +166,11 @@ export function EvidenceCard({ claim }: { claim: Claim }) {
     return (
       <Card title="Evidence">
         <p className="text-sm text-gray-500">
-          {claim.status === "ANALYZING" || claim.status === "SUBMITTED" ? "The AI is reading the photos…" : "No assessment yet."}
+          {claim.status === "ANALYZING" || claim.status === "SUBMITTED"
+            ? "The AI is reading the photos…"
+            : claim.status === "COMPLETED" || (claim.refunds || []).some((r) => r.status === "COMPLETED")
+              ? "No AI assessment was performed. The merchant approved this refund directly."
+              : "No assessment yet."}
         </p>
       </Card>
     );
@@ -235,7 +240,11 @@ export function DecisionCard({ claim }: { claim: Claim }) {
   return (
     <Card title="Decision" aside={d && <Badge>policy {d.policy_version}</Badge>}>
       {!d ? (
-        <p className="text-sm text-gray-500">Waiting for the evidence assessment.</p>
+        <p className="text-sm text-gray-500">
+          {isCompleted
+            ? "Merchant-approved refund completed. No AI assessment was performed, so no policy decision was computed."
+            : "Waiting for the evidence assessment."}
+        </p>
       ) : (
         <div className="space-y-3 text-sm">
           {/* Verdict Banner */}

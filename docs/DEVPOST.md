@@ -1,7 +1,7 @@
 # RefundPilot · Devpost 提交文案（英文，直接复制粘贴）
 
 > 中文说明：下面每一节对应 Devpost 表单里的一个框。数据都有出处（NRF & Happy Returns 2025；LexisNexis 2026 True Cost of Fraud, Retail & Ecommerce；PYMNTS 2026-03-03），别改数字。
-> 争议段落目前写的是“尚未在 Sandbox 验证”。端到端测试通过后，换成：If the buyer has already opened a PayPal dispute, the Disputes tab pulls it in through the Disputes API, matches it to the order and the claim, and resolves it with the same policy amount and one approval, or sends PayPal an evidence package built from the stored facts.
+> 争议段落已按 2026-11-10/11 的 Sandbox 实测更新：文本证据提交、接受索赔并全额退款 $49 两条流程已验证；附件、部分退款、生产环境未验证。
 
 ---
 
@@ -37,7 +37,7 @@ Large retailers have fraud teams. A small merchant has a support inbox. Answer t
 Before adopting a policy, a merchant can replay the same evidence under Goodwill, Standard and Strict rules (a $49 cosmetic scratch suggests $24.50, $14.70 or $7.35) or replay the whole queue in batch, at no extra AI cost.
 
 
-An experimental Disputes tab syncs open PayPal disputes, matches them to orders and claims, and prepares an evidence package from the stored facts; its write actions are covered by automated tests but not yet verified in PayPal Sandbox.
+If the buyer has already opened a PayPal dispute, the Disputes tab pulls it in through the Disputes API and matches it to the order. Two dispute workflows are validated in PayPal Sandbox: submitting text evidence (the submitted text was confirmed in the PayPal merchant dashboard) and accepting a claim with a merchant-approved USD 49.00 refund (PayPal reported the dispute resolved and the refund completed; RefundPilot recorded the webhook completion and set the remaining refundable balance to zero). These tests cover text-only evidence and a manually approved full refund, not evidence attachments, partial refunds or production use.
 
 ### How we built it
 - **PayPal.** Orders v2 creates and captures the sandbox orders buyers claim against. Payments v2 reads the capture's refundable balance before every refund, executes the refund and reconciles pending ones. Webhooks (`PAYMENT.CAPTURE.REFUNDED`, `CUSTOMER.DISPUTE.*`) are verified with `/v1/notifications/verify-webhook-signature` and deduplicated by event id. Disputes v1 (list, show, accept-claim, provide-evidence) connects claims to open disputes.
