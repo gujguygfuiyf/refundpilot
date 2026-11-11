@@ -17,7 +17,7 @@ paypal, paypal-rest-api, gemini, python, fastapi, sqlalchemy, postgresql, neon, 
 ## Links
 - Live demo: https://refundpilot-web.onrender.com (no sign-in; the merchant token is prefilled and can only move PayPal Sandbox money)
 - Code: https://github.com/gujguygfuiyf/refundpilot (MIT)
-- Video: https://youtu.be/ClVgMo-wgOM
+- Video: https://youtu.be/svC5uc2vZVU
 
 ---
 

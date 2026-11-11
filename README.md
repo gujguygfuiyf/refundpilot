@@ -15,7 +15,7 @@ Built for the [PayPal AI Hackathon](https://paypalaihackathon.devpost.com/) (Oct
 
 - **Live demo:** https://refundpilot-web.onrender.com (the merchant token is prefilled there; it can only move PayPal **sandbox** money).
   It runs on free hosting: after 15 idle minutes the first page load can take about a minute while the server wakes up.
-- **Video (under 3 min):** https://youtu.be/ClVgMo-wgOM
+- **Video (under 3 min):** https://youtu.be/svC5uc2vZVU
 - **Design doc:** [`docs/DESIGN.md`](docs/DESIGN.md)
 
 ## Why this split matters
