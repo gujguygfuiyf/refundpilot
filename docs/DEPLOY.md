@@ -53,6 +53,8 @@ uvicorn app.main:app --reload
 4. 点 **Deploy Blueprint**，等 5 到 10 分钟，两个服务都变成 Live。
 5. 看两个服务的实际网址。如果 API 不是 `https://refundpilot-api.onrender.com`（名字被占用时 Render 会加后缀）：去 `refundpilot-web` → Environment，把 `NEXT_PUBLIC_API_URL` 改成 API 的实际网址，选 **Save, rebuild, and deploy**（这个值是构建时写进前端的）。web 的网址带后缀不用管，CORS 已经按正则放行。
 6. 可选：要 OpenAI 备用，在 API 的 Environment 里加 `OPENAI_API_KEY` 和 `OPENAI_MODEL`。
+7. Insights 仪表盘的许可证：在 `refundpilot-web` → Environment 里加 `NEXT_PUBLIC_AG_STUDIO_LICENSE_KEY`（AG Studio 的试用 key，在 ag-grid.com/studio/license-pricing 申请），选 **Save, rebuild, and deploy**（这个值也是构建时写进前端的）。不填也能用，但仪表盘会带水印。
+8. 可选：Insights 的 AI 助手只要有 `GEMINI_API_KEY` 就开启。要关掉它，在 `refundpilot-api` 的 Environment 里加 `ASSISTANT_ENABLED=false`；`ASSISTANT_TURNS_PER_DAY` 调每日上限（默认 300）；`ASSISTANT_API_KEY` 给它单独的 Gemini key，免得挤占理赔评估的额度。
 
 免费版的代价：15 分钟没人访问就休眠，下一次访问约 1 分钟才醒（README 里已经提醒评委）；每月 750 小时免费额度按实际运行时间统计。健康检查不查询数据库；数据库实际消耗仍需通过 Neon 控制台确认。
 

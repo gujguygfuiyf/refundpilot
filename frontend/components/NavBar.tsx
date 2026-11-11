@@ -9,13 +9,14 @@ export default function NavBar() {
   const isBuyerActive = pathname === "/" || pathname.startsWith("/claims");
   const isMerchantActive = pathname === "/merchant";
   const isPolicyActive = pathname.startsWith("/merchant/policy");
+  const isInsightsActive = pathname.startsWith("/merchant/insights");
 
   const activeClass = "rounded-lg bg-blue-50 px-3 py-1.5 font-medium text-brand-dark ring-1 ring-blue-200 shadow-2xs";
   const inactiveClass = "rounded-lg px-3 py-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-gray-900";
 
   return (
     <header className="border-b border-slate-200/80 bg-white/95 shadow-2xs backdrop-blur-xs">
-      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:gap-4">
+      <nav className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 py-3 text-sm sm:gap-3">
         <Link href="/" className="mr-2 text-base font-semibold text-brand-dark">
           Refund<span className="text-brand">Pilot</span>
         </Link>
@@ -37,7 +38,13 @@ export default function NavBar() {
         >
           3. Policy Simulator
         </Link>
-        <div className="ml-auto hidden items-center gap-2 lg:flex">
+        <Link
+          href="/merchant/insights"
+          className={isInsightsActive ? activeClass : inactiveClass}
+        >
+          4. Insights
+        </Link>
+        <div className="ml-auto hidden items-center gap-2 xl:flex">
           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
             AI describes · Policy decides · Human approves · PayPal executes
           </span>
